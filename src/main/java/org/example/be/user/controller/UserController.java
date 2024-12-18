@@ -65,4 +65,19 @@ public class UserController {
         }
     }
 
+    // 구독 동의
+    @PostMapping("/subscription")
+    public ResponseEntity<CommonResponse<String>> subscribeAgree(@RequestBody UserDTO userDTO) {
+
+        try {
+
+            userService.subscribeAgree(userDTO);
+
+            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"구독 동의 완료"));
+
+        } catch (NoSuchElementException e) {
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CommonResponse.error(404,e.getMessage()));
+        }
+    }
 }
