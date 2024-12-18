@@ -1,0 +1,85 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: root
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: sch5229@gmail.com
+    password: zwei hyub xdrt taac
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      properties:
+        hibernate:
+          format_sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: db8efd7a5919e4c619cf6e676b5189fa
+            client-secret: JtlvOynm17hbtFSKleqM8GLqfY8LnhTW
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            client-name: Oauth2
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            scope: profile_nickname
+
+          naver:
+            client-id: J9e7ZObddUCfs_4uICkI
+            client-secret: eocbVptT5i
+            scope: profile,email
+            client-name: Naver
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/login/oauth2/code/naver
+
+          google:
+            client-id: 458553321878-g01fc7i4e4rc1v4ppf3lncj3emmcpqav.apps.googleusercontent.com
+            client-secret: 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
+            scope: profile,email
+            client-name: Google
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+
+        provider:
+          kakao:
+            issuer-uri: https://kauth.kakao.com
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+          naver:
+            authorization-uri: https://nid.naver.com/oauth2.0/authorize
+            token-uri: https://nid.naver.com/oauth2.0/token
+            user-info-uri: https://openapi.naver.com/v1/nid/me
+            user-name-attribute: response
+
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+    user:
+      name: 1111
+      password: 1111
+      roles: ADMIN
+
+    basic:
+      enabled: true
