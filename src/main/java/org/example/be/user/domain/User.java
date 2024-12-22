@@ -20,19 +20,19 @@ public class User {
     private int id;
 
     // User 이메일
-    @Column(nullable = true, length = 100, unique = true)
+    @Column(length = 100, unique = true)
     private String userEmail;
 
     // User 비밀번호
-    @Column(nullable = true)
+    @Column()
     private String userPwd;
 
     // User 이름
-    @Column(nullable = true, length = 100)
+    @Column(length = 100)
     private String userName;
 
     // User 권한
-    @Column(nullable = true)
+    @Column()
     private String userRole;
 
     // User 이용약관 동의 : 기본 False
