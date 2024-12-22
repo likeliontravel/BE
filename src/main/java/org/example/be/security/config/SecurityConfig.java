@@ -2,6 +2,8 @@ package org.example.be.security.config;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.security.filter.RestAuthenticationFilter;
+import org.example.be.security.handler.RestAccessDeniedHandler;
+import org.example.be.security.handler.RestAuthenticationEntryPoint;
 import org.example.be.security.handler.RestAuthenticationFailureHandler;
 import org.example.be.security.handler.RestAuthenticationSuccessHandler;
 import org.example.be.security.provider.RestAuthenticationProvider;
@@ -40,7 +42,6 @@ public class SecurityConfig {
         return authenticationManagerBuilder.build();
     }
 
-
     // 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
@@ -59,11 +60,18 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/SignUp").permitAll()
+                        .requestMatchers("/mail/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
                 // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
                 .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+
+                // 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                        .accessDeniedHandler(new RestAccessDeniedHandler())
+                )
         ;
 
         return http.build();
