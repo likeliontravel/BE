@@ -1,5 +1,6 @@
 package org.example.be.jwt.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -71,16 +72,18 @@ public class JWTFilter extends OncePerRequestFilter {
         // 토큰이 만료시간이 지나면 401 에러 보냄
         if (jwtUtil.isExpired(token)) {
 
+            System.out.println("Token expired");
+
+            ObjectMapper mapper = new ObjectMapper();
+
             CommonResponse<String> commonResponse = CommonResponse.error(
                     HttpStatus.UNAUTHORIZED.value(), "토큰 만료 시간이 지났습니다.");
-
-            System.out.println("Token expired");
 
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json;charset=utf-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
 
-            response.getWriter().write(commonResponse.toString());
+            response.getWriter().write(mapper.writeValueAsString(commonResponse));
             return;
         }
 
@@ -91,7 +94,7 @@ public class JWTFilter extends OncePerRequestFilter {
             if (email != null && role != null) {
 
                 // 유저 객체 정보 가져오기
-                Authentication authentication = jwtProvider.getUserDetails(token);
+                Authentication authentication = jwtProvider.getUserDetails(email);
 
                 // 유저 객체 정보 토큰에 담기
                 SecurityContext context = getSecurityContext(authentication);
@@ -102,6 +105,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
             System.out.println("Invalid JWT token: " + e.getMessage());
 
+            ObjectMapper mapper = new ObjectMapper();
+
             CommonResponse<String> commonResponse = CommonResponse.error(
                     HttpStatus.UNAUTHORIZED.value(), e.getMessage());
 
@@ -109,7 +114,7 @@ public class JWTFilter extends OncePerRequestFilter {
             response.setContentType("application/json;charset=utf-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
 
-            response.getWriter().write(commonResponse.toString());
+            response.getWriter().write(mapper.writeValueAsString(commonResponse));
 
             return;
         }
