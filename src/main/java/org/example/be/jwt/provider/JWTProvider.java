@@ -1,4 +1,4 @@
-package org.example.be.jwt.service;
+package org.example.be.jwt.provider;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.security.service.CustomUserDetailsService;
