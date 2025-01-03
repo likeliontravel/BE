@@ -1,9 +1,6 @@
 package org.example.be.oauth.service;
 
-import org.example.be.oauth.dto.CustomOAuth2User;
-import org.example.be.oauth.dto.GoogleResponse;
-import org.example.be.oauth.dto.OAuth2Response;
-import org.example.be.oauth.dto.SocialUserDTO;
+import org.example.be.oauth.dto.*;
 import org.example.be.oauth.entity.UserEntity;
 import org.example.be.oauth.repository.UserSocialRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -33,13 +30,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // OAuth2 인증 제공자에 대한 등록 ID 확인 (구글인지 확인)
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
+        OAuth2Response oAuth2Response;
+
         // 구글 로그인일 경우에만 처리
         if (!registrationId.equals("google")) {
-            return null; // 구글이 아닌 경우 null 반환
+           oAuth2Response = new GoogleResponse(oAuth2User.getAttributes()); // 구글이 아닌 경우 null 반환
+        } else if (!registrationId.equals("kakao")) {
+            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+        } else {
+            return null;
         }
 
         // OAuth2Response를 GoogleResponse로 초기화
-        OAuth2Response oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+//        OAuth2Response oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
 
         // social 로그인에 사용될 username 생성 (provider + providerId 조합)
         String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
