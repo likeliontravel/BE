@@ -29,6 +29,7 @@ security:
 
         kakao:
           client-id: 68cd67cc86f635e63e4265ff1f14df8f
+          client-secret: ibXG2HPEEBlBfaOxMAxMKYRfKGey9AoM
           authorization-grant-type: authorization_code
           scope: profile_nickname,account_email
           redirect-uri: http://localhost:8080/login/oauth2/code/kakao
