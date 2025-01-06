@@ -6,10 +6,7 @@ import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.filter.JWTFilter;
 import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.security.filter.RestAuthenticationFilter;
-import org.example.be.security.handler.RestAccessDeniedHandler;
-import org.example.be.security.handler.RestAuthenticationEntryPoint;
-import org.example.be.security.handler.RestAuthenticationFailureHandler;
-import org.example.be.security.handler.RestAuthenticationSuccessHandler;
+import org.example.be.security.handler.*;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +33,8 @@ public class SecurityConfig {
     private final RestAuthenticationProvider restAuthenticationProvider;
     private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
     private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
+    private final RestLogoutHandler restLogoutHandler;
+    private final RestLogoutSuccessHandler restLogoutSuccessHandler;
     private final JWTProvider jwtProvider;
     private final JWTUtil jwtUtil;
     private final JWTBlackListService jwtBlackListService;
@@ -75,6 +74,14 @@ public class SecurityConfig {
                 .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
                 // JWT 필터 추가 RestAuthenticationFilter 이전에 추가
                 .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
+
+                // 로그아웃 필터 설정
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler(restLogoutHandler)
+                        .logoutSuccessHandler(restLogoutSuccessHandler)
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true))
 
                 // 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
                 .exceptionHandling(exception -> exception
