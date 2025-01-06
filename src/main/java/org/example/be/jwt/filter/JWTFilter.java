@@ -27,6 +27,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTProvider jwtProvider;
 
+    private final JWTBlackListService jwtBlackListService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
@@ -75,6 +77,21 @@ public class JWTFilter extends OncePerRequestFilter {
         /*
         * 토큰 블랙리스트 기능을 만든다면
         * 여기에 추가를 해주시면 감사하겠습니다 */
+        if (!jwtBlackListService.isTokenBlackListed(accessToken, refreshToken)) {
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            CommonResponse<String> commonResponse = CommonResponse.error(
+                    HttpStatus.UNAUTHORIZED.value(), "토큰이 블랙리스트에 올라가 있습니다.");
+
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json;charset=utf-8");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
+
+            response.getWriter().write(mapper.writeValueAsString(commonResponse));
+
+            return;
+        }
 
         // 토큰이 만료시간이 지나면 401 에러 보냄
         if (jwtUtil.isExpired(accessToken)) {
