@@ -1,4 +1,4 @@
-package org.example.be.jwt;
+package org.example.be.jwt.util;
 
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
