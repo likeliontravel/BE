@@ -1,7 +1,8 @@
 package org.example.be.security.config;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be.jwt.JWTUtil;
+import org.example.be.jwt.service.JWTBlackListService;
+import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.filter.JWTFilter;
 import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.security.filter.RestAuthenticationFilter;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
     private final JWTProvider jwtProvider;
     private final JWTUtil jwtUtil;
+    private final JWTBlackListService jwtBlackListService;
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -72,7 +74,7 @@ public class SecurityConfig {
                 // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
                 .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
                 // JWT 필터 추가 RestAuthenticationFilter 이전에 추가
-                .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider), RestAuthenticationFilter.class)
+                .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
 
                 // 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
                 .exceptionHandling(exception -> exception
