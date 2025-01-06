@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.example.be.jwt.JWTUtil;
+import org.example.be.jwt.util.JWTUtil;
 import org.example.be.response.CommonResponse;
 import org.example.be.user.dto.UserDTO;
 import org.springframework.http.HttpStatus;

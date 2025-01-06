@@ -47,6 +47,22 @@ public class JWTUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
+    /*
+    * JWT 토큰 검증 로직 */
+    public Boolean isValid(String token) {
+
+        try {
+
+            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+
+            return true;
+
+        } catch (Exception e) {
+
+            return false;
+        }
+    }
+
     // JWT 생성 하는 함수
     public String createJwt(String username, String role, Long expiredMs) {
 
