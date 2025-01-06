@@ -75,9 +75,8 @@ public class JWTFilter extends OncePerRequestFilter {
         String accessToken = authorization;
 
         /*
-        * 토큰 블랙리스트 기능을 만든다면
-        * 여기에 추가를 해주시면 감사하겠습니다 */
-        if (!jwtBlackListService.isTokenBlackListed(accessToken, refreshToken)) {
+        * 토큰 블랙리스트 검증 로직 */
+        if (jwtBlackListService.isBlacklistedByEmail(jwtUtil.getUsername(accessToken),accessToken, refreshToken)) {
 
             ObjectMapper mapper = new ObjectMapper();
 
