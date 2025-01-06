@@ -48,6 +48,13 @@ public class JWTUtil {
     }
 
     /*
+     * JWT 토큰에서 만료 시간(Expiration) 추출 */
+    public Date getExpiration(String token) {
+
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration();
+    }
+
+    /*
     * JWT 토큰 검증 로직 */
     public Boolean isValid(String token) {
 
