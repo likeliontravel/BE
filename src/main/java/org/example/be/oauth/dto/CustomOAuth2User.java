@@ -5,7 +5,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 public class CustomOAuth2User implements OAuth2User {
@@ -19,27 +18,35 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        // 추가: SocialUserDTO 정보를 Map 형태로 반환
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("username", socialUserDTO.getUsername());
-        attributes.put("name", socialUserDTO.getName());
-        attributes.put("role", socialUserDTO.getRole());
-        return attributes;
+
+        return null;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+
         Collection<GrantedAuthority> collection = new ArrayList<>();
-        collection.add(() -> socialUserDTO.getRole());
+
+        collection.add(new GrantedAuthority() {
+
+            @Override
+            public String getAuthority() {
+
+                return socialUserDTO.getRole();
+            }
+        });
+
         return collection;
     }
 
     @Override
     public String getName() {
+
         return socialUserDTO.getName();
     }
 
     public String getUsername() {
+
         return socialUserDTO.getUsername();
     }
 }

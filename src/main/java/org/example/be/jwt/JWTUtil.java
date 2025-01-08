@@ -40,7 +40,7 @@ public class JWTUtil {
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
-                .signWith(secretKey, io.jsonwebtoken.SignatureAlgorithm.HS256)
+                .signWith(secretKey)
                 .compact();
     }
 }

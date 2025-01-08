@@ -23,7 +23,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JWTUtil jwtUtil;
 
     public CustomSuccessHandler(JWTUtil jwtUtil) {
-
         this.jwtUtil = jwtUtil;
     }
 
@@ -42,18 +41,20 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
 
         String token = jwtUtil.createJwt(username, role, 60*60*60*60L);
+        System.out.println("생성된 jwt 토큰 : " + token);
 
         response.addCookie(createCookie("Authorization", token));
         response.sendRedirect("http://localhost:3000/");
     }
 
     private Cookie createCookie(String key, String value) {
-
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(60*60*60*60);
         //cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
+
+        System.out.println("Cookie: " + cookie.getValue());
 
         return cookie;
     }

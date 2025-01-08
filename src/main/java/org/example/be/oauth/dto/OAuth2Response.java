@@ -37,5 +37,5 @@ public interface OAuth2Response {
      * - 예: Google의 경우 프로필 이미지, 언어 설정 등도 포함 가능.
      * @return 사용자 속성의 Key-Value 쌍을 포함한 Map
      */
-    Map<String, Object> getAttributes();
+//    Map<String, Object> getAttributes();
 }

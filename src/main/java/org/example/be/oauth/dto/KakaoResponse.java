@@ -3,10 +3,10 @@ package org.example.be.oauth.dto;
 import java.util.Map;
 
 public class KakaoResponse implements OAuth2Response {
-    private final Map<String, Object> attribute;
+    private final Map<String, Object> attributes;
 
-    public KakaoResponse(final Map<String, Object> attribute) {
-        this.attribute = attribute;
+    public KakaoResponse(final Map<String, Object> attributes) {
+        this.attributes = attributes;
     }
 
     @Override
@@ -16,21 +16,32 @@ public class KakaoResponse implements OAuth2Response {
 
     @Override
     public String getProviderId() {
-        return attribute.get("id").toString();
+        return attributes.get("id").toString();
     }
 
     @Override
     public String getEmail() {
-        return attribute.get("email").toString();
+        // "kakao_account"에서 "email" 키 추출
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if (kakaoAccount != null) {
+            Object email = kakaoAccount.get("email");
+            if (email != null) {
+                return email.toString();
+            }
+        }
+        return "Unknown"; // 기본값
     }
 
     @Override
     public String getName() {
-        return attribute.get("name").toString();
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attribute;
+        // 실명을 가져오기 위해 "kakao_account"에서 "name" 필드 사용
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if (kakaoAccount != null) {
+            Object name = kakaoAccount.get("name");
+            if (name != null) {
+                return name.toString();
+            }
+        }
+        return "Unknown"; // 기본값
     }
 }

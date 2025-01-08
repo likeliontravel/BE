@@ -1,6 +1,10 @@
 package org.example.be.security.config;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.jwt.JWTFilter;
+import org.example.be.jwt.JWTUtil;
+import org.example.be.oauth.handler.CustomSuccessHandler;
+import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.security.filter.RestAuthenticationFilter;
 import org.example.be.security.handler.RestAuthenticationFailureHandler;
 import org.example.be.security.handler.RestAuthenticationSuccessHandler;
@@ -30,6 +34,9 @@ public class SecurityConfig {
     private final RestAuthenticationProvider restAuthenticationProvider;
     private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
     private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
+    private final CustomSuccessHandler customSuccessHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final JWTUtil jwtUtil;
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -39,7 +46,6 @@ public class SecurityConfig {
 
         return authenticationManagerBuilder.build();
     }
-
 
     // 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
     @Bean
@@ -54,6 +60,15 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 // cors 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // JWT filter 추가
+                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOAuth2UserService))
+                        .successHandler(customSuccessHandler))
+
                 // 세션 사용 x stateless 상태 서버
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
@@ -63,8 +78,7 @@ public class SecurityConfig {
                 )
 
                 // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
-                .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
-        ;
+                .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
