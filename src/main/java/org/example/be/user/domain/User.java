@@ -42,4 +42,8 @@ public class User {
     // User 구독 여부 : 기본 False
     @Column(nullable = false)
     private Boolean userSubscribe = false;
+
+    // 소셜 로그인 여부
+    @Column(nullable = false)
+    private Boolean social = false;
 }
