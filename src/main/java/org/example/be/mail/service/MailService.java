@@ -29,29 +29,33 @@ public class MailService {
 
         String verificationCode = generateVerificationCode();
 
-        // 기존 데이터 삭제 후 새로운 인증 코드 저장
-        mailRepository.deleteByEmail(email);
+        try {
 
-        Mail mail = new Mail();
+            Mail mail = mailRepository.findByEmail(email).orElse(new Mail());
 
-        mail.setEmail(email);
-        mail.setAuthCode(verificationCode);
-        mail.setCreatedAt(LocalDateTime.now());
-        mail.setExpiresAt(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES));
+            mail.setEmail(email);
+            mail.setAuthCode(verificationCode);
+            mail.setCreatedAt(LocalDateTime.now());
+            mail.setExpiresAt(LocalDateTime.now().plusMinutes(CODE_EXPIRATION_MINUTES));
 
-        mailRepository.save(mail);
+            mailRepository.save(mail);
 
-        // 이메일 전송
-        SimpleMailMessage message = new SimpleMailMessage();
+            // 이메일 전송
+            SimpleMailMessage message = new SimpleMailMessage();
 
-        message.setTo(email);
-        message.setSubject("이메일 인증 코드 요청");
-        message.setText("요청하신 이메일 인증 코드는 : " + verificationCode + " 입니다.\n" +
-                "\n" +
-                "인증 코드 유효시간은 5분 입니다.");
+            message.setTo(email);
+            message.setSubject("이메일 인증 코드 요청");
+            message.setText("요청하신 이메일 인증 코드는 : " + verificationCode + " 입니다.\n" +
+                    "\n" +
+                    "인증 코드 유효시간은 5분 입니다.");
 
 
-        mailSender.send(message);
+            mailSender.send(message);
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(e);
+        }
     }
 
     // 인증 코드 검사하는 로직
@@ -90,7 +94,7 @@ public class MailService {
     }
 
     // 인증 코드 만드는 로직
-    private String generateVerificationCode() {
+    private static String generateVerificationCode() {
 
         Random random = new Random();
 
