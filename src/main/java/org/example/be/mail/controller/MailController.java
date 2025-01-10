@@ -22,9 +22,16 @@ public class MailController {
     @PostMapping("/send")
     public ResponseEntity<CommonResponse<String>> mailSend(@RequestBody MailDTO mailDTO) {
 
-        mailService.sendMail(mailDTO.getEmail());
+        try {
 
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이메일 코드 받기 성공 : " + mailDTO.getEmail()));
+            mailService.sendMail(mailDTO.getEmail());
+
+            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이메일 코드 받기 성공 : " + mailDTO.getEmail()));
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
     }
 
     // 메일 코드 인증
