@@ -10,6 +10,7 @@ import org.example.be.security.handler.*;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -50,6 +51,7 @@ public class SecurityConfig {
 
     // 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
     @Bean
+    @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
 
         http
@@ -63,6 +65,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // 세션 사용 x stateless 상태 서버
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .securityMatcher("/login", "/logout")
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/SignUp").permitAll()
