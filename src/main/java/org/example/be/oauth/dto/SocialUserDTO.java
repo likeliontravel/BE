@@ -10,4 +10,5 @@ public class SocialUserDTO {
     private String role;
     private String name;
     private String username;
+    private String userKey;
 }

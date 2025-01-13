@@ -20,6 +20,7 @@ public class SocialUserEntity {
     private String username;
     private String name;
 
+    private String userKey;
     private String email;
 
     private String role;
