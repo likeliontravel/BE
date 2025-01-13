@@ -1,7 +1,5 @@
 package org.example.be.oauth.dto;
 
-import java.util.Map;
-
 /**
  * OAuth2 제공자(Google, Naver 등)의 사용자 정보를 표준화하여 다루기 위한 인터페이스.
  */

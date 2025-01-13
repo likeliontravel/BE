@@ -1,7 +1,7 @@
 package org.example.be.oauth.service;
 
 import org.example.be.oauth.dto.*;
-import org.example.be.oauth.entity.UserEntity;
+import org.example.be.oauth.entity.SocialUserEntity;
 import org.example.be.oauth.repository.UserSocialRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -46,20 +46,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
 
         // 이미 해당 username으로 회원이 존재하는지 확인
-        UserEntity existData = userSocialRepository.findByUsername(username);
+        SocialUserEntity existData = userSocialRepository.findByUsername(username);
 
         // 회원이 존재하지 않으면 새로 회원을 생성
         if (existData == null) {
 
             // 새로운 사용자 엔티티 생성
-            UserEntity userEntity = new UserEntity();
-            userEntity.setUsername(username);
-            userEntity.setEmail(oAuth2Response.getEmail()); // 이메일 설정
-            userEntity.setName(oAuth2Response.getName()); // 이름 설정
-            userEntity.setRole("ROLE_USER"); // 기본 역할을 ROLE_USER로 설정
+            SocialUserEntity socialUserEntity = new SocialUserEntity();
+            socialUserEntity.setUsername(username);
+            socialUserEntity.setEmail(oAuth2Response.getEmail()); // 이메일 설정
+            socialUserEntity.setName(oAuth2Response.getName()); // 이름 설정
+            socialUserEntity.setRole("ROLE_USER"); // 기본 역할을 ROLE_USER로 설정
 
             // 데이터베이스에 사용자 정보 저장
-            userSocialRepository.save(userEntity);
+            userSocialRepository.save(socialUserEntity);
 
             // SocialUserDTO 객체 생성하여 사용자 정보를 담기
             SocialUserDTO socialUserDTO = new SocialUserDTO();

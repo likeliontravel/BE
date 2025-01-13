@@ -1,13 +1,15 @@
 package org.example.be.security.config;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be.jwt.JWTFilter;
-import org.example.be.jwt.JWTUtil;
+import org.example.be.jwt.service.JWTBlackListService;
+import org.example.be.jwt.util.JWTUtil;
+import org.example.be.jwt.filter.JWTFilter;
+import org.example.be.jwt.provider.JWTProvider;
+import org.example.be.oauth.dto.CustomOAuth2User;
 import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.security.filter.RestAuthenticationFilter;
-import org.example.be.security.handler.RestAuthenticationFailureHandler;
-import org.example.be.security.handler.RestAuthenticationSuccessHandler;
+import org.example.be.security.handler.*;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,9 +36,13 @@ public class SecurityConfig {
     private final RestAuthenticationProvider restAuthenticationProvider;
     private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
     private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
-    private final CustomSuccessHandler customSuccessHandler;
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final RestLogoutHandler restLogoutHandler;
+    private final RestLogoutSuccessHandler restLogoutSuccessHandler;
+    private final JWTProvider jwtProvider;
     private final JWTUtil jwtUtil;
+    private final JWTBlackListService jwtBlackListService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomSuccessHandler customSuccessHandler;
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -60,25 +66,40 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 // cors 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // 세션 사용 x stateless 상태 서버
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // JWT filter 추가
-                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
-
+                // oauth2 설정
                 .oauth2Login((oauth2) -> oauth2
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler))
 
-                // 세션 사용 x stateless 상태 서버
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/SignUp").permitAll()
+                        .requestMatchers("/mail/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
                 // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
-                .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+                // JWT 필터 추가 RestAuthenticationFilter 이전에 추가
+                .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
+
+                // 로그아웃 필터 설정
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler(restLogoutHandler)
+                        .logoutSuccessHandler(restLogoutSuccessHandler)
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true))
+
+                // 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                        .accessDeniedHandler(new RestAccessDeniedHandler())
+                )
+        ;
 
         return http.build();
     }
