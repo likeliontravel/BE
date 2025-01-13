@@ -40,10 +40,15 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String token = jwtUtil.createJwt(username, role, 60*60*60*60L);
-        System.out.println("생성된 jwt 토큰 : " + token);
+        String accessToken = jwtUtil.createJwt(username, role, 60*60*60*60L);
+        String refreshToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 7); // 7일 유효
 
-        response.addCookie(createCookie("Authorization", token));
+        System.out.println("생성된 accessToken 토큰 : " + accessToken);
+        System.out.println("생성된 refreshToken 토큰 : " + refreshToken);
+
+        response.addCookie(createCookie("Authorization", accessToken));
+        response.addHeader("Refresh-Token", refreshToken);
+
         response.sendRedirect("http://localhost:3000/");
     }
 
