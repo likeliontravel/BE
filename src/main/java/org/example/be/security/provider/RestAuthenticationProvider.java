@@ -41,7 +41,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
 
         //Authentication 토큰을 만들어 권한 및 User 각종 정보를 반환 비밀번호는 null 반환
-        return new RestAuthenticationToken(userContext.getAuthorities(), userContext.getUserDTO(), null);
+        return new RestAuthenticationToken(userContext.getAuthorities(), userContext.getGeneralUserDTO(), null);
     }
 
     /*

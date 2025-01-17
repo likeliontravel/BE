@@ -1,13 +1,13 @@
-package org.example.be.user.dto;
+package org.example.be.generaluser.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class UserDTO {
+public class GeneralUserDTO {
 
-    private int id;
+    private Long id;
 
     private String email;
 
@@ -16,8 +16,4 @@ public class UserDTO {
     private String name;
 
     private String role;
-
-    private Boolean policy;
-
-    private Boolean subscribe;
 }

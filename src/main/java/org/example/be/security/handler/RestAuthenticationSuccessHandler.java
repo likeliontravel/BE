@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.response.CommonResponse;
-import org.example.be.user.dto.UserDTO;
+import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -31,14 +31,14 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         ObjectMapper mapper = new ObjectMapper();
 
-        CommonResponse<UserDTO> commonResponse = new CommonResponse<>();
+        CommonResponse<GeneralUserDTO> commonResponse = new CommonResponse<>();
 
         // 인증된 사용자 정보 가져오기
-        UserDTO userDTO = (UserDTO) authentication.getPrincipal();
+        GeneralUserDTO generalUserDTO = (GeneralUserDTO) authentication.getPrincipal();
 
         // Access 토큰 및 Refresh 토큰 생성
-        String accessToken = jwtUtil.createJwt(userDTO.getEmail(), userDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
-        String refreshToken = jwtUtil.createJwt(userDTO.getEmail(), userDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtUtil.createJwt(generalUserDTO.getEmail(), generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
+        String refreshToken = jwtUtil.createJwt(generalUserDTO.getEmail(), generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
 
         // Access 토큰을 쿠키에 추가
         Cookie accessTokenCookie = new Cookie("Authorization", accessToken);
@@ -55,12 +55,12 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
         // 비밀번호 제거 (보안상 제거)
-        userDTO.setPassword(null);
+        generalUserDTO.setPassword(null);
 
         commonResponse.setStatus(HttpStatus.OK.value());
         commonResponse.setSuccess(Boolean.TRUE);
         commonResponse.setMessage("로그인 성공");
-        commonResponse.setData(userDTO);
+        commonResponse.setData(generalUserDTO);
 
         // 응답 본문에 사용자 정보 및 메시지 작성
         mapper.writeValue(response.getWriter(), commonResponse);
