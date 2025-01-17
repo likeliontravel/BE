@@ -17,18 +17,21 @@ public class NaverResponse implements OAuth2Response{
     }
 
     @Override
-    public String getProviderId() {
-        return attribute.get("id").toString();
-    }
-
-    @Override
     public String getEmail() {
-        return attribute.get("email").toString();
+        Object email = attribute.get("email");
+        if (email == null) {
+            throw new IllegalArgumentException("NaverLogin - email is missing");
+        }
+        return email.toString();
     }
 
     @Override
     public String getName() {
-        return attribute.get("name").toString();
-    }
+        Object name = attribute.get("name");
+        if (name == null) {
+            throw new IllegalArgumentException("NaverLogin - name is missing");
+        }
+        return name.toString();
+}
 
 }

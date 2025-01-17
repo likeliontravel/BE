@@ -7,8 +7,9 @@ import lombok.Setter;
 @Setter
 public class SocialUserDTO {
 
-    private String role;
+    private Long id;
+    private String email;
     private String name;
-    private String username;
-    private String userKey;
+    private String provider;
+    private String role;
 }
