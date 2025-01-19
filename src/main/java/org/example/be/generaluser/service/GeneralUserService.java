@@ -38,7 +38,7 @@ public class GeneralUserService {
 
         generalUserRepository.save(generalUser);
 
-//         통합 유저객체 생성. 통합테이블 구현 후 주석 해제
+        // 통합 유저객체 생성 및 저장 메서드 호출
         unifiedUserService.createUnifiedUser(
                 new UnifiedUserCreationRequestDTO("gen", generalUserDTO.getEmail(), generalUserDTO.getName(), "ROLE_USER")
         );

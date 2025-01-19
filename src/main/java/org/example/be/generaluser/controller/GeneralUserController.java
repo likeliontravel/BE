@@ -27,7 +27,7 @@ public class GeneralUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 가입 성공"));
     }
 
-    // 회원정보 수정
+    // 회원정보 수정 -> 마이페이지 패키지가 만들어진다면.. 옮길 필요가 있을 수도 ? 얘가 여기 있는게 맞을까?
     @PutMapping("/update")
     public ResponseEntity<CommonResponse<String>> updateUser(@RequestBody GeneralUserDTO generalUserDTO) {
 

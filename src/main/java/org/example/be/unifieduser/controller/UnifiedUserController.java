@@ -10,9 +10,7 @@ import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,16 +19,12 @@ public class UnifiedUserController {
 
     private final UnifiedUserService unifiedUserService;
 
-//    // 통합 유저 생성 ( 회원 가입 )
-//    @PostMapping("/create")
-//    public ResponseEntity<CommonResponse<String>> createUnifiedUser(@RequestBody UnifiedUserCreationRequestDTO request) {
-//        unifiedUserService.createUnifiedUser(request);
-//
-//        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "통합 유저 생성 성공"));
-//    }
-
     // 통합 유저 삭제 ( 회원 탈퇴 )
-
+    @DeleteMapping("/{userIdentifier}")
+    public ResponseEntity<CommonResponse<String>> deleteUser(@PathVariable String userIdentifier) {
+        unifiedUserService.deleteUnifiedUser(userIdentifier);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
+    }
 
     // 이용약관 동의여부 변경
     @PostMapping("/change/policy")

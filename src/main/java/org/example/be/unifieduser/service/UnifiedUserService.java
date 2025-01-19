@@ -20,7 +20,7 @@ public class UnifiedUserService {
     private final SocialUserRepository socialUserRepository;
     private final GeneralUserRepository generalUserRepository;
 
-    // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다.
+    // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다. )
     @Transactional
     public UnifiedUser createUnifiedUser(UnifiedUserCreationRequestDTO dto) {
 
