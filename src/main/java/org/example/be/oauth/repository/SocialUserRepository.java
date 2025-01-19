@@ -1,18 +1,18 @@
 package org.example.be.oauth.repository;
 
 
-import org.example.be.oauth.entity.SocialUserEntity;
+import org.example.be.oauth.entity.SocialUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface SocialUserRepository extends JpaRepository<SocialUserEntity, Long> {
+public interface SocialUserRepository extends JpaRepository<SocialUser, Long> {
 
-    Optional<SocialUserEntity> findByEmail(String email);
+    Optional<SocialUser> findByEmail(String email);
 
-    Optional<SocialUserEntity> findByProviderAndProviderId(String provider, String providerId);
+    Optional<SocialUser> findByProviderAndProviderId(String provider, String providerId);
 
-    SocialUserEntity findByUsername(String username);
+    SocialUser findByUsername(String username);
 }

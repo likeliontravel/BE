@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "social_user")
-public class SocialUserEntity {
+public class SocialUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +34,4 @@ public class SocialUserEntity {
     @Column(nullable = false)
     private String role;
 
-//    @OneToOne
-//    @JoinColumn(name = "unified_user_id", nullable = false)
-//    private UnifiedUser unifiedUser;  // 통합 이후 주석해제
 }

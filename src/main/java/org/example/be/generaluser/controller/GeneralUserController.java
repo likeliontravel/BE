@@ -49,35 +49,20 @@ public class GeneralUserController {
         }
     }
 
-    // 회원 탈퇴
-    @DeleteMapping("/delete")
-    public ResponseEntity<CommonResponse<String>> deleteUser(@RequestBody GeneralUserDTO generalUserDTO) {
-
-        try {
-
-            generalUserService.deleteGeneralUser(generalUserDTO);
-
-            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"회원 삭제 성공"));
-
-        } catch (Exception e) {
-
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CommonResponse.error(404,e.getMessage()));
-        }
-    }
-
-//    // 구독 동의    -> 임시 삭제처리. 구독관련은 통합서비스쪽에서 구현 후 이 클래스에서는 확실 삭제 예정
-//    @PostMapping("/subscription")
-//    public ResponseEntity<CommonResponse<String>> subscribeAgree(@RequestBody GeneralUserDTO generalUserDTO) {
+//    // 회원 탈퇴
+//    @DeleteMapping("/delete")
+//    public ResponseEntity<CommonResponse<String>> deleteUser(@RequestBody GeneralUserDTO generalUserDTO) {
 //
 //        try {
 //
-//            generalUserService.subscribeAgree(generalUserDTO);
+//            generalUserService.deleteGeneralUser(generalUserDTO);
 //
-//            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"구독 동의 완료"));
+//            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"회원 삭제 성공"));
 //
-//        } catch (NoSuchElementException e) {
+//        } catch (Exception e) {
 //
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CommonResponse.error(404,e.getMessage()));
 //        }
 //    }
+
 }

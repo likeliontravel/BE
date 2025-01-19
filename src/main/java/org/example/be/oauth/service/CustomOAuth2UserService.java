@@ -2,8 +2,10 @@ package org.example.be.oauth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.oauth.dto.*;
-import org.example.be.oauth.entity.SocialUserEntity;
+import org.example.be.oauth.entity.SocialUser;
 import org.example.be.oauth.repository.SocialUserRepository;
+import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -17,7 +19,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final SocialUserRepository socialUserRepository; // SocialUserRepository 의존성 주입
-//    private final UnifiedUserService unifiedUserService;    // 통합 후 주석 해제
+    private final UnifiedUserService unifiedUserService;    // 통합 후 주석 해제
 
     // loadUser 메서드 오버라이드: OAuth2UserRequest 객체를 통해 OAuth2User를 로드
     @Override
@@ -60,35 +62,36 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String providerId = response.getProviderId();
 
         // 소셜 유저 조회
-        SocialUserEntity socialUser = socialUserRepository.findByProviderAndProviderId(provider, providerId).orElse(null);
+        SocialUser socialUser = socialUserRepository.findByProviderAndProviderId(provider, providerId).orElse(null);
 
         // social_user 테이블에 기존 정보가 없을 경우(새로운 유저가 소셜로그인)
         if (socialUser == null) {
-//            // 통합 유저 생성   // 통합 구현 후 주석 해제
-//            UnifiedUser unifiedUser = unifiedUserService.createUnifiedUser(
-//                    provider, email, name, "ROLE_USER", false, false
-//            );
-
             // 소셜 유저 생성
-            socialUser = new SocialUserEntity();
+            socialUser = new SocialUser();
             socialUser.setEmail(email);
             socialUser.setName(name);
             socialUser.setProvider(provider);
             socialUser.setRole("ROLE_USER");
-//            socialUser.setUnifiedUser(unifiedUser);
 
             socialUserRepository.save(socialUser);
+
+            // 통합 유저 생성
+            unifiedUserService.createUnifiedUser(
+                    new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER")
+            );
         } else {    // 기존 회원 데이터가 있을 경우 회원정보 업데이트
             socialUser.setName(name);
             socialUser.setProvider(provider);
             socialUserRepository.save(socialUser);
+
+//            unifiedUserService.updateUnifiedUserInfo()  // 이거 형진이형이랑 이야기해보자
         }
 
         return new CustomOAuth2User(mapToDTO(socialUser));
     }
 
     // 엔티티 -> DTO 매퍼
-    private SocialUserDTO mapToDTO(SocialUserEntity entity) {
+    private SocialUserDTO mapToDTO(SocialUser entity) {
         SocialUserDTO dto = new SocialUserDTO();
         dto.setId(entity.getId());
         dto.setEmail(entity.getEmail());

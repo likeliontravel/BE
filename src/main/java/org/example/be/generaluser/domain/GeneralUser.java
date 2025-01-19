@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.be.unifieduser.entity.UnifiedUser;
 
 @Entity
 @Getter
@@ -34,8 +35,4 @@ public class GeneralUser {
     // General User 권한
     @Column(nullable = false)
     private String role;
-
-//    @OneToOne   // 통합 테이블 조인을 위한 컬럼. 통합 후 주석 해제
-//    @JoinColumn(name = "unified_user_id", nullable = false)
-//    private UnifiedUser unifiedUser;
 }
