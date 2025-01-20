@@ -11,12 +11,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BoardService {
     private final BoardRepository boardRepository;
+
     // 전체 게시판 글 조회
     public List<BoardDTO> getAllBoards(int page, int size) {
         List<Board> boards = boardRepository.findAll();
@@ -26,8 +28,12 @@ public class BoardService {
         }
         return boardDTOList;
     }
+
     // 게시글 등록
     public void write(BoardDTO boardDTO) {
+        if (boardDTO == null || boardDTO.getTitle() == null || boardDTO.getContent() == null) {
+            throw new IllegalArgumentException("게시글 제목과 내용을 모두 입력해야 합니다.");
+        }
         Board board = Board.toSavaEntity(boardDTO);
         boardRepository.save(board);
     }
@@ -39,20 +45,25 @@ public class BoardService {
             Board board = Board.toUpdateEntity(boardDTO);
             boardRepository.save(board);
         } else {
-            throw new IllegalArgumentException("게시글을 찾을 수 없습니다.");
+            throw new NoSuchElementException("게시글을 찾을 수 없습니다.");
         }
     }
+
     // 게시글 삭제
-    public void deleteBoard(BoardDTO boardDTO) {
-        Optional<Board> optionalBoard = boardRepository.findById(boardDTO.getId());
+    public void deleteBoard(int id) {
+        Optional<Board> optionalBoard = boardRepository.findById(id);
         if (optionalBoard.isPresent()) {
             boardRepository.delete(optionalBoard.get());
         } else {
-            throw new IllegalArgumentException("게시글을 찾을 수 없습니다.");
+            throw new NoSuchElementException("게시글을 찾을 수 없습니다.");
         }
     }
+
     // 게시글 검색 (제목이나 내용으로 검색)
     public List<BoardDTO> searchBoardsByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("검색 키워드를 입력해야 합니다.");
+        }
         List<Board> boards = boardRepository.findByTitleContainingOrContentContaining(keyword, keyword);
         List<BoardDTO> boardDTOList = new ArrayList<>();
         for (Board board : boards) {
@@ -60,6 +71,7 @@ public class BoardService {
         }
         return boardDTOList;
     }
+
     // 인기순 정렬 게시판 글 조회 (조회수 기준)
     public List<BoardDTO> getBoardsSortedByHits(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -74,4 +86,3 @@ public class BoardService {
         return boardDTOList;
     }
 }
-
