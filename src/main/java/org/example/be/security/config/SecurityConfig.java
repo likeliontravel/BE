@@ -78,6 +78,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/user/SignUp").permitAll()
                         .requestMatchers("/mail/**").permitAll()
+                        .requestMatchers("/board/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
