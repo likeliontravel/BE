@@ -17,6 +17,15 @@ public class NaverResponse implements OAuth2Response{
     }
 
     @Override
+    public String getProviderId() {
+        Object providerId = attribute.get("id");
+        if (providerId == null) {
+            throw new IllegalArgumentException("NaverLogin - ProviderId is Missing");
+        }
+        return providerId.toString();
+    }
+
+    @Override
     public String getEmail() {
         Object email = attribute.get("email");
         if (email == null) {

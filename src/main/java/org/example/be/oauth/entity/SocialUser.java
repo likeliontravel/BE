@@ -34,4 +34,13 @@ public class SocialUser {
     @Column(nullable = false)
     private String role;
 
+    @Column(unique = true)
+    private String userIdentifier;
+
+    @PrePersist
+    @PreUpdate
+    public void generateUserIdentifier() {
+        this.userIdentifier = provider + " " + email;
+    }
+
 }

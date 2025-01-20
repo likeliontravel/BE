@@ -60,7 +60,7 @@ public class RestLogoutHandler implements LogoutHandler {
             // OAuth2 사용자 확인
             if(authentication != null && authentication.getPrincipal() instanceof CustomOAuth2User) {
                 CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-                String userKey = oAuth2User.getUserKey();    // OAuth2 사용자 이메일 (provider + " " + providerId)
+                String userKey = oAuth2User.getUserIdentifier();    // OAuth2 사용자 이메일 (provider + " " + providerId)
 
                 // OAuth2 사용자 토큰을 플랙리스트에 추가
                 jwtBlackListService.addToBlackList(userKey, accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
@@ -68,7 +68,7 @@ public class RestLogoutHandler implements LogoutHandler {
                 System.out.println("OAuth2 사용자 로그아웃: " + userKey);
             } else {
                 // 일반 사용자 토큰을 블랙리스트에 추가
-                jwtBlackListService.addToBlackList(jwtUtil.getUsername(accessToken), accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
+                jwtBlackListService.addToBlackList(jwtUtil.getUserIdentifier(accessToken), accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
             }
 
             // Authorization 쿠키 삭제

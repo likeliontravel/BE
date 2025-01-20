@@ -35,4 +35,13 @@ public class GeneralUser {
     // General User 권한
     @Column(nullable = false)
     private String role;
+
+    @Column(unique = true)
+    private String userIdentifier;
+
+    @PrePersist
+    @PreUpdate
+    public void generateUserIdentifier() {
+        this.userIdentifier = "gen" + " " + email;
+    }
 }

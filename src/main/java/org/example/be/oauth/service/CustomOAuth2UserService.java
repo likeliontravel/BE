@@ -60,9 +60,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = response.getName();
         String provider = response.getProvider();
         String providerId = response.getProviderId();
+        String userIdentifier = provider + " " + email;
 
         // 소셜 유저 조회
-        SocialUser socialUser = socialUserRepository.findByProviderAndProviderId(provider, providerId).orElse(null);
+        SocialUser socialUser = socialUserRepository.findByUserIdentifier(userIdentifier).orElse(null);
 
         // social_user 테이블에 기존 정보가 없을 경우(새로운 유저가 소셜로그인)
         if (socialUser == null) {
@@ -71,7 +72,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             socialUser.setEmail(email);
             socialUser.setName(name);
             socialUser.setProvider(provider);
+            socialUser.setProviderId(providerId);
             socialUser.setRole("ROLE_USER");
+            socialUser.setUserIdentifier(userIdentifier);
 
             socialUserRepository.save(socialUser);
 
@@ -82,6 +85,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else {    // 기존 회원 데이터가 있을 경우 회원정보 업데이트
             socialUser.setName(name);
             socialUser.setProvider(provider);
+            socialUser.setEmail(email);
+            socialUser.setUserIdentifier(userIdentifier);
             socialUserRepository.save(socialUser);
 
 //            unifiedUserService.updateUnifiedUserInfo()  // 이거 형진이형이랑 이야기해보자

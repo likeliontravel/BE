@@ -76,7 +76,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
         /*
         * 토큰 블랙리스트 검증 로직 */
-        if (jwtBlackListService.isBlacklistedByEmail(jwtUtil.getUsername(accessToken),accessToken, refreshToken)) {
+        if (jwtBlackListService.isBlacklistedByUserIdentifier(jwtUtil.getUserIdentifier(accessToken),accessToken, refreshToken)) {
 
             ObjectMapper mapper = new ObjectMapper();
 
@@ -101,7 +101,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
             if (refreshToken != null && jwtUtil.isValid(refreshToken) && jwtUtil.isExpired(refreshToken)) {
 
-                String email = jwtUtil.getUsername(refreshToken);
+                String email = jwtUtil.getUserIdentifier(refreshToken);
                 String role = jwtUtil.getRole(refreshToken);
 
                 String newAccessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간 토큰 발급
@@ -132,7 +132,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
         try {
 
-            String email = jwtUtil.getUsername(accessToken);
+            String email = jwtUtil.getUserIdentifier(accessToken);
             String role = jwtUtil.getRole(accessToken);
 
             if (email != null && role != null) {

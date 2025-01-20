@@ -36,9 +36,11 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         // 인증된 사용자 정보 가져오기
         GeneralUserDTO generalUserDTO = (GeneralUserDTO) authentication.getPrincipal();
 
+        String generalUserIdentifier = "gen" + " " + generalUserDTO.getEmail();
+
         // Access 토큰 및 Refresh 토큰 생성
-        String accessToken = jwtUtil.createJwt(generalUserDTO.getEmail(), generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
-        String refreshToken = jwtUtil.createJwt(generalUserDTO.getEmail(), generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
+        String refreshToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
 
         // Access 토큰을 쿠키에 추가
         Cookie accessTokenCookie = new Cookie("Authorization", accessToken);

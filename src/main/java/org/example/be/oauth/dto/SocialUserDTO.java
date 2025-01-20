@@ -12,4 +12,5 @@ public class SocialUserDTO {
     private String name;
     private String provider;
     private String role;
+    private String userIdentifier;
 }

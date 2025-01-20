@@ -25,5 +25,5 @@ public class JWTBlackListToken {
     private String refreshToken;
 
     @Column(nullable = false)
-    private String email;
+    private String userIdentifier;
 }

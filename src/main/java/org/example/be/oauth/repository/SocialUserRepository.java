@@ -10,9 +10,6 @@ import java.util.Optional;
 @Repository
 public interface SocialUserRepository extends JpaRepository<SocialUser, Long> {
 
-    Optional<SocialUser> findByEmail(String email);
+    Optional<SocialUser> findByUserIdentifier(String userIdentifier);
 
-    Optional<SocialUser> findByProviderAndProviderId(String provider, String providerId);
-
-    SocialUser findByUsername(String username);
 }
