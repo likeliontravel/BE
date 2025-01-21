@@ -49,7 +49,7 @@ public class GeneralUserService {
     @Transactional
     public void updateGeneralUser(GeneralUserDTO generalUserDTO) {
 
-        GeneralUser generalUser = generalUserRepository.findByEmail(generalUserDTO.getEmail())
+        GeneralUser generalUser = generalUserRepository.findByUserIdentifier(generalUserDTO.getEmail())
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다"));
 
         // 유효하지 않은 요청 데이터인 경우

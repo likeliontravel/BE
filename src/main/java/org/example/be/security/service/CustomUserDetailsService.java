@@ -24,13 +24,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final GeneralUserRepository generalUserRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userIdentifier) throws UsernameNotFoundException {
 
-        Optional<GeneralUser> user = generalUserRepository.findByEmail(email);
+        Optional<GeneralUser> user = generalUserRepository.findByUserIdentifier(userIdentifier);
 
         if (user.isEmpty()) {
 
-            throw new UsernameNotFoundException(email + " 해당 이메일을 찾을 수 없습니다.");
+            throw new UsernameNotFoundException(userIdentifier + " 해당 userIdentifier을 찾을 수 없습니다.");
         }
 
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.get().getRole()));

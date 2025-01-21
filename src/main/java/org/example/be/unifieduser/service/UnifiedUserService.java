@@ -50,6 +50,14 @@ public class UnifiedUserService {
 
         // unified user 삭제. Cascade와 OrphanRemoval옵션으로 연결된 데이터(소셜 또는 일반) 자동삭제.
         unifiedUserRepository.delete(unifiedUser);
+
+        if (userIdentifier.startsWith("gen ")) {
+            generalUserRepository.findByUserIdentifier(userIdentifier)
+                    .ifPresent(generalUserRepository::delete);
+        } else {
+            socialUserRepository.findByUserIdentifier(userIdentifier)
+                    .ifPresent(socialUserRepository::delete);
+        }
     }
 
     @Transactional

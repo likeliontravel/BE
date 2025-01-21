@@ -29,11 +29,11 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        String email = authentication.getName();
+        String userIdentifier = "gen" + " " + authentication.getName();
         String password = (String) authentication.getCredentials();
 
         // userDetailsService 사용하여 loadUserByName 으로 해당 유저가 있는지 확인
-        UserContext userContext = (UserContext) customUserDetailsService.loadUserByUsername(email);
+        UserContext userContext = (UserContext) customUserDetailsService.loadUserByUsername(userIdentifier);
 
         //실제 인증하는 비밀번호가 일치 하는지 인증하는 코드
         if (!passwordEncoder.matches(password, userContext.getPassword())) {

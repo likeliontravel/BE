@@ -40,11 +40,11 @@ public class UnifiedUser {
     private Boolean subscribed = false;     // 유료구독 가입여부 ; 기본값 false
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "general_user_id", referencedColumnName = "id")
+    @JoinColumn(name = "general_user_userIdentifier", referencedColumnName = "userIdentifier")
     private GeneralUser generalUser;    // 일반유저에서 데이터 가져와 저장됨. 삭제 시 두 테이블 모두 해당 튜플 삭제(Cascade)
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "social_user_id", referencedColumnName = "id")
+    @JoinColumn(name = "social_user_userIdentifier", referencedColumnName = "userIdentifier")
     private SocialUser socialUser;      // 소셜유저에서 데이터 가져와 저장됨. 삭제 시 두 테이블 모두 해당 튜플 삭제(Cascade)
 
 }

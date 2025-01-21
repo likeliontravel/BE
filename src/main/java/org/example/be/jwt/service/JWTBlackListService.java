@@ -34,11 +34,11 @@ public class JWTBlackListService {
     }
 
     //블랙리스트에 토큰 추가 (만료시간 저장)
-    public void addToBlackList(String email, String accessToken, String refreshToken, Date expiredTime) {
+    public void addToBlackList(String userIdentifier, String accessToken, String refreshToken, Date expiredTime) {
 
         JWTBlackListToken blackListToken = new JWTBlackListToken();
 
-        blackListToken.setUserIdentifier(email);
+        blackListToken.setUserIdentifier(userIdentifier);
         blackListToken.setAccessToken(accessToken);
         blackListToken.setRefreshToken(refreshToken);
 
