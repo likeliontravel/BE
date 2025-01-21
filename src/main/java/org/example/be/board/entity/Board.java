@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.be.board.dto.BoardDTO;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor //기본 생성자
 @AllArgsConstructor // 모든 필드를 매개변수로 하는 생성자
 @Table(name = "board")
-public class Board extends BaseEntity{
+public class Board extends Base {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -35,14 +36,21 @@ public class Board extends BaseEntity{
     @Column(nullable = false)
     private int boardHits;
 
+    @Column
+    private int fileAttached; // 1이면 이미지 파일이 있는 것
+
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true,fetch = FetchType.LAZY)
+    private List<BoardFile> boardFileList = new ArrayList<>();
+
 
     // dto를 엔티티로 변환(게시글 생성)
-    public static Board toSavaEntity(BoardDTO boardDTO) {
+    public static Board toSaveEntity(BoardDTO boardDTO) {
         Board board = new Board();
         board.setWriter(boardDTO.getWriter());
         board.setTitle(boardDTO.getTitle());
         board.setContent(boardDTO.getContent());
-        board.setBoardHits(0);
+        board.setBoardHits(0); // 생성할 때는 조회수가 0
+        board.setFileAttached(0); // 파일이 없음.
         return board;
     }
     public static Board toUpdateEntity(BoardDTO boardDTO) {
@@ -55,4 +63,13 @@ public class Board extends BaseEntity{
         return board;
     }
 
+    public static Board toSaveFileEntity(BoardDTO boardDTO) {
+        Board board = new Board();
+        board.setWriter(boardDTO.getWriter());
+        board.setTitle(boardDTO.getTitle());
+        board.setContent(boardDTO.getContent());
+        board.setBoardHits(0); // 생성할 때는 조회수가 0
+        board.setFileAttached(1); // 파일이 있음.
+        return board;
+    }
 }

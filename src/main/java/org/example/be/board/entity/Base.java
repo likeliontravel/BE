@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-public class BaseEntity {
+public class Base {
     @CreationTimestamp
     //생성일
     @Column(updatable = false) //생성 시각을 변하지 않게 생성
