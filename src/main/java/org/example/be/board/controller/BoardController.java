@@ -19,17 +19,19 @@ public class BoardController {
     // 전체 게시판 글 조회
     @GetMapping("/boards")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoards(
-            @RequestParam(defaultValue = "0") int page,    // 기본값: 0
-            @RequestParam(defaultValue = "10") int size) {  // 기본값: 10
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
         List<BoardDTO> boardDTOList = boardService.getAllBoards(page, size);
         return ResponseEntity.ok(CommonResponse.success(boardDTOList, "게시판 글 조회 성공"));
     }
 
-    // 인기순 정렬 게시판 글 조회 (조회수 기준)
+    // 인기순 게시판 글 조회 (조회수 기준)
     @GetMapping("/boards/popular")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getPopularBoards(
-            @RequestParam(defaultValue = "0") int page,    // 기본값: 0
-            @RequestParam(defaultValue = "10") int size) {  // 기본값: 10
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
         List<BoardDTO> popularBoards = boardService.getBoardsSortedByHits(page, size);
         return ResponseEntity.ok(CommonResponse.success(popularBoards, "인기순 게시판 글 조회 성공"));
     }
@@ -52,7 +54,7 @@ public class BoardController {
     // 게시글 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) {
-        boardService.deleteBoard(id);  // id만 전달하여 삭제
+        boardService.deleteBoard(id);
         return ResponseEntity.ok(CommonResponse.success("게시판이 삭제되었습니다.", "게시글 삭제 성공"));
     }
 

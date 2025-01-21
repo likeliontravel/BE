@@ -9,30 +9,37 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardService {
     private final BoardRepository boardRepository;
 
-    // 전체 게시판 글 조회
+    // 전체 게시판 글 조회 (페이지 처리)
     public List<BoardDTO> getAllBoards(int page, int size) {
-        List<Board> boards = boardRepository.findAll();
-        List<BoardDTO> boardDTOList = new ArrayList<>();
-        for (Board board : boards) {
-            boardDTOList.add(BoardDTO.toDTO(board));
-        }
-        return boardDTOList;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardRepository.findAll(pageable);
+        return boardPage.stream()
+                .map(BoardDTO::toDTO) // board 엔티티를 받아와서 dto로 변환
+                .collect(Collectors.toList());
+    }
+
+    // 인기순 게시판 글 조회 (조회수 기준 정렬 + 페이지 처리)
+    public List<BoardDTO> getBoardsSortedByHits(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardRepository.findAllByOrderByBoardHitsDesc(pageable);
+        return boardPage.stream()
+                .map(BoardDTO::toDTO)
+                .collect(Collectors.toList());
     }
 
     // 게시글 등록
     public void write(BoardDTO boardDTO) {
-        if (boardDTO == null || boardDTO.getTitle() == null || boardDTO.getContent() == null) {
-            throw new IllegalArgumentException("게시글 제목과 내용을 모두 입력해야 합니다.");
+        if (boardDTO.getTitle() == null || boardDTO.getContent() == null) {
+            throw new IllegalArgumentException("게시글 제목과 내용을 입력해야 합니다.");
         }
         Board board = Board.toSavaEntity(boardDTO);
         boardRepository.save(board);
@@ -40,49 +47,26 @@ public class BoardService {
 
     // 게시글 수정
     public void updateBoard(BoardDTO boardDTO) {
-        Optional<Board> optionalBoard = boardRepository.findById(boardDTO.getId());
-        if (optionalBoard.isPresent()) {
-            Board board = Board.toUpdateEntity(boardDTO);
-            boardRepository.save(board);
-        } else {
-            throw new NoSuchElementException("게시글을 찾을 수 없습니다.");
-        }
+        Board board = boardRepository.findById(boardDTO.getId())
+                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+        boardRepository.save(Board.toUpdateEntity(boardDTO));
     }
 
     // 게시글 삭제
     public void deleteBoard(int id) {
-        Optional<Board> optionalBoard = boardRepository.findById(id);
-        if (optionalBoard.isPresent()) {
-            boardRepository.delete(optionalBoard.get());
-        } else {
-            throw new NoSuchElementException("게시글을 찾을 수 없습니다.");
-        }
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+        boardRepository.delete(board);
     }
 
-    // 게시글 검색 (제목이나 내용으로 검색)
+    // 게시판 검색 (제목/내용 검색)
     public List<BoardDTO> searchBoardsByKeyword(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
+        if (keyword == null || keyword.isBlank()) {
             throw new IllegalArgumentException("검색 키워드를 입력해야 합니다.");
         }
         List<Board> boards = boardRepository.findByTitleContainingOrContentContaining(keyword, keyword);
-        List<BoardDTO> boardDTOList = new ArrayList<>();
-        for (Board board : boards) {
-            boardDTOList.add(BoardDTO.toDTO(board));
-        }
-        return boardDTOList;
-    }
-
-    // 인기순 정렬 게시판 글 조회 (조회수 기준)
-    public List<BoardDTO> getBoardsSortedByHits(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        // 조회수 기준으로 정렬된 게시글 리스트 가져오기 (페이징 포함)
-        Page<Board> boardPage = boardRepository.findAllByOrderByBoardHitsDesc(pageable);
-
-        List<BoardDTO> boardDTOList = new ArrayList<>();
-        for (Board board : boardPage.getContent()) {
-            boardDTOList.add(BoardDTO.toDTO(board));
-        }
-        return boardDTOList;
+        return boards.stream()
+                .map(BoardDTO::toDTO)
+                .collect(Collectors.toList());
     }
 }

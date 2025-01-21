@@ -16,7 +16,7 @@ public class BoardDTO {
     private int boardHits;
     private LocalDateTime createdTime;
 
-    // 엔티티를 dio로 변환
+    // 엔티티를 dto로 변환
     public static BoardDTO toDTO(Board board) {
         BoardDTO boardDTO = new BoardDTO();
         boardDTO.setId(board.getId());
