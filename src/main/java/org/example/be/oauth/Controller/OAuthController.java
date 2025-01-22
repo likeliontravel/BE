@@ -28,7 +28,7 @@ public class OAuthController {
         }
 
         // name과 email을 포함한 사용자 정보 반환
-        SocialUserDTO socialUserDTO = socialUserService.getUserProfile(customOAuth2User.getName());
-        return ResponseEntity.ok(socialUserDTO);
+        SocialUserDTO socialUserDTO = socialUserService.getUserProfile(customOAuth2User.getUsername()); // username으로 사용자 정보 조회
+        return ResponseEntity.ok(socialUserDTO); // SocialUserDTO 반환
     }
 }
