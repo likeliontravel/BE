@@ -32,4 +32,12 @@ public class Comment extends Base {
         comment.setBoard(board);
         return comment;
     }
+    public static Comment toUpdateEntity(CommentDTO commentDTO,Board board) {
+        Comment comment = new Comment();
+        comment.setCommentWriter(commentDTO.getCommentWriter());
+        comment.setCommentContent(commentDTO.getCommentContent());
+        comment.setId(commentDTO.getId());
+        comment.setBoard(board);
+        return comment;
+    }
 }

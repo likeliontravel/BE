@@ -86,6 +86,7 @@ public class BoardService {
         boardRepository.save(Board.toUpdateEntity(boardDTO));
     }
 
+
     // 게시글 삭제
     public void deleteBoard(int id) {
         Board board = boardRepository.findById(id)

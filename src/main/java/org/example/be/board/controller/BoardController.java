@@ -53,14 +53,15 @@ public class BoardController {
     @PutMapping("/{id}")
     public ResponseEntity<CommonResponse<String>> update(@RequestBody BoardDTO boardDTO) {
         boardService.updateBoard(boardDTO);
-        return ResponseEntity.ok(CommonResponse.success("게시판이 수정되었습니다.", "게시글 수정 성공"));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success("게시판이 수정되었습니다.", "게시글 수정 성공"));
     }
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) {
         boardService.deleteBoard(id);
-        return ResponseEntity.ok(CommonResponse.success("게시판이 삭제되었습니다.", "게시글 삭제 성공"));
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"게시글 삭제"));
     }
 
     // 게시판 검색 (제목이나 내용으로 검색)

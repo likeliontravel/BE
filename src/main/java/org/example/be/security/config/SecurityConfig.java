@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/user/SignUp").permitAll()
                         .requestMatchers("/mail/**").permitAll()
                         .requestMatchers("/board/**").permitAll()
+                        .requestMatchers("/comment/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
