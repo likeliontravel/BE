@@ -42,6 +42,9 @@ public class Board extends Base {
     @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true,fetch = FetchType.LAZY)
     private List<BoardFile> boardFileList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true,fetch = FetchType.LAZY)
+    private List<Comment> commentList = new ArrayList<>();
+
 
     // dto를 엔티티로 변환(게시글 생성)
     public static Board toSaveEntity(BoardDTO boardDTO) {

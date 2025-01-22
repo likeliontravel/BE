@@ -43,13 +43,13 @@ public class BoardService {
     }
 
     // 게시글 등록
-    public void write(BoardDTO boardDTO, MultipartFile imageFile) throws IOException {
+    public void write(BoardDTO boardDTO, List<MultipartFile> imageFiles) throws IOException {
         if (boardDTO.getTitle() == null || boardDTO.getContent() == null) {
             throw new IllegalArgumentException("게시글 제목과 내용을 입력해야 합니다.");
         }
         // 파일 첨부 여부에 따라 로직 분리
-        if (boardDTO.getImage().isEmpty()) {
-            //파일이 없을 때
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            // 파일이 없을 때
             Board board = Board.toSaveEntity(boardDTO);
             boardRepository.save(board);
         } else {
