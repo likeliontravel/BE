@@ -28,6 +28,7 @@ public class SocialUserService {
         SocialUserDTO dto = new SocialUserDTO();
         dto.setUsername(entity.getUsername());
         dto.setName(entity.getName());
+        dto.setEmail(entity.getEmail());  // 이메일도 설정
         dto.setRole(entity.getRole());
         return dto;
     }
@@ -38,6 +39,7 @@ public class SocialUserService {
         entity.setUsername(dto.getUsername());
         entity.setName(dto.getName());
         entity.setRole(dto.getRole());
+        entity.setEmail(dto.getEmail());  // 이메일도 설정
         return entity;
     }
 }
