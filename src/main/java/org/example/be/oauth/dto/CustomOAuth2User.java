@@ -13,44 +13,36 @@ public class CustomOAuth2User implements OAuth2User {
     private final SocialUserDTO socialUserDTO;
 
     public CustomOAuth2User(SocialUserDTO socialUserDTO) {
-
         this.socialUserDTO = socialUserDTO;
     }
 
     @Override
     public Map<String, Object> getAttributes() {
-        Map<String, Object> attributes = new HashMap<>();
-
-        // 사용자 정보 추가
-        attributes.put("username", socialUserDTO.getUsername());
-        attributes.put("name", socialUserDTO.getName());
-        attributes.put("email", socialUserDTO.getEmail()); // 이메일 추가
-
-        return attributes;
+        return null;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
-
-        // 권한 정보 추가
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return socialUserDTO.getRole();  // 권한 반환
+                return socialUserDTO.getRole();
             }
         });
-
         return collection;
     }
 
     @Override
     public String getName() {
-        return socialUserDTO.getName(); // 여기서 name을 반환
+        return socialUserDTO.getName(); // 이름 반환
     }
 
     public String getUsername() {
+        return socialUserDTO.getUsername(); // 고유 식별자로 username 반환
+    }
 
-        return socialUserDTO.getUsername();
+    public String getEmail() {
+        return socialUserDTO.getEmail(); // 이메일 반환
     }
 }
