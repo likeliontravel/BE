@@ -15,8 +15,7 @@ public interface OAuth2Response {
      * OAuth2 제공자가 발급한 고유 사용자 ID 반환.
      * @return 제공자에서 발급한 사용자 ID
      */
-    String getProviderId();
-
+    String getProviderId(); // 이건 social_user 테이블에서 식별하기 위한 것
     /**
      * OAuth2 제공자로부터 가져온 사용자 이메일 반환.
      * @return 사용자 이메일

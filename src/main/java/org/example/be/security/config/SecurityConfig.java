@@ -76,7 +76,7 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/user/SignUp").permitAll()
+                        .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
                         .requestMatchers("/mail/**").permitAll()
                         .requestMatchers("/oauth2/**").permitAll() // OAuth2 로그인 경로 추가
                         .anyRequest().authenticated()

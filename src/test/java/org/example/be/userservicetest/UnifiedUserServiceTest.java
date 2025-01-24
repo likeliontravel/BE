@@ -2,7 +2,10 @@ package org.example.be.userservicetest;
 
 import org.example.be.oauth.entity.SocialUser;
 import org.example.be.oauth.repository.SocialUserRepository;
+<<<<<<< HEAD
 import org.example.be.unifieduser.dto.MyPageProfileDTO;
+=======
+>>>>>>> 예찬
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.example.be.unifieduser.service.UnifiedUserService;
@@ -33,7 +36,11 @@ public class UnifiedUserServiceTest {
     void setUp() {
         socialUser = new SocialUser();
         socialUser.setEmail("testuser@exam.com");
+<<<<<<< HEAD
         socialUser.setName("홍길동");
+=======
+        socialUser.setName("Test User");
+>>>>>>> 예찬
         socialUser.setProvider("google");
         socialUser.setProviderId("google-id-123");
         socialUser.setRole("ROLE_USER");
@@ -61,6 +68,7 @@ public class UnifiedUserServiceTest {
         Optional<UnifiedUser> afterUnifiedUser = unifiedUserRepository.findByUserIdentifier(unifiedUser.getUserIdentifier());
         Optional<SocialUser> afterSocialUser = socialUserRepository.findByUserIdentifier(socialUser.getUserIdentifier());
 
+<<<<<<< HEAD
         Assertions.assertFalse(afterUnifiedUser.isPresent(), "회원 정보가 삭제되어야 합니다.");
         Assertions.assertFalse(afterSocialUser.isPresent(), "소셜 회원 정보가 삭제되어야 합니다.");
 
@@ -85,6 +93,13 @@ public class UnifiedUserServiceTest {
             unifiedUserService.getUserProfileByEmail("notfound@exam.com");
         }, "존재하지 않는 이메일에 대해 예외를 발생시켜야 합니다.");
     }
+=======
+        Assertions.assertFalse(afterUnifiedUser.isPresent(), "unifieduser should be deleted");
+        Assertions.assertFalse(afterSocialUser.isPresent(), "socialUserShould be deleted");
+
+    }
+
+>>>>>>> 예찬
 
 
 }

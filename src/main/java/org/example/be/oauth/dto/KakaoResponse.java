@@ -16,7 +16,11 @@ public class KakaoResponse implements OAuth2Response {
 
     @Override
     public String getProviderId() {
-        return attributes.get("id").toString();
+        Object providerId = attributes.get("id");
+        if (providerId == null) {
+            throw new IllegalArgumentException("KakaoLogin - ProviderId is missing");
+        }
+        return providerId.toString();
     }
 
     @Override
@@ -29,7 +33,8 @@ public class KakaoResponse implements OAuth2Response {
                 return email.toString();
             }
         }
-        return "Unknown"; // 기본값
+        // email 못찾으면 예외 던지기
+        throw new IllegalArgumentException("KakaoLogin - Email is missing");
     }
 
     @Override
@@ -42,6 +47,7 @@ public class KakaoResponse implements OAuth2Response {
                 return name.toString();
             }
         }
-        return "Unknown"; // 기본값
+        // name 못찾으면 예외 던지기
+        throw new IllegalArgumentException("KakaoLogin - Name is missing");
     }
 }

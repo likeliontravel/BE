@@ -1,17 +1,20 @@
 package org.example.be.generaluser.service;
 
-
+//import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+
+import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -69,10 +72,11 @@ public class GeneralUserService {
 
         generalUserRepository.save(generalUser);
     }
+
     // 이메일을 기준으로 회원 프로필 정보 조회
     @Transactional(readOnly = true)
     public GeneralUserDTO getProfile(String email) {
-        GeneralUser generalUser = generalUserRepository.findByEmail(email)
+        GeneralUser generalUser = generalUserRepository.findByUserIdentifier(email)
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
 
         // GeneralUser를 DTO로 변환 후 반환
@@ -86,21 +90,3 @@ public class GeneralUserService {
         return generalUserDTO;
     }
 }
-//    // 회원 탈퇴 로직
-//    public void deleteGeneralUser(GeneralUserDTO generalUserDTO) {
-//
-//        Optional<GeneralUser> userOptional = generalUserRepository.findByEmail(generalUserDTO.getEmail());
-//
-//        if (userOptional.isPresent()) {
-//
-//            GeneralUser generalUser = userOptional.get();
-//
-////            unifiedUserService.deleteUnifiedUser(user.getUnifiedUser().getId());    // 통합 테이블 구현 후 주석 해제. 만들 때 조회를 getId로 하는게 맞는지 재차확인할 것.
-//            generalUserRepository.delete(generalUser);
-//
-//        } else {
-//
-//            throw new NoSuchElementException("회원을 찾을 수 없습니다.");
-//        }
-//    }
-

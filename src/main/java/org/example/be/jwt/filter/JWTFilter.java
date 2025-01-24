@@ -32,11 +32,18 @@ public class JWTFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+        if (path.equals("/general-user/SignUp")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         //Request 에서 쿠키 추출
        Cookie[] cookies = request.getCookies();
 
-       //Request 에서 로컬스토리지 추출
+       // Request 에서 로컬스토리지 추출
         String refreshToken = request.getHeader("Refresh_token");
+
 
        // 쿠키가 없고 리프레쉬 토큰도 없으면 다음 필터로 넘어감
         if (cookies == null && (refreshToken == null || refreshToken.isEmpty())) {
@@ -76,7 +83,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
         /*
         * 토큰 블랙리스트 검증 로직 */
-        if (jwtBlackListService.isBlacklistedByEmail(jwtUtil.getUsername(accessToken),accessToken, refreshToken)) {
+        if (jwtBlackListService.isBlacklistedByUserIdentifier(jwtUtil.getUserIdentifier(accessToken),accessToken, refreshToken)) {
 
             ObjectMapper mapper = new ObjectMapper();
 
@@ -101,10 +108,10 @@ public class JWTFilter extends OncePerRequestFilter {
 
             if (refreshToken != null && jwtUtil.isValid(refreshToken) && jwtUtil.isExpired(refreshToken)) {
 
-                String email = jwtUtil.getUsername(refreshToken);
+                String userIdentifier = jwtUtil.getUserIdentifier(refreshToken);
                 String role = jwtUtil.getRole(refreshToken);
 
-                String newAccessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간 토큰 발급
+                String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60); // 1시간 토큰 발급
 
                 // 새로운 Access 토큰을 쿠키에 추가
                 Cookie newAccessTokenCookie = new Cookie("Authorization", newAccessToken);
@@ -132,13 +139,13 @@ public class JWTFilter extends OncePerRequestFilter {
 
         try {
 
-            String email = jwtUtil.getUsername(accessToken);
+            String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
             String role = jwtUtil.getRole(accessToken);
 
-            if (email != null && role != null) {
+            if (userIdentifier != null && role != null) {
 
                 // 유저 객체 정보 가져오기
-                Authentication authentication = jwtProvider.getUserDetails(email);
+                Authentication authentication = jwtProvider.getUserDetails(userIdentifier);
 
                 // 유저 객체 정보 토큰에 담기
                 SecurityContext context = getSecurityContext(authentication);

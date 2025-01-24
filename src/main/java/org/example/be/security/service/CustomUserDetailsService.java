@@ -2,9 +2,9 @@ package org.example.be.security.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.security.dto.UserContext;
-import org.example.be.user.domain.User;
-import org.example.be.user.dto.UserDTO;
-import org.example.be.user.repository.UserRepository;
+import org.example.be.generaluser.domain.GeneralUser;
+import org.example.be.generaluser.dto.GeneralUserDTO;
+import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,30 +21,28 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final GeneralUserRepository generalUserRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userIdentifier) throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findByUserEmail(email);
+        Optional<GeneralUser> user = generalUserRepository.findByUserIdentifier(userIdentifier);
 
         if (user.isEmpty()) {
 
-            throw new UsernameNotFoundException(email + " 해당 이메일을 찾을 수 없습니다.");
+            throw new UsernameNotFoundException(userIdentifier + " 해당 userIdentifier을 찾을 수 없습니다.");
         }
 
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.get().getUserRole()));
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.get().getRole()));
 
-        UserDTO userDTO = new UserDTO();
+        GeneralUserDTO generalUserDTO = new GeneralUserDTO();
 
-        userDTO.setId(user.get().getId());
-        userDTO.setEmail(user.get().getUserEmail());
-        userDTO.setPassword(user.get().getUserPwd());
-        userDTO.setName(user.get().getUserName());
-        userDTO.setRole(user.get().getUserRole());
-        userDTO.setPolicy(user.get().getUserPolicy());
-        userDTO.setSubscribe(user.get().getUserSubscribe());
+        generalUserDTO.setId(user.get().getId());
+        generalUserDTO.setEmail(user.get().getEmail());
+        generalUserDTO.setPassword(user.get().getPassword());
+        generalUserDTO.setName(user.get().getName());
+        generalUserDTO.setRole(user.get().getRole());
 
-        return new UserContext(userDTO, authorities);
+        return new UserContext(generalUserDTO, authorities);
     }
 }

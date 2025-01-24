@@ -1,14 +1,16 @@
 package org.example.be.unifieduser.service;
 
-
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.oauth.repository.SocialUserRepository;
-import org.example.be.unifieduser.dto.*;
+import org.example.be.unifieduser.dto.ModifyNameDTO;
+import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
+import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
+import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -98,27 +100,26 @@ public class UnifiedUserService {
         unifiedUserRepository.save(unifiedUser);
     }
 
-    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성
-
-    @Transactional(readOnly = true)
-    public MyPageProfileDTO getUserProfileByEmail(String email) {
-        // UnifiedUser 조회
-        UnifiedUser unifiedUser = unifiedUserRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. 이메일: " + email));
-
-        // MyPageProfileDTO 생성 및 데이터 설정
-        MyPageProfileDTO profileDTO = new MyPageProfileDTO();
-        profileDTO.setEmail(unifiedUser.getEmail());
-        profileDTO.setName(unifiedUser.getName());
-        profileDTO.setRole(unifiedUser.getRole());
-        profileDTO.setPolicyAgreed(unifiedUser.getPolicyAgreed());
-        profileDTO.setSubscribed(unifiedUser.getSubscribed());
-
-        // 소셜 사용자일 경우 provider 설정
-        if (unifiedUser.getSocialUser() != null) {
-            profileDTO.setProvider(unifiedUser.getSocialUser().getProvider());
-        }
-
-        return profileDTO;
-    }
+//    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
+//    @Transactional(readOnly = true)
+//    public MyPageProfileDTO getUserProfileByEmail(String email) {
+//        // UnifiedUser 조회
+//        UnifiedUser unifiedUser = unifiedUserRepository.findByEmail(email)
+//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. 이메일: " + email));
+//
+//        // MyPageProfileDTO 생성 및 데이터 설정
+//        MyPageProfileDTO profileDTO = new MyPageProfileDTO();
+//        profileDTO.setEmail(unifiedUser.getEmail());
+//        profileDTO.setName(unifiedUser.getName());
+//        profileDTO.setRole(unifiedUser.getRole());
+//        profileDTO.setPolicyAgreed(unifiedUser.getPolicyAgreed());
+//        profileDTO.setSubscribed(unifiedUser.getSubscribed());
+//
+//        // 소셜 사용자일 경우 provider 설정
+//        if (unifiedUser.getSocialUser() != null) {
+//            profileDTO.setProvider(unifiedUser.getSocialUser().getProvider());
+//        }
+//
+//        return profileDTO;
+//    }
 }

@@ -6,9 +6,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SocialUserDTO {
-
+    private Long id;
     private String email;  // 이메일 필드 추가
-    private String role;
     private String name;
-    private String username;
+    private String provider;
+    private String role;
+    private String userIdentifier;
 }

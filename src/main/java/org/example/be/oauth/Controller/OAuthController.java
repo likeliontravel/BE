@@ -28,12 +28,12 @@ public class OAuthController {
         }
 
         // name과 email을 포함한 사용자 정보 반환
-        String username = customOAuth2User.getUsername(); // 고유 식별자로 username 사용
+        String userIdentifier = customOAuth2User.getUserIdentifier(); // 고유 식별자로 username 사용 -> userIdentifier 사용
         String name = customOAuth2User.getName(); // name
         String email = customOAuth2User.getEmail(); // email
 
         // 사용자 정보 DTO 반환
-        SocialUserDTO socialUserDTO = socialUserService.getUserProfile(username);
+        SocialUserDTO socialUserDTO = socialUserService.getUserProfile(userIdentifier);
         socialUserDTO.setName(name);
         socialUserDTO.setEmail(email);
 

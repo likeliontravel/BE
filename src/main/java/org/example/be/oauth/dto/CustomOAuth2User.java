@@ -38,11 +38,11 @@ public class CustomOAuth2User implements OAuth2User {
         return socialUserDTO.getName(); // 이름 반환
     }
 
-    public String getUsername() {
-        return socialUserDTO.getUsername(); // 고유 식별자로 username 반환
-    }
-
     public String getEmail() {
         return socialUserDTO.getEmail(); // 이메일 반환
+    }
+
+    public String getUserIdentifier() {
+        return socialUserDTO.getUserIdentifier();
     }
 }

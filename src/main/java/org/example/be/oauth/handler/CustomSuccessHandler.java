@@ -33,15 +33,15 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //OAuth2User
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
 
-        String username = customUserDetails.getUsername();
+        String userIdentifier = customUserDetails.getUserIdentifier();
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String accessToken = jwtUtil.createJwt(username, role, 60*60*60*60L);
-        String refreshToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtUtil.createJwt(userIdentifier, role, 60*60*60*60L);
+        String refreshToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60 * 24 * 7); // 7일 유효
 
         System.out.println("생성된 accessToken 토큰 : " + accessToken);
         System.out.println("생성된 refreshToken 토큰 : " + refreshToken);
