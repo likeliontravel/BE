@@ -28,7 +28,7 @@ public class GeneralUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 가입 성공"));
     }
 
-    // 회원정보 수정 -> 마이페이지 패키지가 만들어진다면.. 옮길 필요가 있을 수도 ? 얘가 여기 있는게 맞을까?
+/*    // 회원정보 수정 -> 마이페이지 패키지가 만들어진다면.. 옮길 필요가 있을 수도 ? 얘가 여기 있는게 맞을까?
     @PutMapping("/update")
     public ResponseEntity<CommonResponse<String>> updateUser(@RequestBody GeneralUserDTO generalUserDTO) {
 
@@ -43,17 +43,17 @@ public class GeneralUserController {
             // 요청 데이터가 없는 경우
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(400, e.getMessage()));
         }
-    }
+    }*/
 
-    // 회원 프로필 조회
+/*    // 회원 프로필 조회
     @GetMapping("/profile")
     public ResponseEntity<CommonResponse<GeneralUserDTO>> getProfile(Authentication authentication) {
-        // 현재 로그인된 사용자 이메일 가져오기
-        String email = authentication.getName();
+        // 현재 로그인된 사용자 userIdentifier 가져오기
+        String userIdentifier = authentication.getName();
 
         // 회원 정보를 조회
-        GeneralUserDTO userProfile = generalUserService.getProfile(email);
+        GeneralUserDTO userProfile = generalUserService.getProfile(userIdentifier);
 
         return ResponseEntity.ok(CommonResponse.success(userProfile, "회원 프로필 조회 성공"));
-    }
+    }*/
 }
