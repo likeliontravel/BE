@@ -39,6 +39,18 @@ public class UnifiedUser {
     @Column(nullable = false)
     private Boolean subscribed = false;     // 유료구독 가입여부 ; 기본값 false
 
+    @Column(nullable = true)
+    private String profilePictureUrl;   // 프로필 사진 URL
+
+    @Column(nullable = true)
+    private String password;             // 비밀번호
+
+    @Column(nullable = true)
+    private String socialProvider;       // 소셜 로그인 제공자 (예: Google, Kakao 등)
+
+    @Column(nullable = true)
+    private String socialIdentifier;     // 소셜 로그인 ID
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "general_user_userIdentifier", referencedColumnName = "userIdentifier")
     private GeneralUser generalUser;    // 일반유저에서 데이터 가져와 저장됨. 삭제 시 두 테이블 모두 해당 튜플 삭제(Cascade)
