@@ -1,16 +1,19 @@
 package org.example.be.unifieduser.service;
 
-import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.oauth.repository.SocialUserRepository;
-import org.example.be.unifieduser.dto.ModifyNameDTO;
 import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
 import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
 import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.unifieduser.dto.UnifiedUserProfileDTO;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,8 @@ public class UnifiedUserService {
     private final UnifiedUserRepository unifiedUserRepository;
     private final SocialUserRepository socialUserRepository;
     private final GeneralUserRepository generalUserRepository;
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다. )
     @Transactional
@@ -37,6 +42,8 @@ public class UnifiedUserService {
         unifiedUser.setRole(role);
         unifiedUser.setPolicyAgreed(false);
         unifiedUser.setSubscribed(false);
+
+
 
         return unifiedUserRepository.save(unifiedUser);
     }
@@ -85,41 +92,72 @@ public class UnifiedUserService {
         unifiedUser.setSubscribed(subscribed);
         unifiedUserRepository.save(unifiedUser);
     }
-
-    // 회원정보 변경
-    // 가볍게 이름만! : 형진이형 마이페이지 합칠 때 참고하려고요
-    @Transactional
-    public void updateName(ModifyNameDTO dto) {
-        String userIdentifier = dto.getUserIdentifier();
-        String name = dto.getName();
-
+    // 유저 프로필 조회
+    @Transactional(readOnly = true)
+    public UnifiedUserProfileDTO getUserProfile(String userIdentifier) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
-        unifiedUser.setName(name);
+        UnifiedUserProfileDTO profileDTO = new UnifiedUserProfileDTO();
+        profileDTO.setEmail(unifiedUser.getEmail());
+        profileDTO.setName(unifiedUser.getName());
+        profileDTO.setAdditionalInfo(unifiedUser.getSocialProvider() != null ? "소셜 유저" : "일반 유저");
+        profileDTO.setProvider(unifiedUser.getSocialProvider());
+
+        return profileDTO;
+    }
+
+    // 프로필 사진 수정
+    @Transactional
+    public void updateProfilePicture(String userIdentifier, String newProfilePictureUrl) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+
+        unifiedUser.setProfilePictureUrl(newProfilePictureUrl); // 프로필 사진 URL 업데이트
         unifiedUserRepository.save(unifiedUser);
     }
 
-//    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
-//    @Transactional(readOnly = true)
-//    public MyPageProfileDTO getUserProfileByEmail(String email) {
-//        // UnifiedUser 조회
-//        UnifiedUser unifiedUser = unifiedUserRepository.findByEmail(email)
-//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. 이메일: " + email));
-//
-//        // MyPageProfileDTO 생성 및 데이터 설정
-//        MyPageProfileDTO profileDTO = new MyPageProfileDTO();
-//        profileDTO.setEmail(unifiedUser.getEmail());
-//        profileDTO.setName(unifiedUser.getName());
-//        profileDTO.setRole(unifiedUser.getRole());
-//        profileDTO.setPolicyAgreed(unifiedUser.getPolicyAgreed());
-//        profileDTO.setSubscribed(unifiedUser.getSubscribed());
-//
-//        // 소셜 사용자일 경우 provider 설정
-//        if (unifiedUser.getSocialUser() != null) {
-//            profileDTO.setProvider(unifiedUser.getSocialUser().getProvider());
-//        }
-//
-//        return profileDTO;
-//    }
+    // 이름 수정
+    @Transactional
+    public void updateName(String userIdentifier, String newName) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+
+        unifiedUser.setName(newName);
+        unifiedUserRepository.save(unifiedUser);
+    }
+
+    // 이메일 수정 (일반 유저만)
+    @Transactional
+    public void updateEmail(String userIdentifier, String newEmail) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+
+        unifiedUser.setEmail(newEmail);
+        unifiedUserRepository.save(unifiedUser);
+    }
+
+    // 비밀번호 수정 (일반 로그인 사용자)
+    @Transactional
+    public void updatePassword(String userIdentifier, String newPassword) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        unifiedUser.setPassword(encodedPassword);  // 비밀번호 업데이트 (암호화된 형태로 저장해야 함)
+        unifiedUserRepository.save(unifiedUser);
+    }
+
+    // 소셜 계정 연동
+    @Transactional
+    public void linkSocialAccount(String userIdentifier, String socialProvider, String socialIdentifier) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+
+        // 소셜 계정 정보를 저장하는 로직 (소셜 로그인 연동을 위한 처리)
+        unifiedUser.setSocialProvider(socialProvider);
+        unifiedUser.setSocialIdentifier(socialIdentifier);
+        unifiedUserRepository.save(unifiedUser);
+    }
 }
