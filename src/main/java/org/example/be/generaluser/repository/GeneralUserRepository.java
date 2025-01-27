@@ -13,5 +13,5 @@ public interface GeneralUserRepository extends JpaRepository<GeneralUser, Long> 
 
     Optional<GeneralUser> findByUserIdentifier(String userIdentifier);
 
-    Optional<GeneralUser> findByEmail(String email);
+    //Optional<GeneralUser> findByEmail(String email);
 }
