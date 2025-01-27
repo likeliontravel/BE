@@ -78,7 +78,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
                         .requestMatchers("/mail/**").permitAll()
-                        .requestMatchers("/oauth2/**").permitAll() // OAuth2 로그인 경로 추가
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/user/**").permitAll()// OAuth2 로그인 경로 추가
                         .anyRequest().authenticated()
                 )
 
