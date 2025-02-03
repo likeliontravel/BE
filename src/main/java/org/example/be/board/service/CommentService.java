@@ -7,6 +7,7 @@ import org.example.be.board.entity.Comment;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.board.repository.CommentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -43,9 +44,10 @@ public class CommentService {
         commentRepository.save(comment.toUpdateEntity(commentDTO, board));
     }
 
-
+    @Transactional
     public void deletecomment(int id) {
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
         commentRepository.delete(comment);
+        commentRepository.flush();
     }
 }

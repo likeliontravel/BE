@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -88,31 +89,35 @@ public class BoardService {
 
 
     // 게시글 삭제
+    @Transactional
     public void deleteBoard(int id) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+
+        // Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
+        //삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
+        board.getBoardFileList().size();
+        board.getCommentList().size();
+
         // 게시글에 파일이 첨부되었는지 확인
-        if (board.getFileAttached() == 1) {  // fileAttached가 1일 경우 파일이 첨부된 상태
-            // 게시글에 연결된 모든 파일 정보 조회
+        if (board.getFileAttached() == 1) {
             List<BoardFile> boardFiles = board.getBoardFileList();
+
             // 파일 삭제 로직
             for (BoardFile boardFile : boardFiles) {
-                String storedFileName = boardFile.getStoredFileName();  // 파일의 저장된 이름
-                String filePath = "D:/board_img/" + storedFileName; // 실제 파일 경로
-                // 로컬 파일 시스템에서 파일 삭제
+                String storedFileName = boardFile.getStoredFileName();
+                String filePath = "D:/board_img/" + storedFileName;
                 File file = new File(filePath);
-                if (file.exists()) {
-                    boolean deleted = file.delete();
-                    if (!deleted) {
-                        throw new NoSuchElementException("파일 삭제를 실패하였습니다.");
-                        // 삭제 실패 시 처리 (원하는 대로 처리할 수 있음)
-                        // 예: 예외를 던지거나 다른 로직 수행
-                    }
+                if (file.exists() && !file.delete()) {
+                    throw new NoSuchElementException("파일 삭제를 실패하였습니다.");
                 }
             }
-            boardRepository.delete(board);
         }
 
+        boardRepository.delete(board);
+
+        // 실제 삭제 쿼리 강제 실행
+        boardRepository.flush();
     }
 
     // 게시판 검색 (제목/내용 검색)
