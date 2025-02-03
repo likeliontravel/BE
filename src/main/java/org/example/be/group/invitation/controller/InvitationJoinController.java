@@ -62,5 +62,5 @@ public class InvitationJoinController {
         response.sendRedirect(redirectUrl);
     }
 
-    
+
 }

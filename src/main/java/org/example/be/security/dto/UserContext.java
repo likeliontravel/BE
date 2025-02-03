@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.example.be.generaluser.dto.GeneralUserDTO;
+import org.example.be.unifieduser.dto.UnifiedUserDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -19,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserContext implements UserDetails {
 
-    private final GeneralUserDTO generalUserDTO;
+    private final UnifiedUserDTO unifiedUserDTO;
 
     private final List<GrantedAuthority> authorities;
 
@@ -30,12 +31,12 @@ public class UserContext implements UserDetails {
 
     @Override
     public String getPassword() {
-        return generalUserDTO.getPassword();
+        return unifiedUserDTO.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return generalUserDTO.getEmail();
+        return unifiedUserDTO.getUserIdentifier();
     }
 
     @Override

@@ -77,7 +77,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
-                        .requestMatchers("/mail/**").permitAll()
+                        .requestMatchers("/mail/**", "/user/**").permitAll()
                         .requestMatchers("/oauth2/**").permitAll() // OAuth2 로그인 경로 추가
                         .anyRequest().authenticated()
                 )
@@ -122,7 +122,7 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 허용할 Origin
+        configuration.setAllowedOrigins(List.of("**")); // 허용할 Origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true); // 쿠키 허용

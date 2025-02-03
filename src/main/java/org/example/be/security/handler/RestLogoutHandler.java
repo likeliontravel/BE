@@ -43,7 +43,7 @@ public class RestLogoutHandler implements LogoutHandler {
         }
 
         //Request 에서 로컬스토리지에 토큰 추출
-        String refreshToken = request.getHeader("Refresh_token");
+        String refreshToken = request.getHeader("Refresh-Token");
 
         // AccessToken 이나 RefreshToken 이 없는 경우
         if (accessToken == null || refreshToken == null) {

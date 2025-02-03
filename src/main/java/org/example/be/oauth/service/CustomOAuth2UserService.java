@@ -89,6 +89,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 //            socialUser.setEmail(email);
 //            socialUser.setUserIdentifier(userIdentifier);
 //            socialUserRepository.save(socialUser);
+
+            // SocialUser가 이미 존재하는 경우 , UnifiedUser가 존재하는지 확인
+            // (예를 들어, unifiedUserRepository를 직접 주입받거나 unifiedUserService에 해당 메서드를 추가할 수 있음)
+            if (!unifiedUserService.unifiedUserExists(userIdentifier)) {
+                unifiedUserService.createUnifiedUser(new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER"));
+            }
         }
 
         return new CustomOAuth2User(mapToDTO(socialUser));
@@ -102,6 +108,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         dto.setName(entity.getName());
         dto.setProvider(entity.getProvider());
         dto.setRole(entity.getRole());
+        dto.setUserIdentifier(entity.getUserIdentifier());
         return dto;
     }
 }

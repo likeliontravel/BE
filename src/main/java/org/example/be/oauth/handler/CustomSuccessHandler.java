@@ -64,7 +64,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             }
         }
 
-        response.sendRedirect("http://localhost:3000/");
+        response.sendRedirect("https://localhost:8080/group/user-groups");
     }
 
     private Cookie createCookie(String key, String value) {
@@ -73,6 +73,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setSecure(true); // https 적용 시 주석 해제할 것
         cookie.setPath("/");
         cookie.setHttpOnly(true);
+        cookie.setAttribute("SameSite", "None");    // SameSite Config Test
 
         //System.out.println("Cookie: " + cookie.getValue());
 

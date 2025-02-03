@@ -53,6 +53,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         accessTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
         accessTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
         accessTokenCookie.setMaxAge(60 * 60); // 1시간 만료
+        accessTokenCookie.setAttribute("SameSite", "None");
         response.addCookie(accessTokenCookie);
 
         // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)

@@ -50,7 +50,8 @@ public class UnifiedUserService {
 
         // unified user 삭제. Cascade와 OrphanRemoval옵션으로 연결된 데이터(소셜 또는 일반) 자동삭제.
         unifiedUserRepository.delete(unifiedUser);
-
+        unifiedUserRepository.flush();  // DB에 반영해줌
+//
         if (userIdentifier.startsWith("gen ")) {
             generalUserRepository.findByUserIdentifier(userIdentifier)
                     .ifPresent(generalUserRepository::delete);
@@ -98,6 +99,11 @@ public class UnifiedUserService {
 
         unifiedUser.setName(name);
         unifiedUserRepository.save(unifiedUser);
+    }
+
+    // 해당 userIdentifier를 가진 유저가 존재하는지 확인하는 메서드
+    public boolean unifiedUserExists(String userIdentifier) {
+        return unifiedUserRepository.findByUserIdentifier(userIdentifier).isPresent();
     }
 
 //    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
