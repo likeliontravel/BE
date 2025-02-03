@@ -1,6 +1,9 @@
 package org.example.be.generaluser.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.group.dto.GroupAddMemberRequestDTO;
+import org.example.be.group.invitation.service.GroupInvitationService;
+import org.example.be.group.service.GroupService;
 import org.example.be.response.CommonResponse;
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.service.GeneralUserService;
@@ -18,13 +21,31 @@ import java.util.NoSuchElementException;
 public class GeneralUserController {
 
     private final GeneralUserService generalUserService;
+    private final GroupInvitationService groupInvitationService;
+    private final GroupService groupService;
 
     // 회원가입
+    // ---- 2025.02.03 변경 ----
+    // 회원가입 시 초대 코드가 전달된다면 자동으로 그룹 가입 처리
     @PostMapping("/SignUp")
-    public ResponseEntity<CommonResponse<String>> signUp(@RequestBody GeneralUserDTO generalUserDTO) {
+    public ResponseEntity<CommonResponse<String>> signUp(@RequestBody GeneralUserDTO generalUserDTO
+    , @RequestParam(value = "invitationCode", required = false) String invitationCode) {
 
         generalUserService.signUp(generalUserDTO);
 
+        // 만약 초대 코드가 전달되면서 들어온 회원가입 요청이라면 회원가입과 동시에 자동으로 해당 그룹 멤버 추가
+        if (invitationCode != null && !invitationCode.isEmpty()) {
+            try {
+                var invitation = groupInvitationService.getValidInvitation(invitationCode);
+                GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
+                dto.setGroupName(invitation.getGroup().getGroupName());
+                // 일반 유저 가입 시, 식별자로 userIdentifier 사용
+                dto.setUserIdentifier("gen " + generalUserDTO.getEmail());
+                groupService.addMemberToGroup(dto);
+            } catch (Exception e) {
+                System.out.println("자동 그룹 가입 실패: " + e.getMessage());
+            }
+        }
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 가입 성공"));
     }
 

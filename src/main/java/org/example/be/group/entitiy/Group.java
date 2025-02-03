@@ -15,7 +15,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "group")
+@Table(name = "user_groups")
 public class Group {
 
     @Id
@@ -34,8 +34,8 @@ public class Group {
     // 자바 상으로는 UnifiedUser를 멤버로 가지는 Set으로 표현.
     @ManyToMany
     @JoinTable(
-            name = "group_members",
-            joinColumns = @JoinColumn(name = "group_id"),
+            name = "user_groups_members",
+            joinColumns = @JoinColumn(name = "user_groups_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<UnifiedUser> members = new HashSet<>(); // 그룹 내 멤버를 표현할 것임.

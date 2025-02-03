@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.example.be.group.dto.GroupAddMemberRequestDTO;
+import org.example.be.group.invitation.service.GroupInvitationService;
+import org.example.be.group.service.GroupService;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.response.CommonResponse;
 import org.example.be.generaluser.dto.GeneralUserDTO;
@@ -25,6 +28,8 @@ import java.io.IOException;
 public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
+    private final GroupInvitationService groupInvitationService;
+    private final GroupService groupService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -52,6 +57,20 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)
         response.addHeader("Refresh-Token", refreshToken);
+
+        // URL 쿼리 파라미터에 invitationCode 확인. 만약 있다면 로그인과 동시에 해당 그룹에 자동 멤버 추가
+        String invitationCode = request.getParameter("invitationCode");
+        if (invitationCode != null && !invitationCode.isEmpty()) {
+            try {
+                var invitation = groupInvitationService.getValidInvitation(invitationCode);
+                GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
+                dto.setGroupName(invitation.getGroup().getGroupName());
+                dto.setUserIdentifier(authentication.getName());
+                groupService.addMemberToGroup(dto);
+            } catch (Exception e) {
+                System.out.println("로그인 후 자동 그룹 가입 실패: " + e.getMessage());
+            }
+        }
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");

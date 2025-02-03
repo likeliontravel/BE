@@ -5,6 +5,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.example.be.group.dto.GroupAddMemberRequestDTO;
+import org.example.be.group.invitation.service.GroupInvitationService;
+import org.example.be.group.service.GroupService;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.oauth.dto.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
@@ -17,15 +21,12 @@ import java.util.Collection;
 import java.util.Iterator;
 
 @Component
+@RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-
     private final JWTUtil jwtUtil;
-
-    public CustomSuccessHandler(JWTUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
-
+    private final GroupInvitationService groupInvitationService;
+    private final GroupService groupService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -48,6 +49,20 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         response.addCookie(createCookie("Authorization", accessToken));
         response.addHeader("Refresh-Token", refreshToken);
+
+        // OAuth2 로그인 성공 후 URL 쿼리 파라미터에서  invitationCode가 있는지 확인
+        String invitationCode = request.getParameter("invitationCode");
+        if (invitationCode != null && !invitationCode.isEmpty()) {  // invitationCode가 파라미터에 포함되어 있었다면 자동으로 해당 그룹에 멤버 추가
+            try {
+                var invitation = groupInvitationService.getValidInvitation(invitationCode);
+                GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
+                dto.setGroupName(invitation.getGroup().getGroupName());
+                dto.setUserIdentifier(userIdentifier);
+                groupService.addMemberToGroup(dto);
+            } catch (Exception e) {
+                System.out.println("OAuth2 로그인 후 자동 그룹 가입 실패 : " + e.getMessage());
+            }
+        }
 
         response.sendRedirect("http://localhost:3000/");
     }
