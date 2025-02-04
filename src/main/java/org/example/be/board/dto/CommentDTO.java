@@ -14,5 +14,7 @@ public class CommentDTO {
     private String commentWriter;
     private String commentContent;
     private int boardId;
+    private Integer parentCommentId; // 대댓글에 사용
     private LocalDateTime commentCreatedTime;
+
 }

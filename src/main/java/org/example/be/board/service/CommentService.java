@@ -19,12 +19,20 @@ public class CommentService {
     private final BoardRepository boardRepository;
 
     public void writecomment(CommentDTO commentDTO) {
-        //부모엔티티를 먼저 조회
+        //부모엔티티를 먼저 조회 후 일반 댓글 작성
         Optional<Board> optionalBoardEntity = boardRepository.findById(commentDTO.getBoardId());
         if (optionalBoardEntity.isPresent()) {
             Board boardEntity = optionalBoardEntity.get();
-            Comment comment = Comment.toSaveEntity(commentDTO, boardEntity);
-            commentRepository.save(comment).getId();
+
+            //일반 댓글 생성(부모 댓글)
+            if (commentDTO.getParentCommentId() == null) {
+                Comment comment = Comment.toSaveEntity(commentDTO, boardEntity);
+                commentRepository.save(comment).getId();
+            } else {
+                Comment parentComment = commentRepository.findById(commentDTO.getParentCommentId()).orElseThrow(() -> new RuntimeException("부모 댓글이 존재 하지 않습니다."));
+                Comment comment = Comment.toSaveReplyEntity(commentDTO,boardEntity,parentComment);
+                commentRepository.save(comment).getId();
+            }
 
         } else {
             throw new RuntimeException("해당 게시글이 존재하지 않습니다.");
@@ -40,8 +48,20 @@ public class CommentService {
         Board board = boardRepository.findById(commentDTO.getBoardId())
                 .orElseThrow(() -> new RuntimeException("해당 게시글이 존재하지 않습니다."));
 
-        // 댓글을 업데이트하는 엔티티 생성 후 저장
-        commentRepository.save(comment.toUpdateEntity(commentDTO, board));
+        // 대댓글인지 일반 댓글인지를 확인
+        if (comment.getParentComment() != null) {
+            // 대댓글 수정 시 부모 댓글을 변경하지 않고, 대댓글만 수정
+            comment.setCommentContent(commentDTO.getCommentContent()); // 대댓글 수정 내용
+            comment.setCommentWriter(commentDTO.getCommentWriter()); // 대댓글 작성자 수정 내용
+            comment.setBoard(board); // 댓글이 속한 게시글 설정
+            commentRepository.save(comment); // 대댓글 저장
+        } else {
+            // 일반 댓글 수정
+            comment.setCommentContent(commentDTO.getCommentContent()); // 일반 댓글 수정 내용
+            comment.setCommentWriter(commentDTO.getCommentWriter()); // 일반 댓글 작성자 수정 내용
+            comment.setBoard(board); // 댓글이 속한 게시글 설정
+            commentRepository.save(comment); // 일반 댓글 저장
+        }
     }
 
     @Transactional
