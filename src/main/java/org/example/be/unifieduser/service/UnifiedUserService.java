@@ -57,6 +57,8 @@ public class UnifiedUserService {
 
         // unified user 삭제. Cascade와 OrphanRemoval옵션으로 연결된 데이터(소셜 또는 일반) 자동삭제.
         unifiedUserRepository.delete(unifiedUser);
+        unifiedUserRepository.flush();  // DB에 반영해줌
+
 
         if (userIdentifier.startsWith("gen ")) {
             generalUserRepository.findByUserIdentifier(userIdentifier)
@@ -101,6 +103,7 @@ public class UnifiedUserService {
         UnifiedUserProfileDTO profileDTO = new UnifiedUserProfileDTO();
         profileDTO.setEmail(unifiedUser.getEmail());
         profileDTO.setName(unifiedUser.getName());
+        profileDTO.setSubscribed(unifiedUser.getSubscribed());  // 추가됨
         profileDTO.setAdditionalInfo(unifiedUser.getSocialProvider() != null ? "소셜 유저" : "일반 유저");
         profileDTO.setProvider(unifiedUser.getSocialProvider());
 
@@ -133,6 +136,11 @@ public class UnifiedUserService {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
+        // 일반 유저가 아닌 경우 이메일 변경 제한
+        if (unifiedUser.getSocialProvider() != null) {
+            throw new IllegalStateException("소셜 로그인 사용자는 이메일을 변경할 수 없습니다.");
+        }
+
         unifiedUser.setEmail(newEmail);
         unifiedUserRepository.save(unifiedUser);
     }
@@ -147,7 +155,12 @@ public class UnifiedUserService {
         String encodedPassword = passwordEncoder.encode(newPassword);
         unifiedUser.setPassword(encodedPassword);  // 비밀번호 업데이트 (암호화된 형태로 저장해야 함)
         unifiedUserRepository.save(unifiedUser);
+
+        if (unifiedUser.getSocialProvider() != null) {
+            throw new IllegalStateException("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.");
+        }
     }
+
 
     // 소셜 계정 연동
     @Transactional
@@ -159,5 +172,14 @@ public class UnifiedUserService {
         unifiedUser.setSocialProvider(socialProvider);
         unifiedUser.setSocialIdentifier(socialIdentifier);
         unifiedUserRepository.save(unifiedUser);
+
+    }
+    // 소셜 유저 여부 확인
+    public boolean isSocialUser(String userIdentifier) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다." + userIdentifier));
+
+        // 소셜 로그인 유저라면 true
+        return unifiedUser.getSocialProvider() != null;
     }
 }
