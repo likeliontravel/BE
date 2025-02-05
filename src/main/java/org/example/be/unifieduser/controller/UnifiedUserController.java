@@ -7,6 +7,7 @@ import org.example.be.unifieduser.dto.*;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,9 +36,8 @@ public class UnifiedUserController {
 
     // 유료구독 이용여부 변경
     @PostMapping("/change/subscribed")
-    public ResponseEntity<CommonResponse<String>> changePolicy(@RequestBody SubscribedUpdateRequestDTO request) {
+    public ResponseEntity<CommonResponse<String>> changeSubscribed(@RequestBody SubscribedUpdateRequestDTO request) {
         unifiedUserService.updateSubscribed(request);
-
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "유료구독 여부 변경 성공"));
     }
 
@@ -74,6 +74,7 @@ public class UnifiedUserController {
     }
 
     // 이메일 수정 (일반 유저만)
+    @PreAuthorize("!@unifiedUserService.isSocialUser(authentication.name)") // 소셜 로그인 유저 이메일 수정 제한
     @PostMapping("/{userIdentifier}/email")
     public ResponseEntity<CommonResponse<String>> updateEmail(
             @PathVariable String userIdentifier,
@@ -83,6 +84,7 @@ public class UnifiedUserController {
     }
 
     // 비밀번호 수정 (일반 로그인 사용자)
+    @PreAuthorize("!@unifiedUserService.isSocialUser(authentication.name)") // #userIdentifier는 PathVariable로 받아온 유저 식별자
     @PostMapping("/{userIdentifier}/password")
     public ResponseEntity<CommonResponse<String>> updatePassword(
             @PathVariable String userIdentifier,
