@@ -39,13 +39,13 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         //Request 에서 쿠키 추출
-       Cookie[] cookies = request.getCookies();
+        Cookie[] cookies = request.getCookies();
 
-       // Request 에서 로컬스토리지 추출
-        String refreshToken = request.getHeader("Refresh_token");
+        // Request 에서 로컬스토리지 추출
+        String refreshToken = request.getHeader("Refresh-Token");
 
 
-       // 쿠키가 없고 리프레쉬 토큰도 없으면 다음 필터로 넘어감
+        // 쿠키가 없고 리프레쉬 토큰도 없으면 다음 필터로 넘어감
         if (cookies == null && (refreshToken == null || refreshToken.isEmpty())) {
 
             System.out.println("No cookies found or refresh token is empty");
@@ -82,7 +82,7 @@ public class JWTFilter extends OncePerRequestFilter {
         String accessToken = authorization;
 
         /*
-        * 토큰 블랙리스트 검증 로직 */
+         * 토큰 블랙리스트 검증 로직 */
         if (jwtBlackListService.isBlacklistedByUserIdentifier(jwtUtil.getUserIdentifier(accessToken),accessToken, refreshToken)) {
 
             ObjectMapper mapper = new ObjectMapper();
