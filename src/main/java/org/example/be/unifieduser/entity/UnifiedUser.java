@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.oauth.entity.SocialUser;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Getter
@@ -51,12 +53,14 @@ public class UnifiedUser {
     @Column(nullable = true)
     private String socialIdentifier;     // 소셜 로그인 ID
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "general_user_userIdentifier", referencedColumnName = "userIdentifier")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private GeneralUser generalUser;    // 일반유저에서 데이터 가져와 저장됨. 삭제 시 두 테이블 모두 해당 튜플 삭제(Cascade)
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "social_user_userIdentifier", referencedColumnName = "userIdentifier")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private SocialUser socialUser;      // 소셜유저에서 데이터 가져와 저장됨. 삭제 시 두 테이블 모두 해당 튜플 삭제(Cascade)
 
 }
