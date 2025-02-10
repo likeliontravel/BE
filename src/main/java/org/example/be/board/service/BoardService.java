@@ -33,11 +33,36 @@ public class BoardService {
                 .map(BoardDTO::toDTO) // board 엔티티를 받아와서 dto로 변환
                 .collect(Collectors.toList());
     }
+    // 게시글 조회 (조회수 증가 포함)
+    @Transactional
+    public BoardDTO getBoard(int id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+
+        // 조회수 증가
+        increaseBoardHits(board);
+
+        return BoardDTO.toDTO(board); // BoardDTO로 변환하여 반환
+    }
+
+    // 조회수 증가 처리
+    private void increaseBoardHits(Board board) {
+        board.setBoardHits(board.getBoardHits() + 1);
+        boardRepository.save(board); // 조회수 반영
+    }
 
     // 인기순 게시판 글 조회 (조회수 기준 정렬 + 페이지 처리)
     public List<BoardDTO> getBoardsSortedByHits(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Board> boardPage = boardRepository.findAllByOrderByBoardHitsDesc(pageable);
+        return boardPage.stream()
+                .map(BoardDTO::toDTO)
+                .collect(Collectors.toList());
+    }
+    // 최신순 게시판 글 조회
+    public List<BoardDTO> getBoardSortedByRecents(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Board> boardPage = boardRepository.findAllByOrderByCreatedTimeDesc(pageable);
         return boardPage.stream()
                 .map(BoardDTO::toDTO)
                 .collect(Collectors.toList());
