@@ -16,7 +16,7 @@ public class CommentController {
     private final CommentService commentService;
 
     //댓글 작성
-    @PostMapping("/write")
+    @PostMapping
     public ResponseEntity<CommonResponse<String>> write(@RequestBody CommentDTO commentDTO) {
         // 댓글 작성 로직 수행
         commentService.writecomment(commentDTO);

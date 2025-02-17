@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Integer> {
-    List<Board> findByTitleContainingOrContentContaining(String title, String content);
+    List<Board> findByTitleContainingOrContentContainingOrWriterContaining(String title, String content,String writer);
 
     Page<Board> findAllByOrderByBoardHitsDesc(Pageable pageable);
 

@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -147,10 +148,11 @@ public class BoardService {
 
     // 게시판 검색 (제목/내용 검색)
     public List<BoardDTO> searchBoardsByKeyword(String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            throw new IllegalArgumentException("검색 키워드를 입력해야 합니다.");
-        }
-        List<Board> boards = boardRepository.findByTitleContainingOrContentContaining(keyword, keyword);
+        String validatedKeyword = Optional.ofNullable(keyword)
+                .filter(k -> !k.isBlank())
+                .orElseThrow(() -> new IllegalArgumentException("검색 키워드를 입력해야 합니다."));
+
+        List<Board> boards = boardRepository.findByTitleContainingOrContentContainingOrWriterContaining(validatedKeyword, validatedKeyword, validatedKeyword);
         return boards.stream()
                 .map(BoardDTO::toDTO)
                 .collect(Collectors.toList());
