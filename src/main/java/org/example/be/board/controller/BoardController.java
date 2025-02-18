@@ -70,7 +70,7 @@ public class BoardController {
 
     // 게시글 수정
     @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@RequestBody BoardDTO boardDTO) {
+    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@RequestBody BoardDTO boardDTO) throws IOException {
         boardDTO.setId(id);
         boardService.updateBoard(boardDTO);
         return ResponseEntity.status(HttpStatus.CREATED)

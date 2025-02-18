@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardFileRepository boardFileRepository;
+    private final GcsUploader gcsUploader;
 
     // 전체 게시판 글 조회 (페이지 처리)
     public List<BoardDTO> getAllBoards(int page, int size) {
@@ -84,7 +85,7 @@ public class BoardService {
             /*
             1.DTO에 담긴 파일을 꺼냄
             2.파일의 이름을 가져옴
-            3.서버 저장용 이름으로 만듦 ex) 사용자가 내사진.jpg로 저장하면 -> 384728374_내사진.jpg로 변환하여 중복 제거
+            3.서버 저장용 이름으로 만듦 ex) 사용자가 내사진.jpg로 저장하면 -> uuid 식별자를 통해 내사진.jpg로 변환하여 중복 제거
             4.저장 경로를 설정
             5.해당 경로에 파일 저장
             6.board_table에 게시글 정보 save 처리
@@ -94,12 +95,8 @@ public class BoardService {
             int savedId = boardRepository.save(boardEntity).getId(); //게시글에 한 id를 pk로 쓰기 때문에 가져와야함
             Board board = boardRepository.findById(savedId).get();
             for (MultipartFile image : boardDTO.getImage()) {
-
-                String originalFilename = image.getOriginalFilename(); // 2. 사용자가 올린 파일의 이름
-                String storedFileName = System.currentTimeMillis() + "_" + originalFilename; //3. 사진 업로드의 시간으로 중복 구분
-                String savePath = "D:/board_img/" + storedFileName; //4
-                image.transferTo(new File(savePath)); // 5
-
+                String originalFilename = image.getOriginalFilename(); // 사용자가 올린 파일의 이름
+                String storedFileName = gcsUploader.uploadImage(image);
                 BoardFile boardFile = BoardFile.toBoardFile(board, originalFilename, storedFileName);
                 boardFileRepository.save(boardFile);
             }
@@ -107,10 +104,53 @@ public class BoardService {
     }
 
     // 게시글 수정
-    public void updateBoard(BoardDTO boardDTO) {
+    public void updateBoard(BoardDTO boardDTO) throws IOException {
         Board board = boardRepository.findById(boardDTO.getId())
                 .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+
+        // 게시글 업데이트
         boardRepository.save(Board.toUpdateEntity(boardDTO));
+
+        // 이미지 삭제 및 교체 처리 (fileAttached가 1일 때 삭제)
+        if (board.getFileAttached() == 1) {
+            // 기존 이미지 삭제 처리
+            List<BoardFile> boardFiles = board.getBoardFileList();
+
+            for (BoardFile boardFile : boardFiles) {
+                String storedFileName = boardFile.getStoredFileName();
+                try {
+                    // GCS에서 이미지 삭제
+                    gcsUploader.deleteImage(storedFileName);
+
+                    // boardFileRepository에서 해당 파일 정보 삭제
+                    boardFileRepository.delete(boardFile);
+                } catch (NoSuchElementException e) {
+                    throw new NoSuchElementException("파일 삭제를 실패하였습니다.");
+                }
+            }
+        }
+
+        // 새로운 이미지가 있으면 추가 처리
+        if (boardDTO.getImage() != null && !boardDTO.getImage().isEmpty()) {
+            for (MultipartFile image : boardDTO.getImage()) {
+                String storedFileName = gcsUploader.uploadImage(image); // GCS에 이미지 업로드
+                BoardFile boardFile = new BoardFile();
+                boardFile.setBoard(board);
+                boardFile.setOriginalFileName(image.getOriginalFilename());
+                boardFile.setStoredFileName(storedFileName);
+
+                // boardFileRepository에 새 파일 정보 저장
+                boardFileRepository.save(boardFile);
+            }
+
+            // 게시글에 파일이 있으면 fileAttached를 1로 업데이트 (이미지가 추가된 경우)
+            board.setFileAttached(1);
+            boardRepository.save(board);
+        } else {
+            // 이미지가 없으면 fileAttached를 0으로 설정 (이미지가 삭제된 경우)
+            board.setFileAttached(0);
+            boardRepository.save(board);
+        }
     }
 
 
@@ -132,16 +172,14 @@ public class BoardService {
             // 파일 삭제 로직
             for (BoardFile boardFile : boardFiles) {
                 String storedFileName = boardFile.getStoredFileName();
-                String filePath = "D:/board_img/" + storedFileName;
-                File file = new File(filePath);
-                if (file.exists() && !file.delete()) {
+                try {
+                    gcsUploader.deleteImage(storedFileName);
+                }catch (NoSuchElementException e){
                     throw new NoSuchElementException("파일 삭제를 실패하였습니다.");
                 }
             }
         }
-
         boardRepository.delete(board);
-
         // 실제 삭제 쿼리 강제 실행
         boardRepository.flush();
     }
