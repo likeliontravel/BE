@@ -16,22 +16,22 @@ public class JWTBlackListService {
 
     private final JWTBlackListRepository jwtBlackListRepository;
 
-    public boolean isBlacklistedByUserIdentifier(String userIdentifier, String accessToken, String refreshToken) {
-
-        // 이메일로 블랙리스트에 등록된 토큰 가져오기
-        Iterable<JWTBlackListToken> blackListTokens = jwtBlackListRepository.findAllByUserIdentifier(userIdentifier);
-
-        // 이메일로 찾은 모든 블랙리스트 토큰과 현재 토큰을 비교
-        for (JWTBlackListToken token : blackListTokens) {
-
-            if (token.getAccessToken().equals(accessToken) && token.getRefreshToken().equals(refreshToken)) {
-
-                return true;
-            }
-        }
-
-        return false;
-    }
+//    public boolean isBlacklistedByUserIdentifier(String userIdentifier, String accessToken, String refreshToken) {
+//
+//        // 이메일로 블랙리스트에 등록된 토큰 가져오기
+//        Iterable<JWTBlackListToken> blackListTokens = jwtBlackListRepository.findAllByUserIdentifier(userIdentifier);
+//
+//        // 이메일로 찾은 모든 블랙리스트 토큰과 현재 토큰을 비교
+//        for (JWTBlackListToken token : blackListTokens) {
+//
+//            if (token.getAccessToken().equals(accessToken) && token.getRefreshToken().equals(refreshToken)) {
+//
+//                return true;
+//            }
+//        }
+//
+//        return false;
+//    }
 
     //블랙리스트에 토큰 추가 (만료시간 저장)
     public void addToBlackList(String userIdentifier, String accessToken, String refreshToken, Date expiredTime) {
@@ -65,6 +65,12 @@ public class JWTBlackListService {
 
             jwtBlackListRepository.delete(blackListToken);
         }
+    }
+
+    // blacklist에 추가된 토큰인지 확인
+    public boolean isBlackListed(String token) {
+        return jwtBlackListRepository.findByAccessToken(token) != null ||
+                jwtBlackListRepository.findByRefreshToken(token) != null;
     }
 }
 

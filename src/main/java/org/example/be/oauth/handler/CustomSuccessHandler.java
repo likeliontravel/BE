@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
+import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.oauth.dto.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
@@ -24,7 +25,7 @@ import java.util.Iterator;
 @RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JWTUtil jwtUtil;
+    private final JWTProvider jwtProvider;
     private final GroupInvitationService groupInvitationService;
     private final GroupService groupService;
 
@@ -41,8 +42,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String accessToken = jwtUtil.createJwt(userIdentifier, role, 60*60*60*60L);
-        String refreshToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtProvider.generateAccessToken(userIdentifier, role);
+        String refreshToken = jwtProvider.generateRefreshToken(userIdentifier, role);
 
         System.out.println("생성된 accessToken 토큰 : " + accessToken);
         System.out.println("생성된 refreshToken 토큰 : " + refreshToken);
@@ -64,18 +65,17 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             }
         }
 
-        response.sendRedirect("https://localhost:8080/group/user-groups");
+        response.sendRedirect("https://toleave.store/");
     }
 
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60*60*60);
-        cookie.setSecure(true); // https 적용 시 주석 해제할 것
+        cookie.setMaxAge(60*60*24*1);   // 1일 만료
+        cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setAttribute("SameSite", "None");    // SameSite Config Test
-
-        //System.out.println("Cookie: " + cookie.getValue());
+        cookie.setDomain("toleave.store");
+        cookie.setAttribute("SameSite", "None");
 
         return cookie;
     }

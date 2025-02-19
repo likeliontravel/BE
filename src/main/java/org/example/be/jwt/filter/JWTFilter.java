@@ -1,8 +1,13 @@
 package org.example.be.jwt.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,177 +15,102 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.provider.JWTProvider;
-import org.example.be.response.CommonResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 
+@Component
 @RequiredArgsConstructor
-public class JWTFilter extends OncePerRequestFilter {
+public class JWTFilter extends GenericFilterBean {
 
     private final JWTUtil jwtUtil;
-
     private final JWTProvider jwtProvider;
-
     private final JWTBlackListService jwtBlackListService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String path = request.getRequestURI();
-        if (path.equals("/general-user/SignUp")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        //Request 에서 쿠키 추출
-       Cookie[] cookies = request.getCookies();
-
-       // Request 에서 로컬스토리지 추출
-        String refreshToken = request.getHeader("Refresh-Token");
-
-
-       // 쿠키가 없고 리프레쉬 토큰도 없으면 다음 필터로 넘어감
-        if (cookies == null && (refreshToken == null || refreshToken.isEmpty())) {
-
-            System.out.println("No cookies found or refresh token is empty");
-
-            filterChain.doFilter(request, response);
-
-            return;
-        }
-
-        String authorization = null;
-
-        // 쿠키 값을 for 문을 통해 Authorization 이름을 가진 쿠키를 찾음
-        if (cookies != null) {
-
-            for (Cookie cookie : cookies) {
-
-                if ("Authorization".equals(cookie.getName())) {
-
-                    authorization = cookie.getValue();
-                }
-            }
-        }
-
-        // 토큰이 없으면 다음 필터로 넘김
-        if (authorization == null) {
-
-            System.out.println("Access Token is null");
-
-            filterChain.doFilter(request, response);
-
-            return;
-        }
-
-        String accessToken = authorization;
-
-        /*
-        * 토큰 블랙리스트 검증 로직 */
-        if (jwtBlackListService.isBlacklistedByUserIdentifier(jwtUtil.getUserIdentifier(accessToken),accessToken, refreshToken)) {
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.UNAUTHORIZED.value(), "토큰이 블랙리스트에 올라가 있습니다.");
-
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType("application/json;charset=utf-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-            response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
-            return;
-        }
-
-        // 토큰이 만료시간이 지나면 401 에러 보냄
-        if (jwtUtil.isExpired(accessToken)) {
-
-            System.out.println("Access Token expired");
-
-            // 리프레시 토큰 검증 및 Access 토큰 재발급
-
-            if (refreshToken != null && jwtUtil.isValid(refreshToken) && jwtUtil.isExpired(refreshToken)) {
-
-                String userIdentifier = jwtUtil.getUserIdentifier(refreshToken);
-                String role = jwtUtil.getRole(refreshToken);
-
-                String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60); // 1시간 토큰 발급
-
-                // 새로운 Access 토큰을 쿠키에 추가
-                Cookie newAccessTokenCookie = new Cookie("Authorization", newAccessToken);
-                newAccessTokenCookie.setHttpOnly(true);
-                newAccessTokenCookie.setPath("/");
-                newAccessTokenCookie.setMaxAge(60 * 60); // 1시간 유효
-                response.addCookie(newAccessTokenCookie);
-
-            } else {
-
-                ObjectMapper mapper = new ObjectMapper();
-
-                CommonResponse<String> commonResponse = CommonResponse.error(
-                        HttpStatus.UNAUTHORIZED.value(), "토큰 만료 시간이 지났습니다.");
-
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                response.setContentType("application/json;charset=utf-8");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-                response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
-                return;
-            }
-        }
+        // AccessToken은 쿠키에서 추출
+        String accessToken = extractTokenFromCookies(httpRequest, "Authorization");
+        // RefreshToken은 헤더에서 추출
+        String refreshToken = httpRequest.getHeader("Refresh-Token");
 
         try {
+            if (accessToken != null && jwtUtil.validateToken(accessToken)) {
+                setSecurityContext(accessToken);
+            } else if (refreshToken != null && jwtUtil.validateToken(refreshToken) && !jwtBlackListService.isBlackListed(refreshToken)) {
+                // Refresh Token이 유효하면 새로운 Access Token 발급
+                String userIdentifier = jwtUtil.getUserIdentifier(refreshToken);
+                String role = jwtUtil.getRole(refreshToken);
+                String newAccessToken = jwtProvider.generateAccessToken(userIdentifier, role);
 
-            String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
-            String role = jwtUtil.getRole(accessToken);
+                // 새로운 AccessToken을 쿠키에 저장
+                Cookie newAccessTokenCookie = createCookie("Authorization", newAccessToken);
+                httpResponse.addCookie(newAccessTokenCookie);
 
-            if (userIdentifier != null && role != null) {
-
-                // 유저 객체 정보 가져오기
-                Authentication authentication = jwtProvider.getUserDetails(userIdentifier);
-
-                // 유저 객체 정보 토큰에 담기
-                SecurityContext context = getSecurityContext(authentication);
-                SecurityContextHolder.setContext(context);
+                // SecurityContext 업데이트
+                setSecurityContext(newAccessToken);
+            } else {
+                throw new SecurityException("유효하지 않은 인증 토큰");
             }
-
-            // 여러가지 오류들
+        }catch (ExpiredJwtException e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰이 만료되었습니다.");
+            return;
+        } catch (SignatureException e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "서명이 올바르지 않은 토큰입니다.");
+            return;
+        } catch (MalformedJwtException e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "손상된 토큰입니다.");
+            return;
+        } catch (UnsupportedJwtException e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "지원되지 않는 토큰 형식입니다.");
+            return;
+        } catch (SecurityException e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+            return;
         } catch (Exception e) {
-
-            System.out.println("Invalid JWT token: " + e.getMessage());
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.UNAUTHORIZED.value(), e.getMessage());
-
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType("application/json;charset=utf-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-            response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
+            httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 내부 오류 발생");
             return;
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private static SecurityContext getSecurityContext(Authentication authentication) {
-
-        // 권한 설정을 위한 시큐리티 컨텍스트 홀더에 유저 객체 정보 저장
-        SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
-        SecurityContext context = securityContextHolderStrategy.createEmptyContext();
-        context.setAuthentication(authentication);
-
-        return context;
+    // 쿠키에서 토큰 추출하기
+    private String extractTokenFromCookies(HttpServletRequest request, String name) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals(name)) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
+
+    private void setSecurityContext(String token) {
+        try {
+            Authentication authentication = jwtUtil.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();   // 예외 발생 시 보안 유지
+        }
+    }
+
+    private Cookie createCookie(String name, String value) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 1);   // 유효기간 1일
+        cookie.setDomain("toleave.store");
+        cookie.setAttribute("SameSite", "None");
+        return cookie;
+    }
+
 }

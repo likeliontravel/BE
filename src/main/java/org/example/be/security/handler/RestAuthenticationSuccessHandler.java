@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
+import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.response.CommonResponse;
 import org.example.be.generaluser.dto.GeneralUserDTO;
@@ -27,7 +28,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JWTUtil jwtUtil;
+    private final JWTProvider jwtProvider;
     private final GroupInvitationService groupInvitationService;
     private final GroupService groupService;
 
@@ -44,18 +45,19 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         String generalUserIdentifier = "gen" + " " + generalUserDTO.getEmail();
 
         // Access 토큰 및 Refresh 토큰 생성
-        String accessToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
-        String refreshToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtProvider.generateAccessToken(generalUserIdentifier, generalUserDTO.getRole());
+        String refreshToken = jwtProvider.generateRefreshToken(generalUserIdentifier, generalUserDTO.getRole());
 
         // Access 토큰을 쿠키에 추가
         Cookie accessTokenCookie = new Cookie("Authorization", accessToken);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
         accessTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
-        accessTokenCookie.setMaxAge(60 * 60); // 1시간 만료
+        accessTokenCookie.setMaxAge(60 * 60 * 24 * 1); // 1일 만료
+        accessTokenCookie.setDomain("toleave.store");
         accessTokenCookie.setAttribute("SameSite", "None");
-        response.addCookie(accessTokenCookie);
 
+        response.addCookie(accessTokenCookie);
         // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)
         response.addHeader("Refresh-Token", refreshToken);
 

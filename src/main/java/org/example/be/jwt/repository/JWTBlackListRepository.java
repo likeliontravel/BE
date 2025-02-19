@@ -11,4 +11,6 @@ public interface JWTBlackListRepository extends JpaRepository<JWTBlackListToken,
     Iterable<JWTBlackListToken> findAllByUserIdentifier(String userIdentifier);
 
     JWTBlackListToken findByAccessToken(String token);
+
+    JWTBlackListToken findByRefreshToken(String token);
 }
