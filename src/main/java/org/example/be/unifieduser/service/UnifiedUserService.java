@@ -24,6 +24,12 @@ public class UnifiedUserService {
     private final GeneralUserRepository generalUserRepository;
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    // 공통 메서드: 통합 유저 조회
+    @Transactional(readOnly = true)
+    public UnifiedUser getUnifiedUser(String userIdentifier) {
+        return unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+    }
 
     // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다. )
     @Transactional
@@ -49,7 +55,7 @@ public class UnifiedUserService {
     }
 
     // 통합 유저 삭제 ( 회원 탈퇴 )
-    @Transactional
+/*    @Transactional
     public void deleteUnifiedUser(String userIdentifier) {
 
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
@@ -67,11 +73,25 @@ public class UnifiedUserService {
             socialUserRepository.findByUserIdentifier(userIdentifier)
                     .ifPresent(socialUserRepository::delete);
         }
+    }*/
+    //리팩토링 유저 삭제
+    @Transactional
+    public void deleteUnifiedUser(String userIdentifier) {
+        UnifiedUser unifiedUser = getUnifiedUser(userIdentifier);
+        unifiedUserRepository.delete(unifiedUser);
+        unifiedUserRepository.flush();
+
+        if (userIdentifier.startsWith("gen ")) {
+            generalUserRepository.findByUserIdentifier(userIdentifier).ifPresent(generalUserRepository::delete);
+        } else {
+            socialUserRepository.findByUserIdentifier(userIdentifier).ifPresent(socialUserRepository::delete);
+        }
     }
+
 
     @Transactional
     // 약관 동의 상태 변경 - 원하는 상태는 프론트에서 보내줘야됩니다.
-    public void updatePolicy(PolicyUpdateRequestDTO dto) {
+/*    public void updatePolicy(PolicyUpdateRequestDTO dto) {
         String userIdentifier = dto.getUserIdentifier();
         Boolean policyAgreed = dto.getPolicyAgreed();
 
@@ -80,11 +100,16 @@ public class UnifiedUserService {
 
         unifiedUser.setPolicyAgreed(policyAgreed);
         unifiedUserRepository.save(unifiedUser);
+    }*/
+    public void updatePolicy(PolicyUpdateRequestDTO dto) {
+        UnifiedUser unifiedUser = getUnifiedUser(dto.getUserIdentifier());
+        unifiedUser.setPolicyAgreed(dto.getPolicyAgreed());
+        unifiedUserRepository.save(unifiedUser);
     }
 
     // 구독 여부 상태 변경 - 원하는 상태는 프론트에서 보내줘야됩니다.
     @Transactional
-    public void updateSubscribed(SubscribedUpdateRequestDTO dto) {
+/*    public void updateSubscribed(SubscribedUpdateRequestDTO dto) {
         String userIdentifier = dto.getUserIdentifier();
         Boolean subscribed = dto.getSubscribed();
 
@@ -93,7 +118,13 @@ public class UnifiedUserService {
 
         unifiedUser.setSubscribed(subscribed);
         unifiedUserRepository.save(unifiedUser);
+    }*/
+    public void updateSubscribed(SubscribedUpdateRequestDTO dto) {
+        UnifiedUser unifiedUser = getUnifiedUser(dto.getUserIdentifier());
+        unifiedUser.setSubscribed(dto.getSubscribed());
+        unifiedUserRepository.save(unifiedUser);
     }
+
     // 유저 프로필 조회
     @Transactional(readOnly = true)
     public UnifiedUserProfileDTO getUserProfile(String userIdentifier) {
@@ -112,15 +143,20 @@ public class UnifiedUserService {
 
     // 프로필 사진 수정
     @Transactional
-    public void updateProfilePicture(String userIdentifier, String newProfilePictureUrl) {
+/*    public void updateProfilePicture(String userIdentifier, String newProfilePictureUrl) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         unifiedUser.setProfilePictureUrl(newProfilePictureUrl); // 프로필 사진 URL 업데이트
         unifiedUserRepository.save(unifiedUser);
+    }*/
+    public void updateProfilePicture(String userIdentifier, String newProfilePictureUrl) {
+        UnifiedUser unifiedUser = getUnifiedUser(userIdentifier);
+        unifiedUser.setProfilePictureUrl(newProfilePictureUrl);
+        unifiedUserRepository.save(unifiedUser);
     }
 
-    // 이름 수정
+    // 이름 수정 은 없어되잖아?
     @Transactional
     public void updateName(String userIdentifier, String newName) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
@@ -132,7 +168,7 @@ public class UnifiedUserService {
 
     // 이메일 수정 (일반 유저만)
     @Transactional
-    public void updateEmail(String userIdentifier, String newEmail) {
+/*    public void updateEmail(String userIdentifier, String newEmail) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
@@ -143,11 +179,19 @@ public class UnifiedUserService {
 
         unifiedUser.setEmail(newEmail);
         unifiedUserRepository.save(unifiedUser);
+    }*/
+    public void updateEmail(String userIdentifier, String newEmail) {
+        UnifiedUser unifiedUser = getUnifiedUser(userIdentifier);
+        if (unifiedUser.getSocialProvider() != null) {
+            throw new IllegalStateException("소셜 로그인 사용자는 이메일을 변경할 수 없습니다.");
+        }
+        unifiedUser.setEmail(newEmail);
+        unifiedUserRepository.save(unifiedUser);
     }
 
     // 비밀번호 수정 (일반 로그인 사용자)
     @Transactional
-    public void updatePassword(String userIdentifier, String newPassword) {
+/*    public void updatePassword(String userIdentifier, String newPassword) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
@@ -159,12 +203,19 @@ public class UnifiedUserService {
         if (unifiedUser.getSocialProvider() != null) {
             throw new IllegalStateException("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.");
         }
+    }*/
+    public void updatePassword(String userIdentifier, String newPassword) {
+        UnifiedUser unifiedUser = getUnifiedUser(userIdentifier);
+        if (unifiedUser.getSocialProvider() != null) {
+            throw new IllegalStateException("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.");
+        }
+        unifiedUser.setPassword(passwordEncoder.encode(newPassword));
+        unifiedUserRepository.save(unifiedUser);
     }
-
 
     // 소셜 계정 연동
     @Transactional
-    public void linkSocialAccount(String userIdentifier, String socialProvider, String socialIdentifier) {
+/*    public void linkSocialAccount(String userIdentifier, String socialProvider, String socialIdentifier) {
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
@@ -173,13 +224,16 @@ public class UnifiedUserService {
         unifiedUser.setSocialIdentifier(socialIdentifier);
         unifiedUserRepository.save(unifiedUser);
 
+    }*/
+    public void linkSocialAccount(String userIdentifier, String socialProvider, String socialIdentifier) {
+        UnifiedUser unifiedUser = getUnifiedUser(userIdentifier);
+        unifiedUser.setSocialProvider(socialProvider);
+        unifiedUser.setSocialIdentifier(socialIdentifier);
+        unifiedUserRepository.save(unifiedUser);
     }
+
     // 소셜 유저 여부 확인
     public boolean isSocialUser(String userIdentifier) {
-        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다." + userIdentifier));
-
-        // 소셜 로그인 유저라면 true
-        return unifiedUser.getSocialProvider() != null;
+        return getUnifiedUser(userIdentifier).getSocialProvider() != null;
     }
 }
