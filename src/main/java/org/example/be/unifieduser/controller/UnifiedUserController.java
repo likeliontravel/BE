@@ -22,7 +22,7 @@ public class UnifiedUserController {
     @DeleteMapping("/{userIdentifier}")
     public ResponseEntity<CommonResponse<String>> deleteUser(@PathVariable String userIdentifier) {
         unifiedUserService.deleteUnifiedUser(userIdentifier);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
+        return ResponseEntity.ok(CommonResponse.success(null, "회원 탈퇴 성공"));
     }
 
     // 이용약관 동의여부 변경
@@ -48,11 +48,11 @@ public class UnifiedUserController {
 
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이름 변경 성공"));
     }*/
-    // 유저 프로필 조회
+// 유저 프로필 조회
     @GetMapping("/{userIdentifier}/profile")
     public ResponseEntity<CommonResponse<UnifiedUserProfileDTO>> getUserProfile(@PathVariable String userIdentifier) {
         UnifiedUserProfileDTO profileDTO = unifiedUserService.getUserProfile(userIdentifier);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileDTO, "유저 프로필 조회 성공"));
+        return ResponseEntity.ok(CommonResponse.success(profileDTO, "유저 프로필 조회 성공"));
     }
 
     // 프로필 사진 수정
@@ -61,7 +61,7 @@ public class UnifiedUserController {
             @PathVariable String userIdentifier,
             @RequestBody ProfilePictureDTO request) {
         unifiedUserService.updateProfilePicture(userIdentifier, request.getNewProfilePictureUrl());
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 수정 성공"));
+        return ResponseEntity.ok(CommonResponse.success(null, "프로필 사진 수정 성공"));
     }
 
     // 이름 수정
@@ -74,23 +74,23 @@ public class UnifiedUserController {
     }
 
     // 이메일 수정 (일반 유저만)
-    @PreAuthorize("!@unifiedUserService.isSocialUser(authentication.name)") // 소셜 로그인 유저 이메일 수정 제한
+    @PreAuthorize("!@unifiedUserService.isSocialUser(#userIdentifier)")
     @PostMapping("/{userIdentifier}/email")
     public ResponseEntity<CommonResponse<String>> updateEmail(
             @PathVariable String userIdentifier,
             @RequestBody ModifyEmailDTO request) {
         unifiedUserService.updateEmail(userIdentifier, request.getNewEmail());
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이메일 수정 성공"));
+        return ResponseEntity.ok(CommonResponse.success(null, "이메일 수정 성공"));
     }
 
     // 비밀번호 수정 (일반 로그인 사용자)
-    @PreAuthorize("!@unifiedUserService.isSocialUser(authentication.name)") // #userIdentifier는 PathVariable로 받아온 유저 식별자
+    @PreAuthorize("!@unifiedUserService.isSocialUser(#userIdentifier)")
     @PostMapping("/{userIdentifier}/password")
     public ResponseEntity<CommonResponse<String>> updatePassword(
             @PathVariable String userIdentifier,
             @RequestBody ModifyPasswordDTO request) {
         unifiedUserService.updatePassword(userIdentifier, request.getNewPassword());
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 수정 성공"));
+        return ResponseEntity.ok(CommonResponse.success(null, "비밀번호 수정 성공"));
     }
 
     // 소셜 계정 연동
@@ -99,6 +99,6 @@ public class UnifiedUserController {
             @PathVariable String userIdentifier,
             @RequestBody LinkSocialDTO request) {
         unifiedUserService.linkSocialAccount(userIdentifier, request.getSocialProvider(), request.getSocialIdentifier());
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "소셜 계정 연동 성공"));
+        return ResponseEntity.ok(CommonResponse.success(null, "소셜 계정 연동 성공"));
     }
 }
