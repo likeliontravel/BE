@@ -108,7 +108,7 @@ public class JWTFilter extends GenericFilterBean {
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(60 * 60 * 24 * 1);   // 유효기간 1일
-        cookie.setDomain("toleave.store");
+        cookie.setDomain("toleave.shop");
         cookie.setAttribute("SameSite", "None");
         return cookie;
     }

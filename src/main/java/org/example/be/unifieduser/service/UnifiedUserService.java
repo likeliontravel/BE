@@ -106,6 +106,12 @@ public class UnifiedUserService {
         return unifiedUserRepository.findByUserIdentifier(userIdentifier).isPresent();
     }
 
+    // 테스트용 유저 정보 조회
+    public UnifiedUser getUserInfoTest(String userIdentifier) {
+        return unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("그딴 유저는 없어요. userIdentifier : " + userIdentifier));
+    }
+
 //    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
 //    @Transactional(readOnly = true)
 //    public MyPageProfileDTO getUserProfileByEmail(String email) {

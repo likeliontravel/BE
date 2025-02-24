@@ -1,5 +1,6 @@
 package org.example.be.security.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
@@ -73,7 +74,15 @@ public class SecurityConfig {
                 .oauth2Login((oauth2) -> oauth2
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
-                        .successHandler(customSuccessHandler))
+                        .successHandler(customSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                    System.out.println("🚨 OAuth2 로그인 실패: " + exception.getMessage());
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\": \"OAuth2 로그인 실패: " + exception.getMessage() + "\"}");
+                })
+                )
+
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
@@ -121,10 +130,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("https://toleave.store")); // CORS 허용 도메인
+        configuration.setAllowedOrigins(List.of("https://toleave.shop")); // CORS 허용 도메인
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Refresh-Token"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Refresh-Token", "User-Identifier"));
+
+        // ✅ 변경: exposeHeaders가 항상 올바르게 설정되도록 변경
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "User-Identifier"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

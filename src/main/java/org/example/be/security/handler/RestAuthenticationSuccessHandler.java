@@ -54,12 +54,14 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         accessTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
         accessTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
         accessTokenCookie.setMaxAge(60 * 60 * 24 * 1); // 1일 만료
-        accessTokenCookie.setDomain("toleave.store");
+        accessTokenCookie.setDomain("toleave.shop");
         accessTokenCookie.setAttribute("SameSite", "None");
 
         response.addCookie(accessTokenCookie);
         // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)
         response.addHeader("Refresh-Token", refreshToken);
+        response.addHeader("User-Identifier", generalUserIdentifier); // 프론트엔드에서 가져가도록 추가
+
 
         // URL 쿼리 파라미터에 invitationCode 확인. 만약 있다면 로그인과 동시에 해당 그룹에 자동 멤버 추가
         String invitationCode = request.getParameter("invitationCode");

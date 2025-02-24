@@ -40,6 +40,7 @@ public class JWTProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + 2 * 60 * 1000); // 2분
 
+        System.out.println("JWTProvider.generateAccessToken()에 들어온 userIdentifier : " + userIdentifier + ", role : " + role);
         return Jwts.builder()
                 .setSubject("accessToken")
                 .claim("userIdentifier", userIdentifier)
@@ -55,6 +56,8 @@ public class JWTProvider {
         Date now = new Date();
 //        Date validity = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);  // 7일
         Date validity = new Date(now.getTime() + 7 * 60 * 1000);  // 7분
+
+        System.out.println("JWTProvider.generateRefreshToken()에 들어온 userIdentifier : " + userIdentifier + ", role : " + role);
         return Jwts.builder()
                 .setSubject("refreshToken")
                 .claim("userIdentifier", userIdentifier)

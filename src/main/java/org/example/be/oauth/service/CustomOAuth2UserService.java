@@ -9,6 +9,7 @@ import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +25,26 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        try {
+            OAuth2User oAuth2User = super.loadUser(userRequest);
+            System.out.println(oAuth2User);
 
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        System.out.println(oAuth2User);
+            String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+            // 제공자 별 알맞는 Response 생성
+            OAuth2Response response = createOAuth2Response(oAuth2User.getAttributes(), registrationId);
 
-        // 제공자 별 알맞는 Response 생성
-        OAuth2Response response = createOAuth2Response(oAuth2User.getAttributes(), registrationId);
+            // 기존 사용자 조회 또는 생성 및 업데이트
+            return processOAuth2User(response);
+        } catch (Exception e) {
+            System.out.println("OAuth2 사용자 정보 로딩 실패: " + e.getMessage());
+            e.printStackTrace();
+            // OAuth2Error 생성
+            OAuth2Error oauth2Error = new OAuth2Error("oauth2_authentication_failed", "OAuth2 사용자 정보 로딩 실패: " + e.getMessage(), null);
 
-        // 기존 사용자 조회 또는 생성 및 업데이트
-        return processOAuth2User(response);
+            // OAuth2AuthenticationException에 OAuth2Error 추가하여 던짐
+            throw new OAuth2AuthenticationException(oauth2Error, e);
+        }
     }
 
     // 각 Provider에 맞는 ResponseDTO 생성

@@ -6,6 +6,7 @@ import org.example.be.unifieduser.dto.ModifyNameDTO;
 import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
 import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
 import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,5 +52,10 @@ public class UnifiedUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이름 변경 성공"));
     }
 
+    @PostMapping("/test/getUserInfo/{userIdentifier}")
+    public ResponseEntity<CommonResponse<UnifiedUser>> getUnifiedUserInfoTest(@PathVariable String userIdentifier) {
+        UnifiedUser userInfoTest = unifiedUserService.getUserInfoTest(userIdentifier);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userInfoTest, "유저정보가져오기 성공"));
+    }
 
 }
