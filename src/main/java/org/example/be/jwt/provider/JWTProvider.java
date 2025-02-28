@@ -15,55 +15,36 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+// jwt 생성 및 제공을 맡을 클래스 JWTProvider
 @Component
 public class JWTProvider {
 
-    private final CustomUserDetailsService customUserDetailsService;
     private final SecretKey secretKey;
 
-    public JWTProvider(@Value("${spring.jwt.secret}") String secret,
-                       CustomUserDetailsService customUserDetailsService) {
+    public JWTProvider(@Value("${spring.jwt.secret") String secret) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.customUserDetailsService = customUserDetailsService;
     }
 
-    //유저 인증객체 생성
-    public Authentication getUserDetails(String username) {
-
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-
-        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-    }
-
-    // access토큰 생성 메서드
+    // Access Token 생성 ( 2분 )
     public String generateAccessToken(String userIdentifier, String role) {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + 2 * 60 * 1000); // 2분
-
-        System.out.println("JWTProvider.generateAccessToken()에 들어온 userIdentifier : " + userIdentifier + ", role : " + role);
         return Jwts.builder()
                 .setSubject("accessToken")
                 .claim("userIdentifier", userIdentifier)
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(validity)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 2))    // 2분
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // refresh token 생성 메서드
+    // Refresh Token 생성 ( 7분 )
     public String generateRefreshToken(String userIdentifier, String role) {
-        Date now = new Date();
-//        Date validity = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);  // 7일
-        Date validity = new Date(now.getTime() + 7 * 60 * 1000);  // 7분
-
-        System.out.println("JWTProvider.generateRefreshToken()에 들어온 userIdentifier : " + userIdentifier + ", role : " + role);
         return Jwts.builder()
                 .setSubject("refreshToken")
                 .claim("userIdentifier", userIdentifier)
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(validity)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 7))    // 7분
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }

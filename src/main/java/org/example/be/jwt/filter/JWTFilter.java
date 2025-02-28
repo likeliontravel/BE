@@ -22,6 +22,8 @@ import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
 
+
+// Security Filter Chain에 추가할 JWT 검증필터
 @Component
 @RequiredArgsConstructor
 public class JWTFilter extends GenericFilterBean {
@@ -35,10 +37,10 @@ public class JWTFilter extends GenericFilterBean {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // AccessToken은 쿠키에서 추출
-        String accessToken = extractTokenFromCookies(httpRequest, "Authorization");
-        // RefreshToken은 헤더에서 추출
-        String refreshToken = httpRequest.getHeader("Refresh-Token");
+        // AccessToken은 헤더에서 추출
+        String accessToken = httpRequest.getHeader("Authorization");
+        // RefreshToken은 쿠키에서 추출
+        String refreshToken = extractTokenFromCookies(httpRequest, "Refresh-Token");
 
         try {
             if (accessToken != null && jwtUtil.validateToken(accessToken)) {
@@ -49,16 +51,15 @@ public class JWTFilter extends GenericFilterBean {
                 String role = jwtUtil.getRole(refreshToken);
                 String newAccessToken = jwtProvider.generateAccessToken(userIdentifier, role);
 
-                // 새로운 AccessToken을 쿠키에 저장
-                Cookie newAccessTokenCookie = createCookie("Authorization", newAccessToken);
-                httpResponse.addCookie(newAccessTokenCookie);
+                // 새로운 AccessToken을 쿠키에 저장 (!!응답 헤더에 추가되는게 아님!!)
+                httpResponse.addCookie(createCookie("Authorization", newAccessToken, 60 * 2));
 
                 // SecurityContext 업데이트
                 setSecurityContext(newAccessToken);
             } else {
-                throw new SecurityException("유효하지 않은 인증 토큰");
+                throw new SecurityException("유효하지 않은 인증 토큰입니다.");
             }
-        }catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {
             httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "토큰이 만료되었습니다.");
             return;
         } catch (SignatureException e) {
@@ -93,6 +94,7 @@ public class JWTFilter extends GenericFilterBean {
         return null;
     }
 
+    // Security 인증 객체 업데이트
     private void setSecurityContext(String token) {
         try {
             Authentication authentication = jwtUtil.getAuthentication(token);
@@ -102,12 +104,12 @@ public class JWTFilter extends GenericFilterBean {
         }
     }
 
-    private Cookie createCookie(String name, String value) {
+    private Cookie createCookie(String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24 * 1);   // 유효기간 1일
+        cookie.setMaxAge(maxAge);   // 유효기간 2분 (AccessToken이라 담을 쿠키 유효기간도 2분으로 설정)
         cookie.setDomain("toleave.shop");
         cookie.setAttribute("SameSite", "None");
         return cookie;

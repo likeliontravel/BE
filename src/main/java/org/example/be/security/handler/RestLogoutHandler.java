@@ -30,25 +30,19 @@ public class RestLogoutHandler implements LogoutHandler {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        //Request 에서 쿠키 추출
-        Cookie[] cookies = request.getCookies();
-        String accessToken = null;
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("Authorization".equals(cookie.getName())) {
-                    accessToken = cookie.getValue();
-                }
-            }
+        // 요청 헤더에서 AccessToken 가져오기
+        String accessToken = request.getHeader("Authorization");
+        if (accessToken != null && accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7);     // 문자열에서 "Bearer " 부분 제거하기
         }
 
-        //Request 에서 로컬스토리지에 토큰 추출
-        String refreshToken = request.getHeader("Refresh-Token");
+        // 요청 쿠키에서 RefreshToken 가져오기
+        String refreshToken = extractTokenFromCookie(request, "Refresh-Token");
 
         // AccessToken 이나 RefreshToken 이 없는 경우
         if (accessToken == null || refreshToken == null) {
             CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.BAD_REQUEST.value(), "Access Token or Refresh Token are missing."
+                    HttpStatus.BAD_REQUEST.value(), "Access Token 또는 Refresh Token이 존재하지 않습니다."
             );
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE+";charset=utf-8");

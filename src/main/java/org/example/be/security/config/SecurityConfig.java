@@ -2,6 +2,7 @@ package org.example.be.security.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.filter.JWTFilter;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@Slf4j
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -46,11 +49,9 @@ public class SecurityConfig {
     private final CustomSuccessHandler customSuccessHandler;
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+    public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.authenticationProvider(restAuthenticationProvider);
-
         return authenticationManagerBuilder.build();
     }
 
@@ -75,25 +76,20 @@ public class SecurityConfig {
                         .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)
-                        .failureHandler((request, response, exception) -> {
-                    System.out.println("🚨 OAuth2 로그인 실패: " + exception.getMessage());
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"OAuth2 로그인 실패: " + exception.getMessage() + "\"}");
-                })
                 )
 
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
-                        .requestMatchers("/mail/**", "/user/**").permitAll()
+                        .requestMatchers("/mail/**", "/user/**").permitAll()    // 메일, 유저 일부기능 테스트용. 나중에 수정해야함.
                         .requestMatchers("/oauth2/**").permitAll() // OAuth2 로그인 경로 추가
                         .anyRequest().authenticated()
                 )
 
+                // 추가 필터 순서 : JWTFilter -> restAuthenticationFilter -> UsernamePasswordAuthenticationFilter
                 // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
                 .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
-                // JWT 필터 추가 RestAuthenticationFilter 이전에 추가
+                // JWT 필터 추가 RestAuthenticationFilter 이전에 추가.
                 .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
 
                 // 로그아웃 필터 설정
@@ -116,7 +112,7 @@ public class SecurityConfig {
 
     private RestAuthenticationFilter restAuthenticationFilter(AuthenticationManager authenticationManager) {
 
-        RestAuthenticationFilter restAuthenticationFilter = new RestAuthenticationFilter();
+        RestAuthenticationFilter restAuthenticationFilter = new RestAuthenticationFilter(jwtProvider);
 
         restAuthenticationFilter.setAuthenticationManager(authenticationManager);
 
@@ -134,7 +130,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Refresh-Token", "User-Identifier"));
 
-        // ✅ 변경: exposeHeaders가 항상 올바르게 설정되도록 변경
+        // 변경 : exposeHeaders가 항상 올바르게 설정되도록 변경
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "User-Identifier"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

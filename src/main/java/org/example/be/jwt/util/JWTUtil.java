@@ -22,68 +22,61 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
+/*
+    ## JWT 검증 시 필요한 메서드를 정의해둘 클래스 JWTUtil ##
+*/
 @Component
 public class JWTUtil {
 
     private final SecretKey secretKey;
     private final CustomUserDetailsService customUserDetailsService;
-    private final CustomOAuth2UserService customOAuth2UserService;
     private final SocialUserRepository socialUserRepository;
 
-
-    public JWTUtil(@Value("${spring.jwt.secret}") String secret, CustomUserDetailsService customUserDetailsService,
-                   CustomOAuth2UserService customOAuth2UserService, SocialUserRepository socialUserRepository) {
-
-        if (secret.length() < 32) {
-
-            ///  비밀 키가 32 자리가 아니면 예외 발생
-           throw new IllegalArgumentException("JWT secret key must be at least 32 characters long");
-        }
-
+    public JWTUtil(@Value("${spring.jwt.secret") String secret,
+                   CustomUserDetailsService customUserDetailsService,
+                   SocialUserRepository socialUserRepository) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.customUserDetailsService = customUserDetailsService;
-        this.customOAuth2UserService = customOAuth2UserService;
         this.socialUserRepository = socialUserRepository;
     }
-    /*
-     * JWT 토큰에서 만료 시간(Expiration) 추출 */
+
+    // JWT 유효성 검사
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token);
+            return true;
+        } catch (ExpiredJwtException | SignatureException | MalformedJwtException | UnsupportedJwtException e) {
+            System.out.println("JWT 검증 중 다음 예외 발생: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // 토큰에서 userIdentifie만 추출
+    public String getUserIdentifier(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token)
+                .getPayload().get("userIdentifier", String.class);
+    }
+
+    // 토큰에서 role만 추출
+    public String getRole(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token)
+                .getPayload().get("role", String.class);
+    }
+
+
+    /* JWT 토큰에서 만료 시간(Expiration) 추출 */
     public Date getExpiration(String token) {
 
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration();
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (ExpiredJwtException e) {
-            System.out.println("토큰 만료됨: " + e.getMessage());
-            return false;
-        } catch (SignatureException e) {
-            System.out.println("서명이 올바르지 않은 토큰: " + e.getMessage());
-            return false;
-        } catch (MalformedJwtException e) {
-            System.out.println("손상된 토큰: " + e.getMessage());
-            return false;
-        } catch (UnsupportedJwtException e) {
-            System.out.println("지원되지 않는 토큰 형식: " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            System.out.println("유효하지 않은 토큰: " + e.getMessage());
-            return false;
-        }
-    }
 
     // 토큰을 이용해 인증객체 가져오는 메서드
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(secretKey).build()
+                .parseSignedClaims(token)
+                .getPayload();
 
         String userIdentifier = claims.get("userIdentifier", String.class);
         String role = claims.get("role", String.class);
@@ -109,25 +102,4 @@ public class JWTUtil {
         }
     }
 
-    // 토큰에서 userIdentifier 가져오는 메서드
-    public String getUserIdentifier(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.get("userIdentifier", String.class);
-    }
-
-    // 토큰에서 role 가져오는 메서드
-    public String getRole(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return claims.get("role", String.class);
-    }
 }

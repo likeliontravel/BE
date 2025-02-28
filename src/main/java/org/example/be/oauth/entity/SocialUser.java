@@ -19,7 +19,7 @@ public class SocialUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100, unique = true)
+    @Column(nullable = false, length = 100)
     private String email;   // 사용자 이메일
 
     @Column(nullable = false)
@@ -34,7 +34,7 @@ public class SocialUser {
     @Column(nullable = false)
     private String role;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String userIdentifier;
 
     @PrePersist

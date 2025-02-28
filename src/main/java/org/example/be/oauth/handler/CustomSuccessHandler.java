@@ -73,7 +73,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 }
             }
 
+
+
             response.sendRedirect("https://toleave.shop/");
+
+
         } catch (Exception e) {
             System.out.println("OAuth2 로그인 처리 중 예외 발생: " + e.getMessage());
             e.printStackTrace();
