@@ -37,10 +37,20 @@ public class SocialUser {
     @Column(nullable = false, unique = true)
     private String userIdentifier;
 
+
+    public SocialUser(String email, String name, String provider, String providerId, String roleUser, String userIdentifier) {
+        this.email = email;
+        this.name = name;
+        this.provider = provider;
+        this.providerId = providerId;
+        this.role = roleUser;
+        this.userIdentifier = userIdentifier;
+
+    }
+
     @PrePersist
     @PreUpdate
     public void generateUserIdentifier() {
         this.userIdentifier = provider + " " + email;
     }
-
 }

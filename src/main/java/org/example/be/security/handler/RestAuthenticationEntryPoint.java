@@ -17,7 +17,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
 
         CommonResponse<String> commonResponse = CommonResponse.error(
-                HttpStatus.UNAUTHORIZED.value(), "권한 없는 메세지 : " + authException.getMessage()
+                HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다. 권한 없는 메세지 : " + authException.getMessage()
         );
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");

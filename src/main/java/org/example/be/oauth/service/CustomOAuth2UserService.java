@@ -1,5 +1,6 @@
 package org.example.be.oauth.service;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.be.oauth.dto.*;
 import org.example.be.oauth.entity.SocialUser;
@@ -14,7 +15,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 @Service // 이 클래스는 Spring의 서비스 빈으로 등록되어 DI(의존성 주입) 받는다.
 @RequiredArgsConstructor
@@ -27,13 +27,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         try {
             OAuth2User oAuth2User = super.loadUser(userRequest);
-            System.out.println(oAuth2User);
             System.out.println("OAuth2User attributes: " + oAuth2User.getAttributes());
+
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
             // 제공자 별 알맞는 Response 생성
             OAuth2Response response = createOAuth2Response(oAuth2User.getAttributes(), registrationId);
-
             // 기존 사용자 조회 또는 생성 및 업데이트
             return processOAuth2User(response);
         } catch (Exception e) {
@@ -68,9 +67,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String provider = response.getProvider();
         String providerId = response.getProviderId();
         String userIdentifier = provider + " " + email;
-//
-//        // 소셜 유저 조회
-//        SocialUser socialUser = socialUserRepository.findByUserIdentifier(userIdentifier).orElse(null);
 
         // 소셜로그인하며 받은 인증 객체로부터 ProviderId를 이용해 소셜 테이블 유저 조회. 여기서는 예외처리를 하면 안됨.
         SocialUser socialUser = socialUserRepository.findByProviderId(providerId).orElse(null);
@@ -78,13 +74,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // social_user 테이블에 기존 정보가 없을 경우(새로운 유저가 소셜로그인)
         if (socialUser == null) {
             // 소셜 유저 생성
-            socialUser = new SocialUser();
-            socialUser.setEmail(email);
-            socialUser.setName(name);
-            socialUser.setProvider(provider);
-            socialUser.setProviderId(providerId);
-            socialUser.setRole("ROLE_USER");
-            socialUser.setUserIdentifier(userIdentifier);
+            socialUser = new SocialUser(email, name, provider, providerId, "ROLE_USER", userIdentifier);
 
             socialUserRepository.save(socialUser);
 
@@ -93,13 +83,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER")
             );
         } else {
-            // 기존 정보 변경 비활성화. ProviderId는 변경될 일이 없으니 setter 불필요
-//            socialUser.setName(name);
-//            socialUser.setProvider(provider);
-//            socialUser.setEmail(email);
-//            socialUser.setUserIdentifier(userIdentifier);
-//            socialUserRepository.save(socialUser);
-
             // SocialUser가 이미 존재하는 경우 , UnifiedUser가 존재하는지 확인
             // (예를 들어, unifiedUserRepository를 직접 주입받거나 unifiedUserService에 해당 메서드를 추가할 수 있음)
             if (!unifiedUserService.unifiedUserExists(userIdentifier)) {
@@ -112,13 +95,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 엔티티 -> DTO 매퍼
     private SocialUserDTO mapToDTO(SocialUser entity) {
-        SocialUserDTO dto = new SocialUserDTO();
-        dto.setId(entity.getId());
-        dto.setEmail(entity.getEmail());
-        dto.setName(entity.getName());
-        dto.setProvider(entity.getProvider());
-        dto.setRole(entity.getRole());
-        dto.setUserIdentifier(entity.getUserIdentifier());
-        return dto;
+
+        return new SocialUserDTO(entity.getId(), entity.getEmail(), entity.getName(), entity.getProvider(), entity.getRole(), entity.getUserIdentifier());
+
     }
 }

@@ -61,15 +61,15 @@ public class RestLogoutHandler implements LogoutHandler {
 
                 System.out.println("OAuth2 사용자 로그아웃: " + userKey);
             } else {
+                String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
                 // 일반 사용자 토큰을 블랙리스트에 추가
-                jwtBlackListService.addToBlackList(jwtUtil.getUserIdentifier(accessToken), accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
+                jwtBlackListService.addToBlackList(userIdentifier, accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
+                System.out.println("일반 사용자 로그아웃: " + userIdentifier);
             }
 
             // Authorization 쿠키 삭제
-            Cookie deleteCookie = new Cookie("Authorization", null);
-            deleteCookie.setMaxAge(0);
-            deleteCookie.setPath("/");
-            response.addCookie(deleteCookie);
+            response.addCookie(deleteCookie("Authorization"));
+            response.addCookie(deleteCookie("Refresh-Token"));
 
             // 로그아웃 성공 응답 설정
             CommonResponse<String> commonResponse = CommonResponse.success(null, "성공적으로 로그아웃 되었습니다.");
@@ -88,5 +88,29 @@ public class RestLogoutHandler implements LogoutHandler {
             response.getWriter().write(objectMapper.writeValueAsString(commonResponse));
 
         }
+    }
+
+    // 쿠키에서 토큰 추출하는 메서드
+    private String extractTokenFromCookie(HttpServletRequest request, String name) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals(name)) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    // 브라우저에 저장된 쿠키를 삭제해주는 메서드
+    private Cookie deleteCookie(String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+        cookie.setDomain("toleave.shop");
+        cookie.setAttribute("SameSite", "None");
+        return cookie;
     }
 }
