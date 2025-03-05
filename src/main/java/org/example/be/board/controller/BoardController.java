@@ -56,13 +56,8 @@ public class BoardController {
 
     // 게시글 작성
     @PostMapping
-    public ResponseEntity<CommonResponse<String>> writeBoard(
-            @RequestBody BoardDTO boardDTO, // 게시글 정보
-            @RequestParam(required = false) MultipartFile imageFile // 이미지 파일
-    ) throws IOException {
-
-        // 게시글 작성 시 이미지가 있으면 파일 처리도 함께 하도록 변경
-        boardService.write(boardDTO, (List<MultipartFile>) imageFile); // 이미지 포함하여 저장
+    public ResponseEntity<CommonResponse<String>> writeBoard(@ModelAttribute BoardDTO boardDTO) throws IOException {
+        boardService.write(boardDTO);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success("게시판이 작성되었습니다.", "게시글 등록 성공"));
     }

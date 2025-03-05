@@ -35,6 +35,7 @@ public class BoardService {
                 .map(BoardDTO::toDTO) // board 엔티티를 받아와서 dto로 변환
                 .collect(Collectors.toList());
     }
+
     // 게시글 조회 (조회수 증가 포함)
     @Transactional
     public BoardDTO getBoard(int id) {
@@ -61,6 +62,7 @@ public class BoardService {
                 .map(BoardDTO::toDTO)
                 .collect(Collectors.toList());
     }
+
     // 최신순 게시판 글 조회
     public List<BoardDTO> getBoardSortedByRecents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -70,33 +72,25 @@ public class BoardService {
                 .collect(Collectors.toList());
     }
 
-    // 게시글 등록
-    public void write(BoardDTO boardDTO, List<MultipartFile> imageFiles) throws IOException {
+    @Transactional
+    public void write(BoardDTO boardDTO) throws IOException {
+        // 1. 제목과 내용이 없는 경우 예외 처리
         if (boardDTO.getTitle() == null || boardDTO.getContent() == null) {
             throw new IllegalArgumentException("게시글 제목과 내용을 입력해야 합니다.");
         }
-        // 파일 첨부 여부에 따라 로직 분리
-        if (imageFiles == null || imageFiles.isEmpty()) {
-            // 파일이 없을 때
+        // 2. 게시글 정보 저장
+        if (boardDTO.getFileAttached() == 0 || boardDTO.getImage() == null || boardDTO.getImage().isEmpty()) {
+            // 파일이 없을 때: 게시글만 저장
             Board board = Board.toSaveEntity(boardDTO);
             boardRepository.save(board);
         } else {
-            // 파일이 있을 때
-            /*
-            1.DTO에 담긴 파일을 꺼냄
-            2.파일의 이름을 가져옴
-            3.서버 저장용 이름으로 만듦 ex) 사용자가 내사진.jpg로 저장하면 -> uuid 식별자를 통해 내사진.jpg로 변환하여 중복 제거
-            4.저장 경로를 설정
-            5.해당 경로에 파일 저장
-            6.board_table에 게시글 정보 save 처리
-            7.board_file_table에 파일 정보 save 처리
-             */
+            // 파일이 있을 때: 게시글 및 파일 정보 저장
             Board boardEntity = Board.toSaveFileEntity(boardDTO);
-            int savedId = boardRepository.save(boardEntity).getId(); //게시글에 한 id를 pk로 쓰기 때문에 가져와야함
-            Board board = boardRepository.findById(savedId).get();
-            for (MultipartFile image : boardDTO.getImage()) {
-                String originalFilename = image.getOriginalFilename(); // 사용자가 올린 파일의 이름
-                String storedFileName = gcsUploader.uploadImage(image);
+            int savedId = boardRepository.save(boardEntity).getId(); // 게시글의 PK인 ID를 저장
+            Board board = boardRepository.findById(savedId).orElseThrow(() -> new IllegalArgumentException("게시글 저장 실패"));
+            for (MultipartFile file : boardDTO.getImage()) {
+                String originalFilename = file.getOriginalFilename();
+                String storedFileName = gcsUploader.uploadImage(file); // GCS에 파일 업로드하는 메서드
                 BoardFile boardFile = BoardFile.toBoardFile(board, originalFilename, storedFileName);
                 boardFileRepository.save(boardFile);
             }
@@ -174,7 +168,7 @@ public class BoardService {
                 String storedFileName = boardFile.getStoredFileName();
                 try {
                     gcsUploader.deleteImage(storedFileName);
-                }catch (NoSuchElementException e){
+                } catch (NoSuchElementException e) {
                     throw new NoSuchElementException("파일 삭제를 실패하였습니다.");
                 }
             }
