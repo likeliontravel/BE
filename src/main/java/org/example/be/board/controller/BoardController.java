@@ -64,8 +64,8 @@ public class BoardController {
 
 
     // 게시글 수정
-    @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@RequestBody BoardDTO boardDTO) throws IOException {
+    @PostMapping("/{id}")
+    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@ModelAttribute BoardDTO boardDTO) throws IOException {
         boardDTO.setId(id);
         boardService.updateBoard(boardDTO);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -74,7 +74,7 @@ public class BoardController {
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) {
+    public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) throws IOException {
         boardService.deleteBoard(id);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"게시글 삭제"));
     }
