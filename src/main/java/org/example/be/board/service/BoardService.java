@@ -31,16 +31,14 @@ public class BoardService {
     public List<BoardDTO> getAllBoards(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Board> boardPage = boardRepository.findAll(pageable);
-        return boardPage.stream()
-                .map(BoardDTO::toDTO) // board 엔티티를 받아와서 dto로 변환
+        return boardPage.stream().map(BoardDTO::toDTO) // board 엔티티를 받아와서 dto로 변환
                 .collect(Collectors.toList());
     }
 
     // 게시글 조회 (조회수 증가 포함)
     @Transactional
     public BoardDTO getBoard(int id) {
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+        Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
         // 조회수 증가
         increaseBoardHits(board);
@@ -58,18 +56,14 @@ public class BoardService {
     public List<BoardDTO> getBoardsSortedByHits(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Board> boardPage = boardRepository.findAllByOrderByBoardHitsDesc(pageable);
-        return boardPage.stream()
-                .map(BoardDTO::toDTO)
-                .collect(Collectors.toList());
+        return boardPage.stream().map(BoardDTO::toDTO).collect(Collectors.toList());
     }
 
     // 최신순 게시판 글 조회
     public List<BoardDTO> getBoardSortedByRecents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Board> boardPage = boardRepository.findAllByOrderByCreatedTimeDesc(pageable);
-        return boardPage.stream()
-                .map(BoardDTO::toDTO)
-                .collect(Collectors.toList());
+        return boardPage.stream().map(BoardDTO::toDTO).collect(Collectors.toList());
     }
 
     @Transactional
@@ -115,8 +109,7 @@ public class BoardService {
     @Transactional
     public void updateBoard(BoardDTO boardDTO) throws IOException {
         // 기존 게시글 조회 (없으면 예외 발생)
-        Board board = boardRepository.findById(boardDTO.getId())
-                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+        Board board = boardRepository.findById(boardDTO.getId()).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
         // 기존 이미지 삭제 처리 (기존에 파일이 첨부된 경우)
         if (board.getFileAttached() == 1) {
@@ -149,8 +142,7 @@ public class BoardService {
     // 게시글 삭제
     @Transactional
     public void deleteBoard(int id) throws IOException {
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+        Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
         // Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
         //삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
@@ -163,8 +155,8 @@ public class BoardService {
             // 파일 삭제 로직
             for (BoardFile boardFile : boardFiles) {
                 String storedFileName = boardFile.getStoredFileName();
-                    gcsUploader.deleteImage(storedFileName);
-                    boardFileRepository.delete(boardFile);
+                gcsUploader.deleteImage(storedFileName);
+                boardFileRepository.delete(boardFile);
             }
         }
         boardRepository.delete(board);
@@ -174,13 +166,9 @@ public class BoardService {
 
     // 게시판 검색 (제목/내용 검색)
     public List<BoardDTO> searchBoardsByKeyword(String keyword) {
-        String validatedKeyword = Optional.ofNullable(keyword)
-                .filter(k -> !k.isBlank())
-                .orElseThrow(() -> new IllegalArgumentException("검색 키워드를 입력해야 합니다."));
+        String validatedKeyword = Optional.ofNullable(keyword).filter(k -> !k.isBlank()).orElseThrow(() -> new IllegalArgumentException("검색 키워드를 입력해야 합니다."));
 
         List<Board> boards = boardRepository.findByTitleContainingOrContentContainingOrWriterContaining(validatedKeyword, validatedKeyword, validatedKeyword);
-        return boards.stream()
-                .map(BoardDTO::toDTO)
-                .collect(Collectors.toList());
+        return boards.stream().map(BoardDTO::toDTO).collect(Collectors.toList());
     }
 }

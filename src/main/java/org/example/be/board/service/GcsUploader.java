@@ -26,12 +26,7 @@ public class GcsUploader {
 
     // 생성자에서 Storage 객체를 생성하면서 인증을 명시적으로 설정
     public GcsUploader() throws IOException {
-        this.storage = StorageOptions.newBuilder()
-                .setCredentials(GoogleCredentials.fromStream(
-                        new FileInputStream("C:/projects/BE/src/main/resources/toleave-b9a7b3a17267.json")
-                ))
-                .build()
-                .getService();
+        this.storage = StorageOptions.newBuilder().setCredentials(GoogleCredentials.fromStream(new FileInputStream("C:/projects/BE/src/main/resources/toleave-b9a7b3a17267.json"))).build().getService();
     }
 
     @Transactional
@@ -45,9 +40,7 @@ public class GcsUploader {
             String storeFileName = UUID.randomUUID() + "_" + originalFilename;
 
             BlobId blobId = BlobId.of(bucketName, storeFileName);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                    .setContentType(file.getContentType())
-                    .build();
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
             // GCS에 파일 업로드
             storage.create(blobInfo, file.getBytes());
 
