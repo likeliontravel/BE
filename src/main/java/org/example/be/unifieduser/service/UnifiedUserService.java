@@ -28,7 +28,7 @@ public class UnifiedUserService {
         String email = dto.getEmail();
         String name = dto.getName();
         String role = dto.getRole();
-        String userIdentifier = provider + " " + email;
+        String userIdentifier = provider + "_" + email;
 
         UnifiedUser unifiedUser = new UnifiedUser();
         unifiedUser.setUserIdentifier(userIdentifier);
@@ -52,7 +52,7 @@ public class UnifiedUserService {
         unifiedUserRepository.delete(unifiedUser);
         unifiedUserRepository.flush();  // DB에 반영해줌
 //
-        if (userIdentifier.startsWith("gen ")) {
+        if (userIdentifier.startsWith("gen_")) {
             generalUserRepository.findByUserIdentifier(userIdentifier)
                     .ifPresent(generalUserRepository::delete);
         } else {

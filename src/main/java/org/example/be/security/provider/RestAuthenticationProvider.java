@@ -29,7 +29,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        String userIdentifier = "gen" + " " + authentication.getName();
+        String userIdentifier = "gen" + "_" + authentication.getName();
         String password = (String) authentication.getCredentials();
 
         // userDetailsService 사용하여 loadUserByName 으로 해당 유저가 있는지 확인

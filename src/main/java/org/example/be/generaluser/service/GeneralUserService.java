@@ -34,7 +34,11 @@ public class GeneralUserService {
         GeneralUser generalUser = new GeneralUser();
 
         generalUser.setEmail(generalUserDTO.getEmail());
-        generalUser.setPassword(passwordEncoder.encode(generalUserDTO.getPassword()));
+        if (generalUserDTO.getPassword() != null){
+            generalUser.setPassword(passwordEncoder.encode(generalUserDTO.getPassword()));
+        } else {
+            throw new IllegalArgumentException("비밀번호가 비어있습니다.");
+        }
         generalUser.setName(generalUserDTO.getName());
         generalUser.setRole("ROLE_USER");
 
@@ -51,7 +55,7 @@ public class GeneralUserService {
     @Transactional
     public void updateGeneralUser(GeneralUserDTO generalUserDTO) {
 
-        GeneralUser generalUser = generalUserRepository.findByUserIdentifier(generalUserDTO.getEmail())
+        GeneralUser generalUser = generalUserRepository.findByUserIdentifier("gen_" + generalUserDTO.getEmail())
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다"));
 
         // 유효하지 않은 요청 데이터인 경우
@@ -76,7 +80,7 @@ public class GeneralUserService {
     // 이메일을 기준으로 회원 프로필 정보 조회
     @Transactional(readOnly = true)
     public GeneralUserDTO getProfile(String email) {
-        GeneralUser generalUser = generalUserRepository.findByUserIdentifier(email)
+        GeneralUser generalUser = generalUserRepository.findByUserIdentifier("gen_" + email)
                 .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
 
         // GeneralUser를 DTO로 변환 후 반환

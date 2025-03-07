@@ -37,10 +37,25 @@ public class JWTFilter extends GenericFilterBean {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // AccessToken은 헤더에서 추출
-        String accessToken = httpRequest.getHeader("Authorization");
-        // RefreshToken은 쿠키에서 추출
+        // 현재 쿠키 로그에 찍어보기
+        Cookie[] cookies = httpRequest.getCookies();
+        if (cookies != null) {
+            System.out.println("요청에 포함된 쿠키 목록: ");
+            for (Cookie cookie : cookies) {
+                System.out.println("키 : " + cookie.getName() + ", \n값 : " + cookie.getValue());
+            }
+        } else {
+            System.out.println("요청에 쿠키가 포함되어 있지 않습니다.");
+        }
+
+        // AccessToken을 쿠키에서 추출
+        String accessToken = extractTokenFromCookies(httpRequest, "Authorization");
+        // RefreshToken을 쿠키에서 추출
         String refreshToken = extractTokenFromCookies(httpRequest, "Refresh-Token");
+
+        System.out.println("쿠키에서 추출한 토큰");
+        System.out.println("Authorization(AccessToken) : " + accessToken);
+        System.out.println("RefreshToken : " + refreshToken);
 
         try {
             if (accessToken != null && jwtUtil.validateToken(accessToken)) {
@@ -56,6 +71,10 @@ public class JWTFilter extends GenericFilterBean {
 
                 // SecurityContext 업데이트
                 setSecurityContext(newAccessToken);
+
+                // 프론트에서 AccessToken 갱신 감지를 할 수 있도록 205 응답코드 설정
+                httpResponse.setStatus(HttpServletResponse.SC_RESET_CONTENT);
+
             } else {
                 throw new SecurityException("유효하지 않은 인증 토큰입니다.");
             }

@@ -32,7 +32,7 @@ public class JWTUtil {
     private final CustomUserDetailsService customUserDetailsService;
     private final SocialUserRepository socialUserRepository;
 
-    public JWTUtil(@Value("${spring.jwt.secret") String secret,
+    public JWTUtil(@Value("${spring.jwt.secret}") String secret,
                    CustomUserDetailsService customUserDetailsService,
                    SocialUserRepository socialUserRepository) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());

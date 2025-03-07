@@ -45,12 +45,11 @@ public class SocialUser {
         this.providerId = providerId;
         this.role = roleUser;
         this.userIdentifier = userIdentifier;
-
     }
 
     @PrePersist
     @PreUpdate
     public void generateUserIdentifier() {
-        this.userIdentifier = provider + " " + email;
+        this.userIdentifier = provider + "_" + email;
     }
 }

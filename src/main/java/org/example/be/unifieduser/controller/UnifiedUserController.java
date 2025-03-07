@@ -52,8 +52,12 @@ public class UnifiedUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이름 변경 성공"));
     }
 
-    @PostMapping("/test/getUserInfo/{userIdentifier}")
+    @GetMapping("/test/getUserInfo/{userIdentifier}")
     public ResponseEntity<CommonResponse<UnifiedUser>> getUnifiedUserInfoTest(@PathVariable String userIdentifier) {
+        if (userIdentifier == null || userIdentifier.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), "userIdentifier가 제공되지 않았습니다."));
+        }
         UnifiedUser userInfoTest = unifiedUserService.getUserInfoTest(userIdentifier);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userInfoTest, "유저정보가져오기 성공"));
     }

@@ -42,7 +42,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         // 인증된 사용자 정보 가져오기
         GeneralUserDTO generalUserDTO = (GeneralUserDTO) authentication.getPrincipal();
 
-        String generalUserIdentifier = "gen" + " " + generalUserDTO.getEmail();
+        String generalUserIdentifier = "gen" + "_" + generalUserDTO.getEmail();
 
         // Access 토큰 및 Refresh 토큰 생성
         String accessToken = jwtProvider.generateAccessToken(generalUserIdentifier, generalUserDTO.getRole());
@@ -68,6 +68,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
                 groupService.addMemberToGroup(dto);
             } catch (Exception e) {
                 System.out.println("로그인 후 자동 그룹 가입 실패: " + e.getMessage());
+                throw new IllegalArgumentException("초대 코드가 유효하지 않습니다. " + e.getMessage());
             }
         }
 
@@ -79,7 +80,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         commonResponse.setStatus(HttpStatus.OK.value());
         commonResponse.setSuccess(Boolean.TRUE);
-        commonResponse.setMessage("로그인 성공");
+        commonResponse.setMessage("login success");
         commonResponse.setData(generalUserDTO);
 
         // 응답 본문에 사용자 정보 및 메시지 작성

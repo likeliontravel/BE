@@ -66,7 +66,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = response.getName();
         String provider = response.getProvider();
         String providerId = response.getProviderId();
-        String userIdentifier = provider + " " + email;
+        String userIdentifier = provider + "_" + email;
 
         // 소셜로그인하며 받은 인증 객체로부터 ProviderId를 이용해 소셜 테이블 유저 조회. 여기서는 예외처리를 하면 안됨.
         SocialUser socialUser = socialUserRepository.findByProviderId(providerId).orElse(null);

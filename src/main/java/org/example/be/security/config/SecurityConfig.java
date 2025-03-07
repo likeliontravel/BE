@@ -81,7 +81,6 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/SignUp", "/general-user/login").permitAll()
-                        .requestMatchers("/mail/**", "/user/**").permitAll()    // 메일, 유저 일부기능 테스트용. 나중에 수정해야함.
                         .requestMatchers("/oauth2/**").permitAll() // OAuth2 로그인 경로 추가
                         .anyRequest().authenticated()
                 )
@@ -126,12 +125,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("https://toleave.shop")); // CORS 허용 도메인
+        configuration.setAllowedOrigins(List.of("https://toleave.shop", "https://api.toleave.shop")); // CORS 허용 도메인
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Refresh-Token", "User-Identifier"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Refresh-Token", "User-Identifier", "Cookie"));
 
         // 변경 : exposeHeaders가 항상 올바르게 설정되도록 변경
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "User-Identifier"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "User-Identifier", "Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

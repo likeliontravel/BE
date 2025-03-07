@@ -40,10 +40,11 @@ public class GeneralUserController {
                 GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
                 dto.setGroupName(invitation.getGroup().getGroupName());
                 // 일반 유저 가입 시, 식별자로 userIdentifier 사용
-                dto.setUserIdentifier("gen " + generalUserDTO.getEmail());
+                dto.setUserIdentifier("gen_" + generalUserDTO.getEmail());
                 groupService.addMemberToGroup(dto);
             } catch (Exception e) {
                 System.out.println("자동 그룹 가입 실패: " + e.getMessage());
+                throw new IllegalArgumentException("초대 코드가 유효하지 않습니다." + e.getMessage());
             }
         }
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 가입 성공"));

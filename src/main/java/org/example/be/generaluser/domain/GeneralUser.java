@@ -41,6 +41,6 @@ public class GeneralUser {
     @PrePersist
     @PreUpdate
     public void generateUserIdentifier() {
-        this.userIdentifier = "gen" + " " + email;
+        this.userIdentifier = "gen" + "_" + email;
     }
 }
