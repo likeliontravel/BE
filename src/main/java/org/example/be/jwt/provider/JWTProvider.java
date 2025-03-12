@@ -1,51 +1,49 @@
 package org.example.be.jwt.provider;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.example.be.generaluser.domain.GeneralUser;
+import org.example.be.generaluser.repository.GeneralUserRepository;
+import org.example.be.oauth.dto.CustomOAuth2User;
+import org.example.be.oauth.entity.SocialUser;
+import org.example.be.oauth.repository.SocialUserRepository;
 import org.example.be.security.service.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
-// jwt 생성 및 제공을 맡을 클래스 JWTProvider
 @Component
+@RequiredArgsConstructor
 public class JWTProvider {
 
-    private final SecretKey secretKey;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final GeneralUserRepository generalUserRepository;
+    private final SocialUserRepository socialUserRepository;
 
-    public JWTProvider(@Value("${spring.jwt.secret}") String secret) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-    }
+    //유저 인증객체 생성
+    public Authentication getUserDetails(String userIdentifier) {
 
-    // Access Token 생성 ( 2분 )
-    public String generateAccessToken(String userIdentifier, String role) {
-        return Jwts.builder()
-                .setSubject("accessToken")
-                .claim("userIdentifier", userIdentifier)
-                .claim("role", role)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 2))    // 2분
-                .signWith(secretKey, SignatureAlgorithm.HS256)
-                .compact();
-    }
+        Optional<GeneralUser> generalUser = generalUserRepository.findByUserIdentifier(userIdentifier);
+        if (generalUser.isPresent()) {
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(userIdentifier);
+            return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        } else {
+            Optional<SocialUser> socialUserOptional = socialUserRepository.findByUserIdentifier(userIdentifier);
+            if (socialUserOptional.isPresent()) {
+                SocialUser socialUser = socialUserOptional.get();
+                Map<String, Object> attributes = new HashMap<>();
 
-    // Refresh Token 생성 ( 7분 )
-    public String generateRefreshToken(String userIdentifier, String role) {
-        return Jwts.builder()
-                .setSubject("refreshToken")
-                .claim("userIdentifier", userIdentifier)
-                .claim("role", role)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 7))    // 7분
-                .signWith(secretKey, SignatureAlgorithm.HS256)
-                .compact();
+                OAuth2User oAuth2User = new CustomOAuth2User(socialUser, attributes);
+
+                return new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
+            } else {
+                throw new IllegalArgumentException(userIdentifier + " 해당 userIdnetifier를 찾을 수 없습니다.");
+            }
+        }
     }
 }

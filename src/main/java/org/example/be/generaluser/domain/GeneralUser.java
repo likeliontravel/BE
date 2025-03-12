@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.be.generaluser.dto.GeneralUserDTO;
 
 @Entity
 @Getter
@@ -42,5 +43,16 @@ public class GeneralUser {
     @PreUpdate
     public void generateUserIdentifier() {
         this.userIdentifier = "gen" + "_" + email;
+    }
+
+    public GeneralUserDTO mapToDTO() {
+        GeneralUserDTO generalUserDTO = new GeneralUserDTO();
+        generalUserDTO.setId(id);
+        generalUserDTO.setEmail(email);
+        generalUserDTO.setPassword(password);
+        generalUserDTO.setName(name);
+        generalUserDTO.setRole(role);
+        generalUserDTO.setUserIdentifier(userIdentifier);
+        return generalUserDTO;
     }
 }

@@ -10,6 +10,7 @@ public class UnifiedUserDTO {
     private String userIdentifier;
     private String email;
     private String name;
-    private String password;     // 소셜은 빈문자열들어감
     private String role;
+    private Boolean policyAgreed;   // 이용약관 동의 여부
+    private Boolean subscribed; // 유료 구독 여부
 }
