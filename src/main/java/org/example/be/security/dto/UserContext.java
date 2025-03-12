@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-
 /*
  * 사용자의 기본 정보를 저장하는 인터페이스
  * 저장된 정보는 추후 인증 절차에 사용위해 Authentication 객체에 포함되어 제공 */

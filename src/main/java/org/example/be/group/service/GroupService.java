@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.group.dto.*;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
+import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,11 +23,10 @@ public class GroupService {
 
     // 그룹 생성하기
     public GroupResponseDTO createGroup(GroupCreationRequestDTO request) {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
-        String createdBy = request.getCreatedBy();
-
-        UnifiedUser creator = unifiedUserRepository.findByUserIdentifier(createdBy)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다. userIdentifier : " + createdBy));
+        UnifiedUser creator = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         Group group = new Group();
         group.setGroupName(request.getGroupName());
