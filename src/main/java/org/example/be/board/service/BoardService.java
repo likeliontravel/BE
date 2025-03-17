@@ -73,20 +73,27 @@ public class BoardService {
             throw new IllegalArgumentException("게시글 제목과 내용을 입력해야 합니다.");
         }
 
+        // 2. 이미지가 없는 경우
         if (boardDTO.getImage() == null) {
             System.out.println("image 없음");
+            // 이미지가 없으면 fileAttached를 0으로 설정
+            boardDTO.setFileAttached(0);
         } else {
+            // 이미지가 있는 경우
             System.out.println("image 있음");
             boardDTO.setFileAttached(1);
         }
-        if (boardDTO.getImage().isEmpty()) {
+
+        // 3. 이미지가 비어있는지 확인
+        if (boardDTO.getImage() != null && boardDTO.getImage().isEmpty()) {
             System.out.println("이미지 isEmpty true");
-        } else {
+        } else if (boardDTO.getImage() != null) {
             System.out.println("이미지 isEmpty false");
         }
+
         System.out.println("fileAttached : " + boardDTO.getFileAttached());
 
-        // 2. 게시글 정보 저장
+        // 4. 게시글 정보 저장
         if (boardDTO.getFileAttached() == 0 || boardDTO.getImage() == null || boardDTO.getImage().isEmpty()) {
             // 파일이 없을 때: 게시글만 저장
             Board board = Board.toSaveEntity(boardDTO);
@@ -96,6 +103,8 @@ public class BoardService {
             Board boardEntity = Board.toSaveFileEntity(boardDTO);
             int savedId = boardRepository.save(boardEntity).getId(); // 게시글의 PK인 ID를 저장
             Board board = boardRepository.findById(savedId).orElseThrow(() -> new IllegalArgumentException("게시글 저장 실패"));
+
+            // 이미지가 있을 경우 업로드
             for (MultipartFile file : boardDTO.getImage()) {
                 String originalFilename = file.getOriginalFilename();
                 String storedFileName = gcsUploader.uploadImage(file); // GCS에 파일 업로드하는 메서드
@@ -136,6 +145,7 @@ public class BoardService {
         } else {
             updatedBoard.setFileAttached(0);
         }
+        boardRepository.save(updatedBoard);
     }
 
 
