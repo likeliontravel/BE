@@ -6,5 +6,4 @@ import lombok.Getter;
 @Getter
 public class GroupExitOrDeleteRequestDTO {
     private String groupName;
-    private String userIdentifier;
 }

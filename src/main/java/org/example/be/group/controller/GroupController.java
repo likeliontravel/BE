@@ -40,7 +40,7 @@ public class GroupController {
     // 그룹 설명 또는 공지사항 변경
     @PostMapping("/modify")
     public ResponseEntity<CommonResponse<String>> modifyDescriptionOrAnnouncement(@RequestBody GroupModifyRequestDTO request) {
-        groupService.modifyDescribtionOrAnnouncement(request);
+        groupService.modifyDescribtion(request);
 
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 설명 또는 공지사항 변경 완료"));
     }
@@ -63,11 +63,8 @@ public class GroupController {
 
     // GET 엔드포인트 추가: 로그인한 사용자가 가입한 그룹 정보 조회
     @GetMapping("/user-groups")
-    public ResponseEntity<CommonResponse<List<GroupResponseDTO>>> getUserGroups(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        // UserDetails.getUsername()가 수정되어 userIdentifier를 반환하도록 했다고 가정합니다.
-        String userIdentifier = userDetails.getUsername();
-        List<GroupResponseDTO> groups = groupService.getAllGroups(userIdentifier);
+    public ResponseEntity<CommonResponse<List<GroupResponseDTO>>> getUserGroups() {
+        List<GroupResponseDTO> groups = groupService.getAllGroups();
         return ResponseEntity.ok(CommonResponse.success(groups, "그룹 정보 조회 성공"));
     }
 

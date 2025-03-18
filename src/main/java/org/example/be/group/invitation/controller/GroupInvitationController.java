@@ -6,6 +6,7 @@ import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.repository.GroupRepository;
 import org.example.be.response.CommonResponse;
+import org.example.be.security.util.SecurityUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,10 +31,9 @@ public class GroupInvitationController {
     @PostMapping("/{groupName}/invitation")
     public ResponseEntity<CommonResponse<InvitationResponseDTO>> generateInvitation(
             @PathVariable String groupName,
-            @RequestParam(required = false, defaultValue = "false") boolean generateNew,
-            Authentication authentication
+            @RequestParam(required = false, defaultValue = "false") boolean generateNew
     ) {
-        String userIdentifier = authentication.getName();
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         if (!groupRepository.findByGroupName(groupName)
                 .filter(group -> group.getCreatedBy().getUserIdentifier().equals(userIdentifier))
                 .isPresent()) {

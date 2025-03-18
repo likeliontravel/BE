@@ -27,7 +27,7 @@ public class GeneralUserController {
     // 회원가입
     // ---- 2025.02.03 변경 ----
     // 회원가입 시 초대 코드가 전달된다면 자동으로 그룹 가입 처리
-    @PostMapping("/SignUp")
+    @PostMapping("/signup")
     public ResponseEntity<CommonResponse<String>> signUp(@RequestBody GeneralUserDTO generalUserDTO
     , @RequestParam(value = "invitationCode", required = false) String invitationCode) {
 

@@ -29,7 +29,15 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        String requestURI = request.getRequestURI();
         System.out.println("JWTFilter - 요청 URL : " + request.getRequestURI());
+
+        // 일반회원가입과 로그인 요청은 JWT 필터 적용 제외
+        if (requestURI.equals("/general-user/signup") || requestURI.equals("/login")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 헤더에서 토큰 추출
         String accessToken = extractTokenFromHeaderAndCookie(request, "Authorization");

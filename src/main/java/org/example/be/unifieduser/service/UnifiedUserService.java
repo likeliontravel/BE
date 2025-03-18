@@ -115,6 +115,14 @@ public class UnifiedUserService {
                 .orElseThrow(() -> new IllegalArgumentException("그딴 유저는 없어요. userIdentifier : " + userIdentifier));
     }
 
+    // userIdentifier로 이름 가져오기
+    public String getNameByUserIdentifier(String userIdentifier) {
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        return user.getName();
+    }
+
 //    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
 //    @Transactional(readOnly = true)
 //    public MyPageProfileDTO getUserProfileByEmail(String email) {

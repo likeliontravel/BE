@@ -18,7 +18,7 @@ public class GroupInvitationService {
 
     private final GroupInvitationRepository invitationRepository;
     private final GroupRepository groupRepository;
-    private static final long INVITATION_VALID_HOURS = 6; // 초대코드가 만료될 시간 6으로 초기화
+    private static final long INVITATION_VALID_HOURS = 24; // 초대코드가 만료될 시간 6으로 초기화
 
     // 그룹 초대 링크 생성 메서드
     @Transactional
