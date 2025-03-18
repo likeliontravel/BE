@@ -48,7 +48,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(createCookie("Authorization", accessToken));
         response.addCookie(createCookie("Refresh-Token", refreshToken));
         response.setHeader("Authorization", "Bearer " + accessToken);
-        response.setHeader("Refresh-Token", refreshToken);
+        response.setHeader("Refresh-Token", "Bearer " + refreshToken);
 
         // OAuth2 로그인 성공 후 URL 쿼리 파라미터에서  invitationCode가 있는지 확인
         String invitationCode = request.getParameter("invitationCode");
