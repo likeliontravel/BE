@@ -4,13 +4,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.example.be.generaluser.dto.GeneralUserDTO;
-import org.example.be.unifieduser.dto.UnifiedUserDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
-
 
 /*
  * 사용자의 기본 정보를 저장하는 인터페이스
@@ -20,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserContext implements UserDetails {
 
-    private final UnifiedUserDTO unifiedUserDTO;
+    private final GeneralUserDTO generalUserDTO;
 
     private final List<GrantedAuthority> authorities;
 
@@ -31,12 +29,12 @@ public class UserContext implements UserDetails {
 
     @Override
     public String getPassword() {
-        return unifiedUserDTO.getPassword();
+        return generalUserDTO.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return unifiedUserDTO.getUserIdentifier();
+        return generalUserDTO.getEmail();
     }
 
     @Override

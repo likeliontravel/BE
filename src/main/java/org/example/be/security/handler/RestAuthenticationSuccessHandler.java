@@ -6,16 +6,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
-import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.jwt.util.JWTUtil;
 import org.example.be.response.CommonResponse;
-import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -28,9 +29,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JWTProvider jwtProvider;
-    private final GroupInvitationService groupInvitationService;
+    private final JWTUtil jwtUtil;
     private final GroupService groupService;
+    private final GroupInvitationService groupInvitationService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -45,17 +46,29 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         String generalUserIdentifier = "gen" + "_" + generalUserDTO.getEmail();
 
         // Access 토큰 및 Refresh 토큰 생성
-        String accessToken = jwtProvider.generateAccessToken(generalUserIdentifier, generalUserDTO.getRole());
-        String refreshToken = jwtProvider.generateRefreshToken(generalUserIdentifier, generalUserDTO.getRole());
+        String accessToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
+        String refreshToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
 
-        // 쿠키에 AccessToken, RefreshToken, UserIdentifier 저장
-        Cookie accessTokenCookie = createCookie("Authorization", accessToken);
-        Cookie refreshTokenCookie = createCookie("Refresh-Token", refreshToken);
-        Cookie userIdentifierCookie = createCookie("User-Identifier", generalUserIdentifier);
-
+        // Access 토큰을 쿠키에 추가
+        Cookie accessTokenCookie = new Cookie("Authorization", accessToken);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
+        accessTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
+        accessTokenCookie.setMaxAge(60 * 60); // 1시간 만료
         response.addCookie(accessTokenCookie);
+
+        // Refresh 토큰을 쿠키에 추가
+        Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
+        refreshTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
+        refreshTokenCookie.setMaxAge(60 * 60); // 1시간 만료
         response.addCookie(refreshTokenCookie);
-        response.addCookie(userIdentifierCookie);
+
+        // Access 토큰을 헤더에 추가
+        response.addHeader("Authorization", "Bearer " + accessToken);
+        // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)
+        response.addHeader("Refresh-Token", "Bearer " + refreshToken);
 
         // URL 쿼리 파라미터에 invitationCode 확인. 만약 있다면 로그인과 동시에 해당 그룹에 자동 멤버 추가
         String invitationCode = request.getParameter("invitationCode");
@@ -72,6 +85,11 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
             }
         }
 
+        // SecurityContext에 인증 정보 저장하기
+        SecurityContext context = SecurityContextHolder.getContextHolderStrategy().createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
 
@@ -80,7 +98,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         commonResponse.setStatus(HttpStatus.OK.value());
         commonResponse.setSuccess(Boolean.TRUE);
-        commonResponse.setMessage("login success");
+        commonResponse.setMessage("로그인 성공");
         commonResponse.setData(generalUserDTO);
 
         // 응답 본문에 사용자 정보 및 메시지 작성
@@ -100,16 +118,5 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         }
 
         session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
-    }
-
-    private Cookie createCookie(String name, String value) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24); // 1일
-        cookie.setDomain("toleave.shop");
-        cookie.setAttribute("SameSite", "None");
-        return cookie;
     }
 }

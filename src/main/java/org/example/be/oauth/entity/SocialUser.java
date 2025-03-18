@@ -1,11 +1,11 @@
 package org.example.be.oauth.entity;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.be.oauth.dto.SocialUserDTO;
 
 @Entity
 @Getter
@@ -19,7 +19,7 @@ public class SocialUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;   // 사용자 이메일
 
     @Column(nullable = false)
@@ -34,18 +34,8 @@ public class SocialUser {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String userIdentifier;
-
-
-    public SocialUser(String email, String name, String provider, String providerId, String roleUser, String userIdentifier) {
-        this.email = email;
-        this.name = name;
-        this.provider = provider;
-        this.providerId = providerId;
-        this.role = roleUser;
-        this.userIdentifier = userIdentifier;
-    }
 
     @PrePersist
     @PreUpdate

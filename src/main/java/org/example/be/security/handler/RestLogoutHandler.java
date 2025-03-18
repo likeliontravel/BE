@@ -13,6 +13,7 @@ import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Component;
 
@@ -30,19 +31,13 @@ public class RestLogoutHandler implements LogoutHandler {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        // 요청 헤더에서 AccessToken 가져오기
-        String accessToken = request.getHeader("Authorization");
-        if (accessToken != null && accessToken.startsWith("Bearer ")) {
-            accessToken = accessToken.substring(7);     // 문자열에서 "Bearer " 부분 제거하기
-        }
-
-        // 요청 쿠키에서 RefreshToken 가져오기
-        String refreshToken = extractTokenFromCookie(request, "Refresh-Token");
+        String accessToken = extractTokenFromHeaderAndCookie(request, "Authorization");
+        String refreshToken = extractTokenFromHeaderAndCookie(request, "Refresh-Token");
 
         // AccessToken 이나 RefreshToken 이 없는 경우
         if (accessToken == null || refreshToken == null) {
             CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.BAD_REQUEST.value(), "Access Token 또는 Refresh Token이 존재하지 않습니다."
+                    HttpStatus.BAD_REQUEST.value(), "Access Token or Refresh Token are missing."
             );
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE+";charset=utf-8");
@@ -61,21 +56,27 @@ public class RestLogoutHandler implements LogoutHandler {
 
                 System.out.println("OAuth2 사용자 로그아웃: " + userKey);
             } else {
-                String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
                 // 일반 사용자 토큰을 블랙리스트에 추가
-                jwtBlackListService.addToBlackList(userIdentifier, accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
-                System.out.println("일반 사용자 로그아웃: " + userIdentifier);
+                jwtBlackListService.addToBlackList(jwtUtil.getUserIdentifier(accessToken), accessToken, refreshToken, jwtUtil.getExpiration(accessToken));
             }
 
-            // Authorization 쿠키 삭제
-            response.addCookie(deleteCookie("Authorization"));
-            response.addCookie(deleteCookie("Refresh-Token"));
+            // SecurityContext에서 인증객체 삭제
+            SecurityContextHolder.clearContext();
 
-            // 로그아웃 성공 응답 설정
-            CommonResponse<String> commonResponse = CommonResponse.success(null, "성공적으로 로그아웃 되었습니다.");
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
-            response.getWriter().write(objectMapper.writeValueAsString(commonResponse));
+            // Authorization, Refresh-Token 쿠키 삭제
+            Cookie deleteAccessCookie = new Cookie("Authorization", null);
+            deleteAccessCookie.setSecure(true);
+            deleteAccessCookie.setHttpOnly(true);
+            deleteAccessCookie.setMaxAge(0);
+            deleteAccessCookie.setPath("/");
+            response.addCookie(deleteAccessCookie);
+
+            Cookie deleteRefreshCookie = new Cookie("Refresh-Token", null);
+            deleteAccessCookie.setSecure(true);
+            deleteAccessCookie.setHttpOnly(true);
+            deleteAccessCookie.setMaxAge(0);
+            deleteAccessCookie.setPath("/");
+            response.addCookie(deleteRefreshCookie);
 
         } catch (Exception e) {
 
@@ -90,27 +91,25 @@ public class RestLogoutHandler implements LogoutHandler {
         }
     }
 
-    // 쿠키에서 토큰 추출하는 메서드
-    private String extractTokenFromCookie(HttpServletRequest request, String name) {
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals(name)) {
-                    return cookie.getValue();
+    // 헤더에서 먼저 토큰 탐색, 발견되지 않으면 쿠키에서 탐색
+    private String extractTokenFromHeaderAndCookie(HttpServletRequest request, String headerName) {
+        // 헤더 선 탐색
+        String token = request.getHeader(headerName);
+
+        // 헤더에서 발견되지 않을 경우 쿠키 탐색
+        if (token == null) {
+            System.out.println("헤더에서 " + headerName + " 발견되지 않음. 쿠키 탐색 시작");
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals(headerName)) {
+                        return cookie.getValue();
+                    }
                 }
             }
+        } else if (token.startsWith("Bearer ")) {
+            return token.substring(7);
         }
-        return null;
-    }
-
-    // 브라우저에 저장된 쿠키를 삭제해주는 메서드
-    private Cookie deleteCookie(String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        cookie.setSecure(true);
-        cookie.setHttpOnly(true);
-        cookie.setDomain("toleave.shop");
-        cookie.setAttribute("SameSite", "None");
-        return cookie;
+        return token;
     }
 }

@@ -9,5 +9,4 @@ public class GroupCreationRequestDTO {
 
     private String groupName;
     private String description;
-    private String createdBy;   // userIdentifier
 }

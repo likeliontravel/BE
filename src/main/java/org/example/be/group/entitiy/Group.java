@@ -42,8 +42,6 @@ public class Group {
 
     private String description; // 그룹 설명
 
-    private String announcement;    // 그룹 공지사항 ( 피그마 디자인에 있어서 추가해봤습니당 )
-
     // UnifiedUser를 멤버에 추가해주는 함수
     public void addMember(UnifiedUser user) {
         this.members.add(user);

@@ -12,6 +12,8 @@ import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UnifiedUserService {
@@ -23,18 +25,19 @@ public class UnifiedUserService {
     // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다. )
     @Transactional
     public UnifiedUser createUnifiedUser(UnifiedUserCreationRequestDTO dto) {
+        String userIdentifier = dto.getProvider() + "_" + dto.getEmail();
 
-        String provider = dto.getProvider();
-        String email = dto.getEmail();
-        String name = dto.getName();
-        String role = dto.getRole();
-        String userIdentifier = provider + "_" + email;
+        Optional<UnifiedUser> existingUser = unifiedUserRepository.findByUserIdentifier(userIdentifier);
+
+        if (existingUser.isPresent()) {
+            return existingUser.get(); // 이미 존재하면 기존 사용자 반환
+        }
 
         UnifiedUser unifiedUser = new UnifiedUser();
         unifiedUser.setUserIdentifier(userIdentifier);
-        unifiedUser.setEmail(email);
-        unifiedUser.setName(name);
-        unifiedUser.setRole(role);
+        unifiedUser.setEmail(dto.getEmail());
+        unifiedUser.setName(dto.getName()); // 최초 로그인 시에만 `name` 저장
+        unifiedUser.setRole(dto.getRole());
         unifiedUser.setPolicyAgreed(false);
         unifiedUser.setSubscribed(false);
 
@@ -110,6 +113,14 @@ public class UnifiedUserService {
     public UnifiedUser getUserInfoTest(String userIdentifier) {
         return unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("그딴 유저는 없어요. userIdentifier : " + userIdentifier));
+    }
+
+    // userIdentifier로 이름 가져오기
+    public String getNameByUserIdentifier(String userIdentifier) {
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        return user.getName();
     }
 
 //    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
