@@ -18,4 +18,8 @@ public class Base {
     //생성일
     @Column(updatable = false) //생성 시각을 변하지 않게 생성
     private LocalDateTime createdTime;
+
+    @Column
+    private LocalDateTime updatedTime;
+
 }

@@ -26,6 +26,7 @@ public class Board extends Base {
     //제목
     @Column(nullable = false, length = 50)
     private String title;
+
     //내용
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;

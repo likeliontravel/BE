@@ -155,7 +155,7 @@ public class BoardService {
         Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
         // Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
-        //삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
+        // 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
         board.getBoardFileList().size();
         board.getCommentList().size();
 
