@@ -30,7 +30,7 @@ public class BoardController {
     }
     //게시판 글 조회
     @GetMapping("/{id}")
-    public ResponseEntity<CommonResponse<BoardDTO>> getBoardById(@PathVariable int id) {
+    public ResponseEntity<CommonResponse<BoardDTO>> getBoardById(@PathVariable Long id) {
         BoardDTO boardDTO = boardService.getBoard(id);
         return ResponseEntity.ok(CommonResponse.success(boardDTO, "게시글 조회 성공"));
     }
@@ -74,7 +74,7 @@ public class BoardController {
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) throws IOException {
+    public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long id) throws IOException {
         boardService.deleteBoard(id);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"게시글 삭제"));
     }

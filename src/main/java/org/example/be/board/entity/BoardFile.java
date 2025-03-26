@@ -3,6 +3,7 @@ package org.example.be.board.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.be.config.Base;
 
 @Entity
 @Getter

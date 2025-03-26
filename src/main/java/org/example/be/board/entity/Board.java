@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.be.board.dto.BoardDTO;
+import org.example.be.config.Base;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class Board extends Base {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     //제목
     @Column(nullable = false, length = 50)
     private String title;
@@ -39,26 +40,16 @@ public class Board extends Base {
     @Column(nullable = false)
     private int boardHits;
 
-    @Column
-    private int fileAttached; // 1이면 이미지 파일이 있는 것
-
-    @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true,fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private List<BoardFile> boardFileList = new ArrayList<>();
-
     @OneToMany(mappedBy = "board", cascade = CascadeType.REMOVE, orphanRemoval = true,fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Comment> commentList = new ArrayList<>();
 
-
     // dto를 엔티티로 변환(게시글 생성)
     public static Board toSaveEntity(BoardDTO boardDTO) {
         Board board = new Board();
-        board.setWriter(boardDTO.getWriter());
         board.setTitle(boardDTO.getTitle());
         board.setContent(boardDTO.getContent());
         board.setBoardHits(0); // 생성할 때는 조회수가 0
-        board.setFileAttached(0); // 파일이 없음.
         return board;
     }
     public static Board toUpdateEntity(BoardDTO boardDTO) {
@@ -71,13 +62,4 @@ public class Board extends Base {
         return board;
     }
 
-    public static Board toSaveFileEntity(BoardDTO boardDTO) {
-        Board board = new Board();
-        board.setWriter(boardDTO.getWriter());
-        board.setTitle(boardDTO.getTitle());
-        board.setContent(boardDTO.getContent());
-        board.setBoardHits(0); // 생성할 때는 조회수가 0
-        board.setFileAttached(1); // 파일이 있음.
-        return board;
-    }
 }

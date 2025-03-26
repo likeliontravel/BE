@@ -9,10 +9,12 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface BoardRepository extends JpaRepository<Board, Integer> {
-    List<Board> findByTitleContainingOrContentContainingOrWriterContaining(String title, String content,String writer);
+public interface BoardRepository extends JpaRepository<Board, Long> {
+    List<Board> findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(String title, String content, String writer);
 
     Page<Board> findAllByOrderByBoardHitsDesc(Pageable pageable);
 
     Page<Board> findAllByOrderByCreatedTimeDesc(Pageable pageable);
+
+    Page<Board> findAllByOrderByUpdatedTimeDesc(Pageable pageable);
 }
