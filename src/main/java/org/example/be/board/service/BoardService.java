@@ -98,20 +98,20 @@ public class BoardService {
         // 새로운 게시글 데이터 생성 및 저장
         Board updatedBoard = Board.toUpdateEntity(boardDTO);
         boardRepository.save(updatedBoard);
-
-        // 새 이미지 저장 (새 이미지가 있을 경우)
-        if (boardDTO.getImage() != null && !boardDTO.getImage().isEmpty()) {
-            for (MultipartFile file : boardDTO.getImage()) {
-                String originalFilename = file.getOriginalFilename();
-                String storedFileName = gcsUploader.uploadImage(file); // GCS 업로드
-                BoardFile boardFile = BoardFile.toBoardFile(updatedBoard, originalFilename, storedFileName);
-                boardFileRepository.save(boardFile);
-            }
-            updatedBoard.setFileAttached(1);
-        } else {
-            updatedBoard.setFileAttached(0);
-        }
-        boardRepository.save(updatedBoard);
+//
+//        // 새 이미지 저장 (새 이미지가 있을 경우)
+//        if (boardDTO.getImage() != null && !boardDTO.getImage().isEmpty()) {
+//            for (MultipartFile file : boardDTO.getImage()) {
+//                String originalFilename = file.getOriginalFilename();
+//                String storedFileName = gcsUploader.uploadImage(file); // GCS 업로드
+//                BoardFile boardFile = BoardFile.toBoardFile(updatedBoard, originalFilename, storedFileName);
+//                boardFileRepository.save(boardFile);
+//            }
+//            updatedBoard.setFileAttached(1);
+//        } else {
+//            updatedBoard.setFileAttached(0);
+//        }
+//        boardRepository.save(updatedBoard);
     }
 
 

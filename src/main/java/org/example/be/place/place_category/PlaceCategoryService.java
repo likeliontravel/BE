@@ -20,6 +20,6 @@ public class PlaceCategoryService {
 
     // 모든 테마 목록 가져오기
     public List<String> getAllThemes() {
-        return placeCategoryRepository.findDistinctTheme();
+        return placeCategoryRepository.findAllThemesDistinct();
     }
 }

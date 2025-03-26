@@ -14,7 +14,7 @@ public class BoardFile extends Base {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Column
     private String originalFileName;

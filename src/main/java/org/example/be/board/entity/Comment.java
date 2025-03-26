@@ -19,7 +19,7 @@ import java.util.List;
 public class Comment extends Base {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Column(length = 20, nullable = false)
     private String commentWriter;

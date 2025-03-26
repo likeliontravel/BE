@@ -1,6 +1,7 @@
 package org.example.be.place.place_category;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public interface PlaceCategoryRepository extends JpaRepository<PlaceCategory, St
     // 테마로 객체 전부 가져오기
     public List<PlaceCategory> findAllByTheme(String theme);
 
-    // 모든 테마 가져오기
-    public List<String> findDistinctTheme();
+    // 모든 테마 가져오기 (중복 제거)
+    @Query("SELECT DISTINCT p.theme FROM PlaceCategory p")
+    List<String> findAllThemesDistinct();
 }
