@@ -1,15 +1,17 @@
 package org.example.test.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.test.dto.TouristSpotDTO;
 import org.example.test.entity.TouristSpot;
 import org.example.test.repository.TouristSpotRepository;
-import org.example.test.dto.TouristSpotDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import reactor.core.publisher.Flux;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,34 +22,45 @@ public class TouristSpotService {
     @Value("${service-key}")
     private String serviceKey;
 
-    @Value("${api.url}")
-    private String apiUrl;  // api.url을 프로퍼티에서 주입받음
+/*    @Value("${api.url}")
+    private String apiUrl;*/
 
     private final TouristSpotRepository touristSpotRepository;
     private final WebClient webClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<TouristSpot> fetchAndSaveTouristSpots(String areaCode) {
-        String url = apiUrl + "?serviceKey=" + serviceKey +
+    // 비동기 방식으로 관광지 데이터 가져오기 및 저장
+    public Mono<List<TouristSpot>> fetchAndSaveTouristSpots(String areaCode) {
+        String url = "http://apis.data.go.kr/B551011/KorService1/areaBasedList1" + "?serviceKey=" + serviceKey +
                 "&MobileApp=AppTest&MobileOS=ETC&listYN=Y&arrange=A" +
-                "&areaCode=" + areaCode + "&_type=json&numOfRows=10&pageNo=1";
+                "&areaCode=" + areaCode + "&_type=xml&numOfRows=10&pageNo=1";
 
-        Mono<String> responseMono = webClient.get()
+        // 요청 URL 확인
+        System.out.println("Fetching URL: " + url);
+
+        return webClient.get()
                 .uri(url)
                 .retrieve()
-                .bodyToMono(String.class);
-
-        return responseMono.map(this::parseApiResponse)
-                .doOnNext(touristSpotRepository::saveAll)
-                .block();
+                .bodyToMono(String.class)
+                .doOnTerminate(() -> System.out.println("API call completed")) // API 호출이 종료되었을 때
+                .doOnError(e -> System.err.println("Error during API call: " + e.getMessage())) // 오류 발생 시
+                .flatMapMany(this::parseApiResponse)
+                .collectList()
+                .flatMap(spots -> {
+                    // List<TouristSpot> -> Mono<List<TouristSpot>> 형태로 저장
+                    return Mono.just(touristSpotRepository.saveAll(spots))
+                            .doOnTerminate(() -> System.out.println("Data saved to DB"))
+                            .flatMap(savedSpots -> Mono.just(savedSpots)); // 저장된 데이터를 다시 Mono로 래핑
+                });
     }
 
-    private List<TouristSpot> parseApiResponse(String jsonResponse) {
-        List<TouristSpot> touristSpots = new ArrayList<>();
+    private Flux<TouristSpot> parseApiResponse(String jsonResponse) {
         try {
+            System.out.println("Parsing response: " + jsonResponse); // 응답 확인
             JsonNode root = objectMapper.readTree(jsonResponse);
             JsonNode items = root.path("response").path("body").path("items").path("item");
 
+            List<TouristSpot> touristSpots = new ArrayList<>();
             for (JsonNode item : items) {
                 TouristSpotDTO dto = objectMapper.treeToValue(item, TouristSpotDTO.class);
                 TouristSpot spot = TouristSpot.builder()
@@ -69,13 +82,13 @@ public class TouristSpotService {
                         .build();
                 touristSpots.add(spot);
             }
+            return Flux.fromIterable(touristSpots);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error parsing JSON: " + e.getMessage()); // JSON 파싱 오류 확인
+            return Flux.error(new RuntimeException("JSON 파싱 오류", e));
         }
-        return touristSpots;
     }
-
-    // 추가된 메서드: areaCode로 관광지 목록을 조회
+    // 특정 지역 코드로 관광지 목록 조회
     public List<TouristSpot> getTouristSpotsByAreaCode(String areaCode) {
         return touristSpotRepository.findByAreaCode(areaCode);
     }
