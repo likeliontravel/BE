@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
-        return builder.baseUrl("https://apis.data.go.kr/B551011/KorService1")
+        return builder.baseUrl("http://apis.data.go.kr/B551011/KorService1")  // 정확한 기본 URL 설정
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
