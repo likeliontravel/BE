@@ -15,13 +15,15 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 public class Base {
+
+    // 생성 시각
     @CreationTimestamp
-    //생성일
-    @Column(updatable = false) //생성 시각을 변하지 않게 생성
+    @Column(updatable = false) // 생성 시각은 자동 초기화 후 변경 불가
     private LocalDateTime createdTime;
 
+    // 업데이트 시각 ( 또는 수정 시각 )
     @Column
-    @UpdateTimestamp
+    @UpdateTimestamp    // 업데이트 시각은 자동 변경
     private LocalDateTime updatedTime;
 
 }

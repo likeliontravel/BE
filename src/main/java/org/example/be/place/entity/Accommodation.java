@@ -31,6 +31,6 @@ public class Accommodation extends Base implements Place {
     @Column(name = "cat3")
     private String cat3;
 
-    @Column(name = "regionKeyword")
-    private String regionKeyword;
+    @Column(name = "region")
+    private String region;
 }

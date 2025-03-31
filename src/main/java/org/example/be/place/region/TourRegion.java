@@ -24,6 +24,6 @@ public class TourRegion {
     @Column(name = "areaName")
     private String areaName;
 
-    @Column(name = "regionKeyword")
-    private String regionKeyword;   // 우리 서비스에서 지원하는 지역 ( 미리 나눠둔 지역 )
+    @Column(name = "region")
+    private String region;   // 우리 서비스에서 지원하는 지역 ( 미리 나눠둔 지역 )
 }

@@ -3,12 +3,8 @@ package org.example.be.board.dto;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.be.board.entity.Board;
-import org.example.be.board.entity.BoardFile;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -18,6 +14,9 @@ public class BoardDTO {
     private String content;
     private String writer;
     private int boardHits;
+    private String theme;
+    private String region;
+    private String thumbnailPublicUrl;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
 
@@ -29,9 +28,11 @@ public class BoardDTO {
         boardDTO.setContent(board.getContent());
         boardDTO.setWriter(board.getWriter());
         boardDTO.setBoardHits(board.getBoardHits());
+        boardDTO.setTheme(board.getTheme());
+        boardDTO.setRegion(board.getRegion());
+        boardDTO.setThumbnailPublicUrl(board.getThumbnailPublicUrl());
         boardDTO.setCreatedTime(board.getCreatedTime());
         boardDTO.setUpdatedTime(board.getUpdatedTime());
-
         return boardDTO;
     }
 }

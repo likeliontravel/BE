@@ -11,5 +11,5 @@ public interface TourRegionRepository extends JpaRepository<TourRegion, String> 
     Optional<TourRegion> findByAreaCodeAndSiGunGuCode(String areaCode, String siGunGuCode);
 
     // 지원하는 지역으로 TourRegion 전부 가져오기
-    List<TourRegion> findAllByRegionKeyword(String regionKeyword);
+    List<TourRegion> findAllByRegion(String region);
 }
