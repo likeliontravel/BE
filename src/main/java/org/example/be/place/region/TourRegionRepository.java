@@ -12,4 +12,7 @@ public interface TourRegionRepository extends JpaRepository<TourRegion, String> 
 
     // 지원하는 지역으로 TourRegion 전부 가져오기
     List<TourRegion> findAllByRegion(String region);
+
+    // 지역을 입력해 db에 있는지 확인
+    boolean existsByRegion(String region);
 }

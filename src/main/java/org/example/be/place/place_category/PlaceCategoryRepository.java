@@ -19,4 +19,7 @@ public interface PlaceCategoryRepository extends JpaRepository<PlaceCategory, St
     // 모든 테마 가져오기 (중복 제거)
     @Query("SELECT DISTINCT p.theme FROM PlaceCategory p")
     List<String> findAllThemesDistinct();
+
+    // 테마를 입력해 해당 테마가 DB에 존재하는지 확인
+    boolean existsPlaceCategoryByTheme(String theme);
 }

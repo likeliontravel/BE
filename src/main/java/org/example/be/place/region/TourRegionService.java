@@ -22,4 +22,9 @@ public class TourRegionService {
 
     }
 
+    // 지역을 입력해 현재 지원하는 지역인지 확인 ( DB에 확인 - region컬럼값 )
+    public boolean existsByRegion(String region) {
+        return tourRegionRepository.existsByRegion(region);
+    }
+
 }

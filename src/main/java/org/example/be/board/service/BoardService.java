@@ -8,6 +8,8 @@ import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.SortType;
 import org.example.be.board.repository.BoardRepository;
+import org.example.be.place.place_category.PlaceCategoryService;
+import org.example.be.place.region.TourRegionService;
 import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,8 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
     private final UnifiedUserService unifiedUserService;
+    private final TourRegionService tourRegionService;
+    private final PlaceCategoryService placeCategoryService;
 
     private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_SIZE = 30;
@@ -248,6 +252,12 @@ public class BoardService {
         }
         if (boardDTO.getRegion() == null || boardDTO.getRegion().isBlank()) {
             throw new IllegalArgumentException("지역은 필수 입력입니다.");
+        }
+        if (!placeCategoryService.existsByTheme(boardDTO.getTheme())) {
+            throw new IllegalArgumentException("해당 테마는 지원하지 않는 테마입니다.");
+        }
+        if (!tourRegionService.existsByRegion(boardDTO.getRegion())) {
+            throw new IllegalArgumentException("해당 지역은 지원하지 않는 지역입니다.");
         }
     }
 }

@@ -22,4 +22,9 @@ public class PlaceCategoryService {
     public List<String> getAllThemes() {
         return placeCategoryRepository.findAllThemesDistinct();
     }
+
+    // 테마 이름이 존재하는지 확인
+    public boolean existsByTheme(String theme) {
+        return placeCategoryRepository.existsPlaceCategoryByTheme(theme);
+    }
 }
