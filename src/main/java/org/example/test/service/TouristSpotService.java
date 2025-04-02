@@ -2,16 +2,13 @@ package org.example.test.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.example.test.dto.TouristSpotDTO;
-import org.example.test.entity.TouristSpot;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import java.net.URI;
-import java.net.URLEncoder;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -27,22 +24,26 @@ public class TouristSpotService {
     // 비동기 방식으로 관광지 데이터 가져오기
     public List<Map<String, Object>> getData(int areaCode, String state, int contentTypeId, int numOfRows) throws Exception {
 
-        String encodedServiceKey = URLEncoder.encode(serviceKey, StandardCharsets.UTF_8);
-
         String link = "https://apis.data.go.kr/B551011/KorService1/areaBasedList1";
         String MobileOS = "ETC";
         String MobileApp = "Test";
         String _type = "json";
 
+        // ✅ serviceKey 자동 디코딩 (안전한 방식)
+        String decodedServiceKey = URLDecoder.decode(serviceKey, StandardCharsets.UTF_8);
+
         String url = UriComponentsBuilder.fromHttpUrl(link)
-                .queryParam("MobileOS", MobileOS)
-                .queryParam("MobileApp", MobileApp)
-                .queryParam("_type", _type)
+                .queryParam("MobileOS", "ETC")
+                .queryParam("MobileApp", "Test")
+                .queryParam("_type", "json")
                 .queryParam("areaCode", areaCode)
                 .queryParam("contentTypeId", contentTypeId)
                 .queryParam("numOfRows", numOfRows)
-                .queryParam("serviceKey", encodedServiceKey) // 인코딩된 serviceKey 사용
+                .queryParam("serviceKey", serviceKey) // 인코딩 방지 적용
+                .build(false)  // 자동 인코딩 방지!
                 .toUriString();
+
+        System.out.println("Generated URL: " + url); // 디버깅용 로그
 
         URI uri = new URI(url);
         RestTemplate restTemplate = new RestTemplate();
