@@ -6,11 +6,9 @@ import org.example.be.tour.service.AccommodationService;
 import org.example.be.tour.service.TouristSpotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +82,17 @@ public class TourismController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    @PostMapping("/accommodation/save/{areaCode}")
+    public ResponseEntity<String> saveAccommodations(@PathVariable int areaCode) {
+        try {
+            accommodationService.saveAccommodations(areaCode);
+            return ResponseEntity.ok("숙박 정보가 성공적으로 저장되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("숙박 정보 저장 중 오류 발생: " + e.getMessage());
+        }
+    }
+
 }
 
 /*    // 지역 코드로 관광지 목록 조회

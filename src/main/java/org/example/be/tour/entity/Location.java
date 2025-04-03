@@ -20,6 +20,6 @@ public class Location extends Base {
 
     private String name;  // 지역명 (예: 서울, 부산, 대전)
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private int areaCode; // TourAPI에서 제공하는 지역 코드
 }

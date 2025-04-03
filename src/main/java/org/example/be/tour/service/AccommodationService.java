@@ -2,6 +2,10 @@ package org.example.be.tour.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.example.be.tour.entity.Accommodation;
+import org.example.be.tour.entity.Location;
+import org.example.be.tour.repository.AccommodationRepository;
+import org.example.be.tour.repository.LocationRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AccommodationService {
+    private final AccommodationRepository accommodationRepository;
+    private final LocationRepository locationRepository;
 
     @Value("${service-key}")
     private String serviceKey;
@@ -77,4 +83,27 @@ public class AccommodationService {
 
         return filteredItems;
     }
+
+    public void saveAccommodations(int areaCode) throws Exception {
+        List<Map<String, Object>> accommodations = getData(areaCode, Integer.MAX_VALUE);
+
+        for (Map<String, Object> item : accommodations) {
+            Long contentId = Long.parseLong(item.get("contentid").toString());
+
+            // 중복 검사 후 저장
+            if (accommodationRepository.findByContentId(contentId).isEmpty()) {
+                Accommodation accommodation = new Accommodation();
+
+                accommodation.setName(item.get("title").toString()); // 숙소 이름
+                accommodation.setAddress(item.getOrDefault("addr1", "").toString()); // 주소
+                accommodation.setCategory(item.getOrDefault("cat3", "").toString()); // 카테고리 (예: B02010700)
+                accommodation.setImageUrl(item.getOrDefault("firstimage", "").toString()); // 이미지
+                accommodation.setContentId(contentId); // contentId 저장
+
+
+                // 저장
+                accommodationRepository.save(accommodation);
+            }
+        }
     }
+}

@@ -25,8 +25,8 @@ public class Accommodation extends Base {
     private String category;  // 호텔, 모텔, 펜션 등
     private String imageUrl; // 이미지 URL (선택)
     @Column(nullable = false, unique = true)
-    private String contentId;
+    private Long contentId;
     @ManyToOne(fetch = FetchType.LAZY) // N:1 관계
-    @JoinColumn(name = "location_id", nullable = false)
+    @JoinColumn(name = "location_id",nullable = true)
     private Location location;   // 'area' -> 'location'
 }
