@@ -27,6 +27,6 @@ public class Accommodation extends Base {
     @Column(nullable = false, unique = true)
     private Long contentId;
     @ManyToOne(fetch = FetchType.LAZY) // N:1 관계
-    @JoinColumn(name = "location_id",nullable = true)
+    @JoinColumn(name = "location_id")
     private Location location;   // 'area' -> 'location'
 }

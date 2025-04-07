@@ -99,9 +99,14 @@ public class AccommodationService {
                 accommodation.setCategory(item.getOrDefault("cat3", "").toString()); // 카테고리 (예: B02010700)
                 accommodation.setImageUrl(item.getOrDefault("firstimage", "").toString()); // 이미지
                 accommodation.setContentId(contentId); // contentId 저장
+                // ✅ 지역 설정
+                Object areaCodeObj = item.get("areacode");
+                if (areaCodeObj != null) {
+                    int areaCodeFromItem = Integer.parseInt(areaCodeObj.toString());
+                    Location location = locationRepository.findByAreaCode(areaCodeFromItem).orElse(null);
+                    accommodation.setLocation(location);
+                }
 
-
-                // 저장
                 accommodationRepository.save(accommodation);
             }
         }
