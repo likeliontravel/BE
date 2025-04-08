@@ -1,17 +1,18 @@
 package org.example.be.unifieduser.service;
 
+import org.example.be.gcs.GCSService;
+import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.dto.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.oauth.repository.SocialUserRepository;
-import org.example.be.unifieduser.dto.ModifyNameDTO;
-import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
-import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Service
@@ -21,6 +22,7 @@ public class UnifiedUserService {
     private final UnifiedUserRepository unifiedUserRepository;
     private final SocialUserRepository socialUserRepository;
     private final GeneralUserRepository generalUserRepository;
+    private final GCSService gcsService;
 
     // 통합 유저 생성 메서드 ( 컨트롤러 호출이 아닙니다. 소셜, 일반 각 서비스 생성메서드에서 호출합니다. )
     @Transactional
@@ -109,10 +111,61 @@ public class UnifiedUserService {
         return unifiedUserRepository.findByUserIdentifier(userIdentifier).isPresent();
     }
 
-    // 테스트용 유저 정보 조회
-    public UnifiedUser getUserInfoTest(String userIdentifier) {
-        return unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("그딴 유저는 없어요. userIdentifier : " + userIdentifier));
+    // 유저 정보 조회하기
+    @Transactional(readOnly = true)
+    public UnifiedUserDTO getUserProfile(String userIdentifier) {
+        UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        UnifiedUserDTO unifiedUserDTO = new UnifiedUserDTO();
+        unifiedUserDTO.setId(unifiedUser.getId());
+        unifiedUserDTO.setName(unifiedUser.getName());
+        unifiedUserDTO.setEmail(unifiedUser.getEmail());
+        unifiedUserDTO.setRole(unifiedUser.getRole());
+        unifiedUserDTO.setPolicyAgreed(unifiedUser.getPolicyAgreed());
+        unifiedUserDTO.setSubscribed(unifiedUser.getSubscribed());
+        unifiedUserDTO.setProfileImageUrl(unifiedUser.getProfileImageUrl());
+
+        return unifiedUserDTO;
+    }
+
+    // 프로필 사진 업데이트
+    @Transactional
+    public String updateProfileImageUrl(String userIdentifier, MultipartFile file) throws IOException {
+        // 요청자 본인의 프로필 사진 변경 시도인지 확인
+        if (!userIdentifier.equals(SecurityUtil.getUserIdentifierFromAuthentication())) {
+            throw new IllegalArgumentException("본인의 프로필 사진만 변경할 수 있습니다.");
+        }
+
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        // 이미 프로필 사진이 있다면 삭제하고 저장
+        if (user.getProfileImageUrl() != null) {
+            gcsService.deleteProfileImage(user.getProfileImageUrl());
+        }
+
+        String profileImageUrl = gcsService.uploadProfileImage(file, userIdentifier);
+        user.setProfileImageUrl(profileImageUrl);
+        return profileImageUrl;
+    }
+
+    // 프로필 사진 삭제
+    @Transactional
+    public void deleteProfileImage(String userIdentifier) {
+        // 요청자 본인의 프로필 사진 삭제 요청 시도인지 확인
+        if (!userIdentifier.equals(SecurityUtil.getUserIdentifierFromAuthentication())) {
+            throw new IllegalArgumentException("본인의 프로필 사진만 삭제할 수 있습니다.");
+        }
+
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        if (user.getProfileImageUrl() != null) {
+            gcsService.deleteProfileImage(user.getProfileImageUrl());
+            user.setProfileImageUrl(null);
+        }
+
     }
 
     // userIdentifier로 이름 가져오기
@@ -123,26 +176,20 @@ public class UnifiedUserService {
         return user.getName();
     }
 
-//    //이메일 기반으로 통합 사용자 정보 조회 후 MyPageProfileDTO 생성         // 임시 블록 주석처리
-//    @Transactional(readOnly = true)
-//    public MyPageProfileDTO getUserProfileByEmail(String email) {
-//        // UnifiedUser 조회
-//        UnifiedUser unifiedUser = unifiedUserRepository.findByEmail(email)
-//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. 이메일: " + email));
-//
-//        // MyPageProfileDTO 생성 및 데이터 설정
-//        MyPageProfileDTO profileDTO = new MyPageProfileDTO();
-//        profileDTO.setEmail(unifiedUser.getEmail());
-//        profileDTO.setName(unifiedUser.getName());
-//        profileDTO.setRole(unifiedUser.getRole());
-//        profileDTO.setPolicyAgreed(unifiedUser.getPolicyAgreed());
-//        profileDTO.setSubscribed(unifiedUser.getSubscribed());
-//
-//        // 소셜 사용자일 경우 provider 설정
-//        if (unifiedUser.getSocialUser() != null) {
-//            profileDTO.setProvider(unifiedUser.getSocialUser().getProvider());
-//        }
-//
-//        return profileDTO;
-//    }
+    // userIdentifier로 이름, 프로필 사진만 가져오기 ( 그룹 채팅에서만 이용 용도, 가독성 및 안정성 상 불필요시 삭제 예정 )
+    public UnifiedUsersNameAndProfileImageUrl getNameAndProfileImageUrlByUserIdentifier(String userIdentifier) {
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        UnifiedUsersNameAndProfileImageUrl dto = new UnifiedUsersNameAndProfileImageUrl();
+        dto.setName(user.getName());
+        dto.setProfileImageUrl(user.getProfileImageUrl());
+        return dto;
+    }
 }
+
+// check!
+// 개념 상
+// 프로필 사진 변경 / 업데이트 메서드에서 마지막에 JpaRepository.save() 호출 없이도 db에 잘 반영됨.
+// @Transactional 로 인해서 영속성을 가진 엔티티 내부 필드값 변경이 있어도 트랜잭션 커밋 시점에 자동으로 DB에 적용되도록 되어 있음.
+// 확인해보자.

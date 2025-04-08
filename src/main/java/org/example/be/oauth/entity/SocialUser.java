@@ -25,6 +25,9 @@ public class SocialUser {
     @Column(nullable = false)
     private String name;    // 사용자 이름
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @Column(nullable = false)
     private String provider;    // 소셜 제공자
 

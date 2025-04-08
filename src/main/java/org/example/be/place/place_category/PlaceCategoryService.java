@@ -28,3 +28,4 @@ public class PlaceCategoryService {
         return placeCategoryRepository.existsPlaceCategoryByTheme(theme);
     }
 }
+

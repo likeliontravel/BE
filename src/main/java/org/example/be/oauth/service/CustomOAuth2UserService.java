@@ -65,6 +65,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String provider = response.getProvider();
         String providerId = response.getProviderId();
         String userIdentifier = provider + "_" + email;
+        String profileImageUrl = response.getProfileImage();
 
         System.out.println("생성된 userIdentifier: " + userIdentifier);
 
@@ -82,22 +83,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             socialUser.setProviderId(providerId);
             socialUser.setRole("ROLE_USER");
             socialUser.setUserIdentifier(userIdentifier);
+            socialUser.setProfileImageUrl(profileImageUrl);
 
             socialUserRepository.save(socialUser);
 
             // UnifiedUser가 없으면 생성
             if (existingUnifiedUser.isEmpty()) {
-                unifiedUserService.createUnifiedUser(
+                UnifiedUser unifiedUser = unifiedUserService.createUnifiedUser(
                         new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER")
                 );
+                unifiedUser.setProfileImageUrl(profileImageUrl);
+                unifiedUserRepository.save(unifiedUser);
             }
         } else {
             socialUser = existingSocialUser.get();
         }
 
         return new CustomOAuth2User(socialUser, attributes);
-        // SocialUser 테이블에 없다면 새로 생성
-
     }
 
     // SecurityContext에 OAuth2 인증 정보 설정

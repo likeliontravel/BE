@@ -50,4 +50,17 @@ public class KakaoResponse implements OAuth2Response {
         // name 못찾으면 예외 던지기
         throw new IllegalArgumentException("KakaoLogin - Name is missing");
     }
+
+    @Override
+    public String getProfileImage() {
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        if (kakaoAccount != null) {
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+            if (profile != null && profile.get("profile_image_url") != null) {
+                return profile.get("profile_image_url").toString();
+            }
+        }
+        return null;
+    }
+
 }

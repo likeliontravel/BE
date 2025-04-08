@@ -29,10 +29,8 @@ public interface OAuth2Response {
     String getName();
 
     /**
-     * OAuth2 제공자가 반환한 모든 속성을 Map 형태로 반환.
-     * - 제공자마다 추가 정보가 다르기 때문에 확장성을 위해 사용.
-     * - 예: Google의 경우 프로필 이미지, 언어 설정 등도 포함 가능.
-     * @return 사용자 속성의 Key-Value 쌍을 포함한 Map
+     * OAuth2 제공자로부터 가져온 사용자 프로필 사진 반환.
+     * @return 사용자 프로필 사진 미디어파일
      */
-//    Map<String, Object> getAttributes();
+    String getProfileImage();
 }

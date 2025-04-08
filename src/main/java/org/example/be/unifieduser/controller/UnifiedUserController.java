@@ -2,16 +2,17 @@ package org.example.be.unifieduser.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.response.CommonResponse;
-import org.example.be.unifieduser.dto.ModifyNameDTO;
-import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
-import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.dto.*;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Controller
 @RequiredArgsConstructor
@@ -52,14 +53,48 @@ public class UnifiedUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이름 변경 성공"));
     }
 
-    @GetMapping("/test/getUserInfo/{userIdentifier}")
-    public ResponseEntity<CommonResponse<UnifiedUser>> getUnifiedUserInfoTest(@PathVariable String userIdentifier) {
-        if (userIdentifier == null || userIdentifier.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), "userIdentifier가 제공되지 않았습니다."));
-        }
-        UnifiedUser userInfoTest = unifiedUserService.getUserInfoTest(userIdentifier);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userInfoTest, "유저정보가져오기 성공"));
+    // 유저 정보 조회 ( 프로필 이라 칭하겠음 )
+    // !주의 : 요청자의 정보 조회가 이루어지는 게 아님. 조회하고자 하는 유저 userIdentifier 입력으로 정보 조회.
+    @GetMapping("/getProfile/{userIdentifier}")
+    public ResponseEntity<CommonResponse<UnifiedUserDTO>> getUserProfile(@PathVariable String userIdentifier) {
+        UnifiedUserDTO userDTO = unifiedUserService.getUserProfile(userIdentifier);
+
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userDTO, "프로필 조회 성공"));
     }
+
+    // 프로필 사진 변경
+    @PostMapping("/profileImage/change")
+    public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file) throws IOException {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        String profileImageUrl = unifiedUserService.updateProfileImageUrl(userIdentifier, file);
+
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
+    }
+
+    // 프로필 사진 삭제
+    @DeleteMapping("/profileImage/delete")
+    public ResponseEntity<CommonResponse<Void>> deleteProfileImage() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        unifiedUserService.deleteProfileImage(userIdentifier);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 삭제 성공"));
+    }
+
+    // 해당 유저 이름, 프로필사진만 가져오기 ( 그룹 채팅에서 사용 예정 )
+    @GetMapping("/getNameAndImage/{userIdentifier}")
+    public ResponseEntity<CommonResponse<UnifiedUsersNameAndProfileImageUrl>> getNameAndProfileImageUrl(@PathVariable String userIdentifier) {
+        UnifiedUsersNameAndProfileImageUrl nameAndProfileImageUrl = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(userIdentifier);
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(nameAndProfileImageUrl, "이름과 프로필 사진 가져오기 성공"));
+    }
+
+    // 테스트용 코드 변경
+//    @GetMapping("/test/getUserInfo/{userIdentifier}")
+//    public ResponseEntity<CommonResponse<UnifiedUser>> getUnifiedUserInfoTest(@PathVariable String userIdentifier) {
+//        if (userIdentifier == null || userIdentifier.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), "userIdentifier가 제공되지 않았습니다."));
+//        }
+//        UnifiedUser userInfoTest = unifiedUserService.getUserInfoTest(userIdentifier);
+//        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userInfoTest, "유저정보가져오기 성공"));
+//    }
 
 }

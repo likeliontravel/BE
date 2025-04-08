@@ -13,4 +13,5 @@ public class UnifiedUserDTO {
     private String role;
     private Boolean policyAgreed;   // 이용약관 동의 여부
     private Boolean subscribed; // 유료 구독 여부
+    private String profileImageUrl; // 프로필 사진 퍼블릭 URL
 }

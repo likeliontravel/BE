@@ -32,6 +32,9 @@ public class UnifiedUser {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @Column(nullable = false)
     private String role;
 

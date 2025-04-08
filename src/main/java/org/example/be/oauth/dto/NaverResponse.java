@@ -41,6 +41,12 @@ public class NaverResponse implements OAuth2Response{
             throw new IllegalArgumentException("NaverLogin - name is missing");
         }
         return name.toString();
-}
+    }
+
+    @Override
+    public String getProfileImage() {
+        Object profileImage = attribute.get("profile_image");
+        return profileImage != null ? profileImage.toString() : null;
+    }
 
 }
