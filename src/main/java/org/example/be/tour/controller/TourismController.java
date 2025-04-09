@@ -3,6 +3,7 @@ package org.example.be.tour.controller;
 import lombok.RequiredArgsConstructor;
 
 import org.example.be.tour.service.AccommodationService;
+import org.example.be.tour.service.RestaurantService;
 import org.example.be.tour.service.TouristSpotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public class TourismController {
     private final TouristSpotService touristSpotService;
     private static final Logger logger = LoggerFactory.getLogger(TourismController.class);
     private final AccommodationService accommodationService;
+    private final RestaurantService restaurantService;
 
     // 동기적으로 관광지 데이터를 가져오기
     @GetMapping("/fetch/{areaCode}")
@@ -92,8 +94,35 @@ public class TourismController {
                     .body("숙박 정보 저장 중 오류 발생: " + e.getMessage());
         }
     }
+    @GetMapping("/restaurant/{areaCode}")
+    public ResponseEntity<List<Map<String, Object>>> getRestaurants(@PathVariable int areaCode) {
+        try {
+            // areaCode를 지역명으로 변환
+            String state = getStateByAreaCode(areaCode);
 
-}
+            if (state == null) {
+                return ResponseEntity.badRequest().body(null); // 잘못된 areaCode 처리
+            }
+
+            List<Map<String, Object>> restaurants = restaurantService.getData((areaCode), 39,10);
+            return ResponseEntity.ok(restaurants);
+        } catch (Exception e) {
+            logger.error("식당 정보를 가져오는 중 오류 발생: ", e);
+            return ResponseEntity.internalServerError().build(); // 에러 처리
+        }
+    }
+    @PostMapping("/restaurant/save/{areaCode}")
+    public ResponseEntity<String> saveRestaurants(@PathVariable int areaCode) {
+        try {
+            restaurantService.saveRestaurants(areaCode);
+            return ResponseEntity.ok("식당 정보가 성공적으로 저장되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("식당 정보 저장 중 오류 발생: " + e.getMessage());
+        }
+    }
+    }
+
 
 /*    // 지역 코드로 관광지 목록 조회
     @GetMapping("/{areaCode}")

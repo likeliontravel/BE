@@ -26,7 +26,7 @@ public class Restaurant extends Base {
     private String imageUrl;
 
     @Column(unique = true)
-    private String contentId;   // TourAPI에서 제공하는 고유 ID
+    private Long contentId;   // TourAPI에서 제공하는 고유 ID
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")  // 'area_id' -> 'location_id'
