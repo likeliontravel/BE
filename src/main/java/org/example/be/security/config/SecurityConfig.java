@@ -77,7 +77,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/signup", "/login").permitAll()
-                        .requestMatchers("/oauth2/**", "/user/**", "/error", "/mail/**", "/board/get/**", "/comment/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/user/**", "/error", "/mail/**", "/board/get/**", "/comment/**", "/ws/**", "/chat/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -120,9 +120,9 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 허용할 Origin
+        configuration.setAllowedOrigins(List.of("https://localhost:5500")); // 허용할 Origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
         configuration.setAllowCredentials(true); // 쿠키 허용
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

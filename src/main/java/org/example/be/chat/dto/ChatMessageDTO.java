@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class ChatMessageDTO {
     private Long id;
     private String groupName;
-    private String senderName;
     private String senderIdentifier;
     private String content;
     private String type;    // "TEXT" 또는 "IMAGE"

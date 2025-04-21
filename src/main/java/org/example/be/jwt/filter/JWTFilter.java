@@ -33,8 +33,8 @@ public class JWTFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         System.out.println("JWTFilter - 요청 URL : " + request.getRequestURI());
 
-        // 일반회원가입과 로그인 요청은 JWT 필터 적용 제외
-        if (requestURI.equals("/general-user/signup") || requestURI.equals("/login")) {
+        // 일반회원가입과 로그인 요청, 웹소켓 연결은 JWT 필터 적용 제외
+        if (requestURI.equals("/general-user/signup") || requestURI.equals("/login") || requestURI.startsWith("/ws")) {
             filterChain.doFilter(request, response);
             return;
         }

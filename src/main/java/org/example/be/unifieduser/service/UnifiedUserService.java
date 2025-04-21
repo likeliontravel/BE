@@ -42,6 +42,7 @@ public class UnifiedUserService {
         unifiedUser.setRole(dto.getRole());
         unifiedUser.setPolicyAgreed(false);
         unifiedUser.setSubscribed(false);
+        unifiedUser.setProfileImageUrl(null);
 
         return unifiedUserRepository.save(unifiedUser);
     }

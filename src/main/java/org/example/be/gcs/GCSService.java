@@ -20,6 +20,9 @@ public class GCSService {
     @Value("${gcs.bucket.profile}")
     private String profileBucketName;
 
+    @Value("${gcs.bucket.chat}")
+    private String chatImageBucketName;
+
     /**
      * 프로필 사진 GCS 업로드 메서드
      * param : 저장할 이미지파일, userIdentifier
@@ -45,6 +48,19 @@ public class GCSService {
         String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
         BlobId blobId = BlobId.of(profileBucketName, fileName);
         storage.delete(blobId);
+    }
+
+    /**
+     * 채팅 이미지 업로드 메서드
+     *
+     */
+    public String uploadChatImage(MultipartFile file, String senderIdentifier, String groupName) throws IOException {
+        String fileName = "chat_" + groupName + "_" + senderIdentifier + "_" + UUID.randomUUID();
+        BlobId blobId = BlobId.of(chatImageBucketName, fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
+        storage.create(blobInfo, file.getBytes());
+
+        return String.format("https://storage.googleapis.com/%s/%s", chatImageBucketName, fileName);
     }
 
 }
