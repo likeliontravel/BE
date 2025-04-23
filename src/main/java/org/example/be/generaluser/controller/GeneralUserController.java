@@ -1,6 +1,7 @@
 package org.example.be.generaluser.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.generaluser.dto.GeneralUserUpdatePasswordDTO;
 import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
@@ -50,20 +51,16 @@ public class GeneralUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 가입 성공"));
     }
 
-    // 회원정보 수정 -> 마이페이지 패키지가 만들어진다면.. 옮길 필요가 있을 수도 ? 얘가 여기 있는게 맞을까?
-    @PutMapping("/update")
-    public ResponseEntity<CommonResponse<String>> updateUser(@RequestBody GeneralUserDTO generalUserDTO) {
-
+    // 비밀번호 변경
+    @PutMapping("/passwordUpdate")
+    public ResponseEntity<CommonResponse<String>> updatePassword(@RequestBody GeneralUserUpdatePasswordDTO generalUserUpdatePasswordDTO) {
         try {
-            generalUserService.updateGeneralUser(generalUserDTO);
-            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 수정 성공"));
-        } catch (NoSuchElementException e) {
-            // 회원을 찾을 수 없는 경우
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CommonResponse.error(404, e.getMessage()));
+            generalUserService.updatePassword(generalUserUpdatePasswordDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
         } catch (IllegalArgumentException e) {
-
-            // 요청 데이터가 없는 경우
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(400, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(404, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, e.getMessage()));
         }
     }
 

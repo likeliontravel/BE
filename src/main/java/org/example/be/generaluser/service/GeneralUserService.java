@@ -4,7 +4,9 @@ package org.example.be.generaluser.service;
 import lombok.RequiredArgsConstructor;
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.generaluser.dto.GeneralUserDTO;
+import org.example.be.generaluser.dto.GeneralUserUpdatePasswordDTO;
 import org.example.be.generaluser.repository.GeneralUserRepository;
+import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
 
 import org.example.be.unifieduser.entity.UnifiedUser;
@@ -51,29 +53,22 @@ public class GeneralUserService {
 
     }
 
-    // 회원 수정 로직
+    // 비밀번호 변경 로직
     @Transactional
-    public void updateGeneralUser(GeneralUserDTO generalUserDTO) {
-
-        GeneralUser generalUser = generalUserRepository.findByUserIdentifier("gen_" + generalUserDTO.getEmail())
-                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다"));
-
-        // 유효하지 않은 요청 데이터인 경우
-        if (generalUserDTO.getPassword() == null && generalUserDTO.getName() == null) {
-
-            throw new IllegalArgumentException("요청 데이터에 유효한 정보가 없습니다. 이메일과 이름 중 하나 이상은 값을 입력해야 합니다.");
+    public void updatePassword(GeneralUserUpdatePasswordDTO dto) {
+        String inputUserIdentifier = "gen_" + dto.getEmail();
+        if (!inputUserIdentifier.equals(SecurityUtil.getUserIdentifierFromAuthentication())) {
+            throw new IllegalArgumentException("인증 정보가 일치하지 않거나 비밀번호를 변경할 권한이 없습니다.");
         }
 
-        // 필요한 데이터만 업데이트
-        if (generalUserDTO.getPassword() != null) {
-            generalUser.setPassword(passwordEncoder.encode(generalUserDTO.getPassword()));
+        GeneralUser generalUser = generalUserRepository.findByUserIdentifier(inputUserIdentifier)
+                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. userIdentifier: " + inputUserIdentifier));
+
+        if (dto.getPassword() == null) {
+            throw new IllegalArgumentException("비밀번호를 입력해야 합니다.");
         }
 
-        if (generalUserDTO.getName() != null) {
-            generalUser.setName(generalUserDTO.getName());
-//            unifiedUserService.updateName(generalUser.getUnifiedUser().getId(), generalUserDTO.getName());  // 통합테이블 구현 후 주석 해제. 만들 때 조회를 getId로 하는게 맞는지 재차확인할 것.
-        }
-
+        generalUser.setPassword(passwordEncoder.encode(dto.getPassword()));
         generalUserRepository.save(generalUser);
     }
 

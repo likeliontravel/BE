@@ -63,7 +63,7 @@ public class UnifiedUserController {
     }
 
     // 프로필 사진 변경
-    @PostMapping("/profileImage/change")
+    @PostMapping("/change/profileImage")
     public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file) throws IOException {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         String profileImageUrl = unifiedUserService.updateProfileImageUrl(userIdentifier, file);
@@ -85,16 +85,5 @@ public class UnifiedUserController {
         UnifiedUsersNameAndProfileImageUrl nameAndProfileImageUrl = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(userIdentifier);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(nameAndProfileImageUrl, "이름과 프로필 사진 가져오기 성공"));
     }
-
-    // 테스트용 코드 변경
-//    @GetMapping("/test/getUserInfo/{userIdentifier}")
-//    public ResponseEntity<CommonResponse<UnifiedUser>> getUnifiedUserInfoTest(@PathVariable String userIdentifier) {
-//        if (userIdentifier == null || userIdentifier.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), "userIdentifier가 제공되지 않았습니다."));
-//        }
-//        UnifiedUser userInfoTest = unifiedUserService.getUserInfoTest(userIdentifier);
-//        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userInfoTest, "유저정보가져오기 성공"));
-//    }
 
 }
