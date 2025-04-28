@@ -61,7 +61,7 @@ public class GroupService {
         groupRepository.save(group);
     }
 
-    // 그룹 설명 또는 공지사항 변경
+    // 그룹 설명 변경
     public void modifyDescribtion(GroupModifyRequestDTO request) {
 
         String groupName = request.getGroupName();

@@ -11,6 +11,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.util.UriUtils;
+
+import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,6 +32,8 @@ public class ChatMessageSocketController {
             ChatMessageDTO incomingMessage,
             Message<?> message
     ) {
+        // groupName 디코딩
+        String decodedGroupName = UriUtils.decode(groupName, StandardCharsets.UTF_8);
 
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         String senderIdentifier = (String) accessor.getSessionAttributes().get("userIdentifier");

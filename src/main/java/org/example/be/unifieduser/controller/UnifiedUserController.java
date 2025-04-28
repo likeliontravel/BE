@@ -53,8 +53,8 @@ public class UnifiedUserController {
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이름 변경 성공"));
     }
 
-    // 유저 정보 조회 ( 프로필 이라 칭하겠음 )
-    // !주의 : 요청자의 정보 조회가 이루어지는 게 아님. 조회하고자 하는 유저 userIdentifier 입력으로 정보 조회.
+    // 유저 정보 조회
+    // !주의 : 요청자 본인의 정보 조회가 이루어지는 게 아님. 조회하고자 하는 유저 userIdentifier 입력으로 정보 조회.
     @GetMapping("/getProfile/{userIdentifier}")
     public ResponseEntity<CommonResponse<UnifiedUserDTO>> getUserProfile(@PathVariable String userIdentifier) {
         UnifiedUserDTO userDTO = unifiedUserService.getUserProfile(userIdentifier);
@@ -65,8 +65,7 @@ public class UnifiedUserController {
     // 프로필 사진 변경
     @PostMapping("/change/profileImage")
     public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file) throws IOException {
-        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        String profileImageUrl = unifiedUserService.updateProfileImageUrl(userIdentifier, file);
+        String profileImageUrl = unifiedUserService.updateProfileImageUrl(file);
 
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
     }
@@ -74,8 +73,7 @@ public class UnifiedUserController {
     // 프로필 사진 삭제
     @DeleteMapping("/profileImage/delete")
     public ResponseEntity<CommonResponse<Void>> deleteProfileImage() {
-        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        unifiedUserService.deleteProfileImage(userIdentifier);
+        unifiedUserService.deleteProfileImage();
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 삭제 성공"));
     }
 

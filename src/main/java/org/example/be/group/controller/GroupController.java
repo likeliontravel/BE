@@ -6,10 +6,6 @@ import org.example.be.group.service.GroupService;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,19 +34,26 @@ public class GroupController {
     }
 
     // 그룹 설명 또는 공지사항 변경
-    @PostMapping("/modify")
-    public ResponseEntity<CommonResponse<String>> modifyDescriptionOrAnnouncement(@RequestBody GroupModifyRequestDTO request) {
+    @PostMapping("/modify/description")
+    public ResponseEntity<CommonResponse<String>> modifyDescription(@RequestBody GroupModifyRequestDTO request) {
         groupService.modifyDescribtion(request);
 
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 설명 또는 공지사항 변경 완료"));
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 설명 변경 완료"));
     }
 
     // 그룹 나가기
     @PostMapping("/exit")
     public ResponseEntity<CommonResponse<String>> exitFromGroup(@RequestBody GroupExitOrDeleteRequestDTO request) {
-        groupService.exitGroup(request);
+        try {
+            groupService.exitGroup(request);
 
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 나가기 완료"));
+            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 나가기 완료"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+
     }
 
     // 사용자가 가입한 그룹 조회하기 // 임시 주석 처리 - 테스트

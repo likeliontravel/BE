@@ -7,6 +7,7 @@ import org.example.be.group.entitiy.Group;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
+import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.util.SecurityUtil;
 import org.springframework.http.HttpStatus;
@@ -31,7 +32,7 @@ public class InvitationJoinController {
     // 로그인 시 성공 핸들러에서 해당 파라미터를 이용해 한번 더 리다이렉션.
     @GetMapping("/{invitationCode}")
     public void handleInvitation(
-            @PathVariable String invitationCode,
+            @DecodedPathVariable String invitationCode,
             Authentication authentication,
             HttpServletResponse response) throws IOException {
 

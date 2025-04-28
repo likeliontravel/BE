@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.be.group.announcement.entity.GroupAnnouncement;
 import org.example.be.unifieduser.entity.UnifiedUser;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -29,7 +32,6 @@ public class Group {
     @JoinColumn(name = "created_by", nullable = false)
     private UnifiedUser createdBy;  // 그룹 창설자
 
-
     // group_members라는 조인테이블 생성. groupId와 userId가 연결되어있는 테이블이 될것임.
     // 자바 상으로는 UnifiedUser를 멤버로 가지는 Set으로 표현.
     @ManyToMany
@@ -41,6 +43,9 @@ public class Group {
     private Set<UnifiedUser> members = new HashSet<>(); // 그룹 내 멤버를 표현할 것임.
 
     private String description; // 그룹 설명
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupAnnouncement> announcements = new ArrayList<>();
 
     // UnifiedUser를 멤버에 추가해주는 함수
     public void addMember(UnifiedUser user) {

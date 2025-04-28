@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.chat.dto.ChatMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.service.ChatMessageService;
+import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.util.SecurityUtil;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class ChatMessageController {
 
     // 채팅방 최초 입장 시 최신 메시지 20개 조회
     @GetMapping("/{groupName}/messages")
-    public ResponseEntity<CommonResponse<Map<String, Object>>> getRecent20Messages(@PathVariable String groupName) {
+    public ResponseEntity<CommonResponse<Map<String, Object>>> getRecent20Messages(@DecodedPathVariable String groupName) {
         Map<String, Object> result = chatMessageService.getRecent20Messages(groupName);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "최근 메시지 20개 조회 성공"));
     }
@@ -31,7 +32,7 @@ public class ChatMessageController {
     // 스크롤 업 시 과거 메시지 추가 20개 조회
     @GetMapping("/{groupName}/messages/prev")
     public ResponseEntity<CommonResponse<Map<String, Object>>> getPrev20Messages(
-            @PathVariable String groupName,
+            @DecodedPathVariable String groupName,
             @RequestParam Long lastMessageId
     ) {
         Map<String, Object> result = chatMessageService.getPrevious20Messages(groupName, lastMessageId);
@@ -41,7 +42,7 @@ public class ChatMessageController {
     // 키워드 기반 메시지 조회 ( 메시지 검색 )
     @GetMapping("/{groupName}/messages/search")
     public ResponseEntity<CommonResponse<Map<String, Object>>> searchMessages(
-            @PathVariable String groupName,
+            @DecodedPathVariable String groupName,
             @RequestParam String keyword
     ) {
         Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword);
@@ -51,7 +52,7 @@ public class ChatMessageController {
     // 해당 그룹 가장 최신 메시지 1개 조회 ( 채팅페이지 내 그룹목록에 사용 )
     @GetMapping("/{groupName}/messages/latest")
     public ResponseEntity<CommonResponse<ChatMessageDTO>> getLatestMessage(
-            @PathVariable String groupName
+            @DecodedPathVariable String groupName
     ) {
         ChatMessageDTO result = chatMessageService.getLatestMessageOfGroup(groupName);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 1개 조회 성공"));
@@ -61,7 +62,7 @@ public class ChatMessageController {
     // 웹소켓, STOMP 적용 전 테스트용
     @PostMapping("/{groupName}/messages/save")
     public ResponseEntity<CommonResponse<ChatMessageDTO>> saveMessage(
-            @PathVariable String groupName,
+            @DecodedPathVariable String groupName,
             @RequestParam String content,
             @RequestParam String type
     ) {
@@ -79,7 +80,7 @@ public class ChatMessageController {
     // 이미지 메시지 저장
     @PostMapping("/{groupName}/messages/image")
     public ResponseEntity<CommonResponse<ChatMessageDTO>> uploadImageMessage(
-            @PathVariable String groupName,
+            @DecodedPathVariable String groupName,
             @RequestParam MultipartFile image
     ) throws IOException {
         String senderIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();

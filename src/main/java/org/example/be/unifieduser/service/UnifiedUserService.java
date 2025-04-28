@@ -97,7 +97,7 @@ public class UnifiedUserService {
     // 가볍게 이름만! : 형진이형 마이페이지 합칠 때 참고하려고요
     @Transactional
     public void updateName(ModifyNameDTO dto) {
-        String userIdentifier = dto.getUserIdentifier();
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         String name = dto.getName();
 
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
@@ -132,14 +132,12 @@ public class UnifiedUserService {
 
     // 프로필 사진 업데이트
     @Transactional
-    public String updateProfileImageUrl(String userIdentifier, MultipartFile file) throws IOException {
-        // 요청자 본인의 프로필 사진 변경 시도인지 확인
-        if (!userIdentifier.equals(SecurityUtil.getUserIdentifierFromAuthentication())) {
-            throw new IllegalArgumentException("본인의 프로필 사진만 변경할 수 있습니다.");
-        }
+    public String updateProfileImageUrl(MultipartFile file) throws IOException {
+
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+                .orElseThrow(() -> new IllegalArgumentException("요청자의 정보를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
 
         // 이미 프로필 사진이 있다면 삭제하고 저장
         if (user.getProfileImageUrl() != null) {
@@ -153,14 +151,11 @@ public class UnifiedUserService {
 
     // 프로필 사진 삭제
     @Transactional
-    public void deleteProfileImage(String userIdentifier) {
-        // 요청자 본인의 프로필 사진 삭제 요청 시도인지 확인
-        if (!userIdentifier.equals(SecurityUtil.getUserIdentifierFromAuthentication())) {
-            throw new IllegalArgumentException("본인의 프로필 사진만 삭제할 수 있습니다.");
-        }
+    public void deleteProfileImage() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+                .orElseThrow(() -> new IllegalArgumentException("요청자의 정보를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
 
         if (user.getProfileImageUrl() != null) {
             gcsService.deleteProfileImage(user.getProfileImageUrl());

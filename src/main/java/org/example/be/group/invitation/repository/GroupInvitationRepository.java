@@ -14,6 +14,12 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
     // 해당 그룹에 대해; 활성 상태이고 만료 시각이 현재 시각보다 이후인 (아직 유효한) 초대링크 찾기용
     Optional<GroupInvitation> findByGroupAndActiveTrueAndExpiresAtAfter(Group group, LocalDateTime now);
 
-    // 해당 초대코드에 대해; 활성 상태이고, 만료 시각이 현재 시각보다 이후인 (아직 유효한) 초대링크 찾기용
+//    // 해당 초대코드에 대해; 활성 상태이고, 만료 시각이 현재 시각보다 이후인 (아직 유효한) 초대링크 찾기용
+//    Optional<GroupInvitation> findByInvitationCodeAndActiveTrueAndExpiresAtAfter(String invitationCode, LocalDateTime now);
+
+    // 해당 그룹에 대해 활성 상태인 초대 링크 찾기
+    Optional<GroupInvitation> findByGroupAndActiveTrue(Group group);
+
+    // 해당 그룹에 대해 활성 상태이지만 유효 기간이 지나지 않은 링크 찾기
     Optional<GroupInvitation> findByInvitationCodeAndActiveTrueAndExpiresAtAfter(String invitationCode, LocalDateTime now);
 }

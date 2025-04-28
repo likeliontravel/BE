@@ -77,7 +77,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/general-user/signup", "/login").permitAll()
-                        .requestMatchers("/oauth2/**", "/user/**", "/error", "/mail/**", "/board/get/**", "/comment/**", "/ws/**", "/chat/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/error", "/mail/**", "/board/get/**", "/comment/**", "/ws/**", "/chat/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -124,6 +124,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
         configuration.setAllowCredentials(true); // 쿠키 허용
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 

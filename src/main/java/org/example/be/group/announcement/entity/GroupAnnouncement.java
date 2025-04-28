@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.be.group.entitiy.Group;
-import org.example.be.unifieduser.entity.UnifiedUser;
 
 import java.time.LocalDateTime;
 
@@ -19,17 +18,17 @@ public class GroupAnnouncement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_groups_id", nullable = false)
     private Group group;
 
     @Column
     private String writerName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)

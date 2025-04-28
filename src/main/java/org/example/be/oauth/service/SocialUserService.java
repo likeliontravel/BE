@@ -14,13 +14,6 @@ public class SocialUserService {
         this.socialUserRepository = socialUserRepository;
     }
 
-//    public SocialUserDTO getUserProfile(String userIdentifier) {
-//        SocialUser socialUser = socialUserRepository.findByUserIdentifier(userIdentifier)
-//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
-//
-//        return convertEntityToDTO(socialUser); // 변환 메서드 호출
-//    }
-
     // Entity -> DTO 변환 메서드
     public SocialUserDTO convertEntityToDTO(SocialUser entity) {
         SocialUserDTO dto = new SocialUserDTO();
