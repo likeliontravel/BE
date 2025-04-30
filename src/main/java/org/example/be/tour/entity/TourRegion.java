@@ -12,14 +12,21 @@ import org.example.be.board.entity.Base;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "location")
-public class Location extends Base {
+@Table(name = "tour_region")
+public class TourRegion extends Base {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;  // 지역명 (예: 서울, 부산, 대전)
-
     @Column(nullable = false, unique = true)
-    private int areaCode; // TourAPI에서 제공하는 지역 코드
+    private int areaCode;
+
+    private String areaName;
+
+    private String siGunGuCode;
+
+    private String siGunGuName;
+
+    private String region;
 }

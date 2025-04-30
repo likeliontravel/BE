@@ -2,10 +2,10 @@ package org.example.be.tour.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.example.be.tour.entity.Location;
 import org.example.be.tour.entity.Restaurant;
-import org.example.be.tour.repository.LocationRepository;
+import org.example.be.tour.entity.TourRegion;
 import org.example.be.tour.repository.RestaurantRepository;
+import org.example.be.tour.repository.TourRegionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -18,13 +18,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
-    private final LocationRepository locationRepository;
+    private final TourRegionRepository tourRegionRepository;
 
     @Value("${service-key}")
     private String serviceKey;
@@ -91,8 +90,8 @@ public class RestaurantService {
                 Object areaCodeObj = item.get("areacode");
                 if (areaCodeObj != null) {
                     int areaCodeFromItem = Integer.parseInt(areaCodeObj.toString());
-                    Location location = locationRepository.findByAreaCode(areaCodeFromItem).orElse(null);
-                    restaurant.setLocation(location);
+                    TourRegion location = tourRegionRepository.findByAreaCode(areaCodeFromItem).orElse(null);
+                    restaurant.setTourRegion(location);
                 }
                 restaurantRepository.save(restaurant);
             }

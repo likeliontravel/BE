@@ -3,9 +3,9 @@ package org.example.be.tour.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.be.tour.entity.Accommodation;
-import org.example.be.tour.entity.Location;
+import org.example.be.tour.entity.TourRegion;
 import org.example.be.tour.repository.AccommodationRepository;
-import org.example.be.tour.repository.LocationRepository;
+import org.example.be.tour.repository.TourRegionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
-    private final LocationRepository locationRepository;
+    private final TourRegionRepository tourRegionRepository;
 
     @Value("${service-key}")
     private String serviceKey;
@@ -103,8 +103,8 @@ public class AccommodationService {
                 Object areaCodeObj = item.get("areacode");
                 if (areaCodeObj != null) {
                     int areaCodeFromItem = Integer.parseInt(areaCodeObj.toString());
-                    Location location = locationRepository.findByAreaCode(areaCodeFromItem).orElse(null);
-                    accommodation.setLocation(location);
+                    TourRegion location = tourRegionRepository.findByAreaCode(areaCodeFromItem).orElse(null);
+                    accommodation.setTourRegion(location);
                 }
 
                 accommodationRepository.save(accommodation);
