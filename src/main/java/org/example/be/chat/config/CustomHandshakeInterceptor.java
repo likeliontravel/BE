@@ -67,6 +67,17 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 
         if (!isMember) {
             System.out.println("[WebSocket] 그룹의 멤버가 아니어서 채팅방에 입장할 수 없습니다. not a member of group.");
+            if (response instanceof ServletServerHttpResponse servletResponse) {
+                servletResponse.getServletResponse().setStatus(HttpStatus.FORBIDDEN.value());                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+
+                try {
+                    servletResponse.getServletResponse().getWriter().write("[WebSocket] 그룹의 멤버가 아니어서 채팅방에 입장할 수 없습니다. not a member of group.");
+                    servletResponse.getServletResponse().flushBuffer();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
             return false;
         }
 
