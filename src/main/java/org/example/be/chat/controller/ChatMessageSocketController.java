@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.chat.dto.ChatMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.service.ChatMessageService;
+import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.security.util.SecurityUtil;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,39 +25,37 @@ public class ChatMessageSocketController {
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
-     *  클라이언트가 "/pub/chat/{groupName}"으로 메시지를 보내면 실행됨.
-     *  해당 메시지를 DB에 저장하고, "/sub/chat/{groupName}"을 구독중인 사람에게 메시지 전송
+     *  클라이언트가 "/pub/chat/{groupName}" 으로 메시지를 보내면 이 메서드가 실행됨
+     *   1. WebSocket에서 전송된 메시지를 수신
+     *   2. 메시지 DB에 저장
+     *   3. "/sub/chat/{groupName}"으로 구독한 클라이언트들에게 브로드캐스트
      */
     @MessageMapping("/chat/{groupName}")
     public void handleMessage(
             @DestinationVariable String groupName,
             ChatMessageDTO incomingMessage,
-            Message<?> message
+            Principal principal
     ) {
-        // groupName 디코딩
+        // URI 인코딩된 그룹 명 디코딩하기
         String decodedGroupName = UriUtils.decode(groupName, StandardCharsets.UTF_8);
 
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        String senderIdentifier = (String) accessor.getSessionAttributes().get("userIdentifier");
+        // 핸드셰이크 때 저장해둔 Principal에서 userIdentifier 추출
+        String userIdentifier = principal.getName();
 
-        if (senderIdentifier == null) {
+        if (userIdentifier == null) {
             throw new IllegalArgumentException("WebSocket 세션에 사용자 정보가 없습니다.");
         }
 
-        // 메시지 저장
+        // 메시지를 DB에 저장
         ChatMessage savedMessage = chatMessageService.saveMessage(
-                groupName,
-                senderIdentifier,
+                decodedGroupName,
+                userIdentifier,
                 incomingMessage.getContent(),
                 incomingMessage.getType()
         );
 
-        // DTO로 변환
+        // DTO 변환 후 해당 채팅방 구독자에게 브로드캐스팅
         ChatMessageDTO chatMessageDTO = chatMessageService.toDTO(savedMessage);
-
-        System.out.println("보내기 직전 : " + chatMessageDTO);
-        // 구독 중인 클라이언트에게 브로드캐스트
         messagingTemplate.convertAndSend("/sub/chat/" + groupName, chatMessageDTO);
     }
-
 }

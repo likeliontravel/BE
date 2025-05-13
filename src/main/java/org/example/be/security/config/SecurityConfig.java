@@ -76,8 +76,17 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/general-user/signup", "/login").permitAll()
-                        .requestMatchers("/oauth2/**", "/error", "/mail/**", "/board/get/**", "/comment/**", "/ws/**", "/chat/**").permitAll()
+                        .requestMatchers(
+                                "/general-user/signup",
+                                "/login",
+                                "/oauth2/**",
+                                "/error",
+                                "/mail/**",
+                                "/board/get/**",
+                                "/comment/**",
+                                "/ws/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
 

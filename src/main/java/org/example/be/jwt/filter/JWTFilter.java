@@ -29,7 +29,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
         String requestURI = request.getRequestURI();
         System.out.println("JWTFilter - 요청 URL : " + request.getRequestURI());
 
@@ -41,8 +40,8 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         // 헤더에서 토큰 추출
-        String accessToken = extractTokenFromHeaderAndCookie(request, "Authorization");
-        String refreshToken = extractTokenFromHeaderAndCookie(request, "Refresh-Token");
+        String accessToken = extractTokenFromHeaderAndCookie(request, "Authorization", "accessToken");
+        String refreshToken = extractTokenFromHeaderAndCookie(request, "Refresh-Token", "refreshToken");
 
         // AccessToken이 없으면 인증 실패 처리
         if (accessToken == null || !jwtUtil.isValid(accessToken)) {
@@ -102,7 +101,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
 
     // 헤더에서 먼저 토큰 탐색, 발견되지 않으면 쿠키에서 탐색
-    private String extractTokenFromHeaderAndCookie(HttpServletRequest request, String headerName) {
+    private String extractTokenFromHeaderAndCookie(HttpServletRequest request, String headerName, String paramName) {
         // 헤더 선 탐색
         String token = request.getHeader(headerName);
 
@@ -120,7 +119,14 @@ public class JWTFilter extends OncePerRequestFilter {
         } else if (token.startsWith("Bearer ")) {
             return token.substring(7);
         }
-        return token;
+
+        // 쿼리 파라미터에서 탐색
+        token = request.getParameter(paramName);
+        if (token != null) {
+            return token;
+        }
+
+        return null;
     }
 
     private Cookie createCookie(String key, String value) {

@@ -1,9 +1,11 @@
 package org.example.be.chat.config;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.group.repository.GroupRepository;
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -16,23 +18,30 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JWTUtil jwtUtil;
     private final JWTBlackListService jwtBlackListService;
+    private final GroupRepository groupRepository;
 
-    // 클라이언트가 연결할 WebSocket 엔드포인트 지정
+    // 클라이언트가 접속할 WebSocket 엔드포인트 등록
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws") // WebSocket 연결 주소 : ws://localhost:8080/ws
-                .addInterceptors(new JWTHandshakeInterceptor(jwtUtil, jwtBlackListService)) // jwt 인증을 위해 커스텀 핸드셰이크 인터셉터 추가
-                .setAllowedOrigins("https://localhost:5500") // 배포 시 CORS 정확한 지정 필요
-                .withSockJS();  // SockJS fallback 지원 (웹소켓 미지원 브라우저일 경우)
+        registry.addEndpoint("/ws")
+                .addInterceptors(new CustomHandshakeInterceptor(jwtUtil, jwtBlackListService, groupRepository))
+                .setHandshakeHandler(new CustomHandshakeHandler())
+                .setAllowedOrigins("https://localhost:5500")
+                .withSockJS();  // SockJS fallback 지원
     }
 
-    // 메시지 브로커 설정
+    // STOMP 메시지 처리에 사용할 브로커 설정
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // 메시지를 구독하는 prefix
-        registry.enableSimpleBroker("/sub");
-
-        // 메시지를 보낼 때 사용할 prefix
-        registry.setApplicationDestinationPrefixes("/pub");
+        registry.enableSimpleBroker("/sub"); // 클라이언트가 구독에 사용할 prefix
+        registry.setApplicationDestinationPrefixes("/pub"); // 클라이언트가 메시지 전송 시 사용할 prefix
     }
+
+
+//    // WebSocket 수신 채널에 커스텀 인터셉터 등록 ( 사용자 그룹 가입 여부 검증 ) -> 삭제
+//    // 더 이상 GroupMembershipChannelInterceptor, JWTHandshakeInterceptor를 사용하지 않는다.
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+////        registration.interceptors(groupMembershipChannelInterceptor);
+//    }
 }
