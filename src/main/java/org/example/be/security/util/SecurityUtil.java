@@ -11,10 +11,13 @@ public class SecurityUtil {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("[SecurityUtil] 인증 실패 - 인증 객체가 없거나 인증되지 않음");
             throw new IllegalArgumentException("인증되지 않은 사용자입니다.");
         }
 
         Object principal = authentication.getPrincipal();
+        System.out.println("[SecurityUtil] principal 객체: " + principal);
+
         String userIdentifier = null;
 
         if (principal instanceof UserContext) {
@@ -24,9 +27,11 @@ public class SecurityUtil {
         }
 
         if (userIdentifier == null) {
+            System.out.println("[SecurityUtil] 인증 객체에서 userIdentifier 추출 실패");
             throw new IllegalArgumentException("인증 객체로부터 userIdentifier를 찾을 수 없습니다.");
         }
 
+        System.out.println("[SecurityUtil] 추출된 userIdentifier: " + userIdentifier);
         return userIdentifier;
     }
 }

@@ -27,8 +27,15 @@ public class ChatMessageController {
     public ResponseEntity<CommonResponse<Map<String, Object>>> getRecent20Messages(
             @DecodedPathVariable String groupName
     ) {
-        Map<String, Object> result = chatMessageService.getRecent20Messages(groupName);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "최근 메시지 20개 조회 성공"));
+        try {
+            Map<String, Object> result = chatMessageService.getRecent20Messages(groupName);
+            return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "최근 메시지 20개 조회 성공"));
+        } catch (Exception e) {
+            System.out.println("[Controller] 예외 발생: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(CommonResponse.error(500, "서버 내부 오류: " + e.getMessage()));
+        }
     }
 
     // 해당 메시지 기준 과거 20개 메시지 추가 조회 ( 스크롤 업 시 호출용 )

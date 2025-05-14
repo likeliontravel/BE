@@ -12,6 +12,7 @@ import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.example.be.unifieduser.entity.UnifiedUser;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.example.be.unifieduser.service.UnifiedUserService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +38,7 @@ public class ChatMessageService {
     @Transactional
     public Map<String, Object> getRecent20Messages(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        System.out.println("[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
         Group group = findGroupAndValidateMember(groupName, userIdentifier);
 
         List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
@@ -125,6 +127,13 @@ public class ChatMessageService {
         Group group = groupRepository.findByGroupName(groupName)
                 .orElseThrow(() -> new IllegalArgumentException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName));
 
+        System.out.println("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
+        System.out.println("[검증 로그] 요청자 userIdentifier: " + userIdentifier);
+        System.out.println("[검증 로그] 그룹 멤버 목록:");
+        group.getMembers().forEach(member ->
+                System.out.println(" - " + member.getUserIdentifier())
+        );
+
         boolean isMember = group.getMembers().stream()
                 .anyMatch(user -> user.getUserIdentifier().equals(userIdentifier));
 
@@ -162,22 +171,6 @@ public class ChatMessageService {
 
         return result;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     // Entity -> DTO 파싱
     public ChatMessageDTO toDTO(ChatMessage entity) {

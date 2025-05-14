@@ -96,6 +96,8 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
+        System.out.println("[JWTFilter 마지막] SecurityContextHolder 인증 객체: " +
+                SecurityContextHolder.getContext().getAuthentication());
         filterChain.doFilter(request, response);
     }
 

@@ -164,6 +164,14 @@ public class GroupService {
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
+        System.out.println("[GroupService에서 검증 로그] 그룹 이름: " + groupName);
+        System.out.println("[검증 로그] 요청자 userIdentifier: " + userIdentifier);
+        System.out.println("[검증 로그] 그룹 멤버 목록:");
+        group.getMembers().forEach(member ->
+                System.out.println(" - " + member.getUserIdentifier())
+        );
+
+
         if (group.getMembers().contains(user)) {
             return true;
         } else {
