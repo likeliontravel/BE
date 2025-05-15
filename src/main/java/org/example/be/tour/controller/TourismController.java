@@ -3,6 +3,7 @@ package org.example.be.tour.controller;
 import lombok.RequiredArgsConstructor;
 
 import org.example.be.tour.service.AccommodationService;
+import org.example.be.tour.service.KeywordSearchService;
 import org.example.be.tour.service.RestaurantService;
 import org.example.be.tour.service.TouristSpotService;
 import org.slf4j.Logger;
@@ -25,26 +26,52 @@ public class TourismController {
     private static final Logger logger = LoggerFactory.getLogger(TourismController.class);
     private final AccommodationService accommodationService;
     private final RestaurantService restaurantService;
+    private final KeywordSearchService keywordSearchService;
 
     // 동기적으로 관광지 데이터를 가져오기
     @GetMapping("/fetch/{areaCode}")
-    public ResponseEntity<List<Map<String, Object>>> fetchTouristSpots(@PathVariable String areaCode) {
+    public ResponseEntity<List<Map<String, Object>>> fetchTouristSpots(
+            @PathVariable String areaCode,
+            @RequestParam(defaultValue = "1") int pageNo //기본값 1
+    ) {
         try {
-            // areaCode를 지역명으로 변환
             String state = getStateByAreaCode(Integer.parseInt(areaCode));
+            if (state == null) return ResponseEntity.badRequest().build();
 
-            if (state == null) {
-                return ResponseEntity.badRequest().body(null); // 잘못된 areaCode 처리
+            List<Map<String, Object>> touristSpots;
+
+            if (pageNo <= 0) {
+                // 전체 페이지 반복 호출
+                touristSpots = touristSpotService.getAllData(
+                        Integer.parseInt(areaCode), state, 12
+                );
+            } else {
+                // 지정한 페이지만 호출
+                touristSpots = touristSpotService.getData(
+                        Integer.parseInt(areaCode), state, 12, 1000, pageNo
+                );
             }
 
-            // 관광지 데이터를 가져옴
-            List<Map<String, Object>> touristSpots = touristSpotService.getData(Integer.parseInt(areaCode), state, 12, 10);
             return ResponseEntity.ok(touristSpots);
         } catch (Exception e) {
             logger.error("관광지 정보를 가져오는 중 오류 발생: ", e);
-            return ResponseEntity.internalServerError().build(); // 에러 처리
+            return ResponseEntity.internalServerError().build();
         }
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<Map<String, Object>>> searchByKeyword(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "38") int contentTypeId
+    ) {
+        try {
+            List<Map<String, Object>> result = keywordSearchService.searchByKeyword(keyword, contentTypeId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            logger.error("키워드 검색 중 오류 발생: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
     private String getStateByAreaCode(int areaCode) {
         Map<Integer, String> areaCodeMap = new HashMap<>();

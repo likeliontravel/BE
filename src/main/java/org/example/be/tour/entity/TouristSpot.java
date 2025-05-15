@@ -14,6 +14,7 @@ public class TouristSpot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "content_id", unique = true)
     private String contentId;    // 콘텐츠 ID
     private String title;        // 관광지 이름
     private String address;      // 주소

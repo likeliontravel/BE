@@ -1,6 +1,5 @@
 package org.example.be.tour.service;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.be.tour.entity.TouristSpot;
@@ -8,10 +7,11 @@ import org.example.be.tour.repository.TouristSpotRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.util.UriComponentsBuilder;
+
 import java.net.URI;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -19,81 +19,49 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TouristSpotService {
+public class KeywordSearchService {
+
     private final TouristSpotRepository touristSpotRepository;
 
     @Value("${service-key}")
     private String serviceKey;
-    // 개별 페이지 데이터 가져오기 (기존 메서드)
-    public List<Map<String, Object>> getData(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
-        return fetchAndSave(areaCode, state, contentTypeId, numOfRows, pageNo);
-    }
 
-    // 전체 데이터를 가져오는 메서드 (추가된 메서드)
-    public List<Map<String, Object>> getAllData(int areaCode, String state, int contentTypeId) throws Exception {
-        int pageNo = 1;
-        int numOfRows = 1000;
-        List<Map<String, Object>> allItems = new java.util.ArrayList<>();
-
-        while (true) {
-            List<Map<String, Object>> pageItems = fetchAndSave(areaCode, state, contentTypeId, numOfRows, pageNo);
-            if (pageItems.isEmpty()) break;
-
-            allItems.addAll(pageItems);
-            pageNo++;
-        }
-
-        return allItems;
-    }
-
-    // 비동기 방식으로 관광지 데이터 가져오기
-    private List<Map<String, Object>> fetchAndSave(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
-
-        String link = "https://apis.data.go.kr/B551011/KorService1/areaBasedList1";
-
-        // ✅ serviceKey 자동 디코딩 (안전한 방식)
+    public List<Map<String, Object>> searchByKeyword(String keyword, int contentTypeId) throws Exception {
         String decodedServiceKey = URLDecoder.decode(serviceKey, StandardCharsets.UTF_8);
+        String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
 
-        String url = UriComponentsBuilder.fromHttpUrl(link)
+        String url = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/searchKeyword1")
                 .queryParam("MobileOS", "ETC")
                 .queryParam("MobileApp", "Test")
                 .queryParam("_type", "json")
-                .queryParam("areaCode", areaCode)
+                .queryParam("keyword", encodedKeyword)
                 .queryParam("contentTypeId", contentTypeId)
-                .queryParam("numOfRows", numOfRows)
-                .queryParam("pageNo", pageNo) //
-                .queryParam("serviceKey", serviceKey) // 인코딩 방지 적용
-                .build(false)  // 자동 인코딩 방지!
+                .queryParam("numOfRows", 100)
+                .queryParam("pageNo", 1)
+                .queryParam("arrange", "C")
+                .queryParam("listYN", "Y")
+                .queryParam("serviceKey", serviceKey)
+                .build(false)
                 .toUriString();
-
-        System.out.println("Generated URL: " + url); // 디버깅용 로그
 
         URI uri = new URI(url);
         RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-
         String response = restTemplate.getForObject(uri, String.class);
-        // JSON 파싱
+
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> map = objectMapper.readValue(response, Map.class);
 
         Map<String, Object> responseMap = (Map<String, Object>) map.get("response");
         Map<String, Object> bodyMap = (Map<String, Object>) responseMap.get("body");
         Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
-        List<Map<String, Object>> itemMap = (List<Map<String, Object>>) itemsMap.get("item");
 
-        // items가 없거나, item이 리스트가 아니면 빈 리스트 리턴
         if (itemsMap == null || !(itemsMap.get("item") instanceof List)) {
-            return List.of(); // 더 이상 가져올 데이터 없음
+            return List.of(); // 결과 없음
         }
 
-        // 필터링 후 DB 저장 + 중복 체크
+        List<Map<String, Object>> itemMap = (List<Map<String, Object>>) itemsMap.get("item");
+
         List<Map<String, Object>> filteredItems = itemMap.stream()
-                .filter(item -> {
-                    Object value = item.get("addr1");
-                    return value != null && value.toString().contains(state);
-                })
                 .peek(item -> {
                     String contentId = String.valueOf(item.get("contentid"));
                     boolean exists = touristSpotRepository.existsByContentId(contentId);
