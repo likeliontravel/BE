@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AccommodationService {
+public class AccommodationService { //숙박 정보 불러오기
     private final AccommodationRepository accommodationRepository;
     private final TourRegionRepository tourRegionRepository;
 

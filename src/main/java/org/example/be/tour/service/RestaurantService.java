@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantService {
+public class RestaurantService { //식당 정보 불러오기
     private final RestaurantRepository restaurantRepository;
     private final TourRegionRepository tourRegionRepository;
 
