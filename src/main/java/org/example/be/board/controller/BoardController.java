@@ -7,6 +7,7 @@ import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.SortType;
 import org.example.be.board.service.BoardService;
 import org.example.be.response.CommonResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -84,8 +85,14 @@ public class BoardController {
     // 게시판 글 생성 ( 작성 )
     @PostMapping("/create")
     public ResponseEntity<CommonResponse<BoardDTO>> writeBoard(@RequestBody BoardDTO boardDTO) {
-        BoardDTO savedBoardDTO = boardService.writeBoard(boardDTO);
-        return ResponseEntity.ok(CommonResponse.success(savedBoardDTO, "게시글 저장 성공"));
+        try {
+            BoardDTO savedBoardDTO = boardService.writeBoard(boardDTO);
+            return ResponseEntity.ok(CommonResponse.success(savedBoardDTO, "게시글 저장 성공"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
+        }
     }
 
     // 게시판 글 수정
