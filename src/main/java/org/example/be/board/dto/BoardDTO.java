@@ -19,6 +19,7 @@ public class BoardDTO {
     private String thumbnailPublicUrl;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
+    private String writerIdentifier; // 작성자 본인확인 로직 강화 - 0520 추가
 
     // 엔티티를 dto로 변환
     public static BoardDTO toDTO(Board board) {
@@ -30,6 +31,7 @@ public class BoardDTO {
         boardDTO.setBoardHits(board.getBoardHits());
         boardDTO.setTheme(board.getTheme());
         boardDTO.setRegion(board.getRegion());
+        boardDTO.setWriterIdentifier(board.getWriterIdentifier());
         boardDTO.setThumbnailPublicUrl(board.getThumbnailPublicUrl());
         boardDTO.setCreatedTime(board.getCreatedTime());
         boardDTO.setUpdatedTime(board.getUpdatedTime());

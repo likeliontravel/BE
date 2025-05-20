@@ -174,6 +174,7 @@ public class BoardService {
             // 저장할 엔티티로 변환, 작성자 정보 기입
             Board board = Board.toCreateEntity(boardDTO);
             board.setWriter(writer);
+            board.setWriterIdentifier(userIdentifier);
 
             Board savedBoard = boardRepository.save(board);
             return BoardDTO.toDTO(savedBoard);
@@ -193,7 +194,7 @@ public class BoardService {
         Board originalBoard = boardRepository.findById(boardDTO.getId())
                 .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
-        if (!userIdentifier.equals(originalBoard.getWriter())) {
+        if (!userIdentifier.equals(originalBoard.getWriterIdentifier())) {
             throw new IllegalArgumentException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
         }
 
@@ -209,7 +210,7 @@ public class BoardService {
             boardDTO.setWriter(originalBoard.getWriter());
 
             // 새로운 게시글 데이터 생성 및 저장
-            Board updatedBoard = Board.toUpdateEntity(boardDTO);
+            Board updatedBoard = Board.toUpdateEntity(boardDTO, originalBoard.getWriterIdentifier());
             Board savedBoard = boardRepository.save(updatedBoard);
             return BoardDTO.toDTO(savedBoard);
         } catch (Exception e) {
@@ -226,7 +227,7 @@ public class BoardService {
 
         // 사용자 인증 정보 확인
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        if (!userIdentifier.equals(board.getWriter())) {
+        if (!userIdentifier.equals(board.getWriterIdentifier())) {
             throw new IllegalArgumentException("작성자 본인만 삭제할 수 있습니다.");
         }
 

@@ -38,6 +38,10 @@ public class Board extends Base {
     @Column(nullable = false)
     private String writer;
 
+    // 작성자 identifier - 검증용 추가 0520
+    @Column
+    private String writerIdentifier;
+
     // 조회수 인기글을 받아오기 위해 사용
     @Column(nullable = false)
     private int boardHits;
@@ -68,16 +72,18 @@ public class Board extends Base {
         board.setTheme(boardDTO.getTheme());
         board.setRegion(boardDTO.getRegion());
         board.setThumbnailPublicUrl(boardDTO.getThumbnailPublicUrl());
+        board.setWriterIdentifier(boardDTO.getWriterIdentifier());
         return board;
     }
 
     // dto를 엔티티로 변환 ( 게시글 업데이트 )
-    public static Board toUpdateEntity(BoardDTO boardDTO) {
+    public static Board toUpdateEntity(BoardDTO boardDTO, String originalWriterIdentifier) {
         Board board = new Board();
         board.setId(boardDTO.getId());
         board.setTitle(boardDTO.getTitle());
         board.setContent(boardDTO.getContent());
         board.setWriter(boardDTO.getWriter());
+        board.setWriterIdentifier(originalWriterIdentifier);
         board.setBoardHits(boardDTO.getBoardHits());
         board.setTheme(boardDTO.getTheme());
         board.setRegion(boardDTO.getRegion());

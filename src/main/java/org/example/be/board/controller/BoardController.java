@@ -1,6 +1,7 @@
 package org.example.be.board.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be.board.dto.BoardDTO;
 import org.example.be.board.dto.BoardSearchRequestDTO;
 import org.example.be.board.dto.SimplePageableRequestDTO;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/board")
@@ -91,6 +93,7 @@ public class BoardController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
         } catch (Exception e) {
+            log.error("게시글 생성 오류", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
         }
     }
@@ -98,14 +101,28 @@ public class BoardController {
     // 게시판 글 수정
     @PutMapping("/update")
     public ResponseEntity<CommonResponse<BoardDTO>> updateBoard(@RequestBody BoardDTO boardDTO) {
-        BoardDTO updatedBoardDTO = boardService.updateBoard(boardDTO);
-        return ResponseEntity.ok(CommonResponse.success(updatedBoardDTO, "게시글 글 수정 성공"));
+        try {
+            BoardDTO updatedBoardDTO = boardService.updateBoard(boardDTO);
+            return ResponseEntity.ok(CommonResponse.success(updatedBoardDTO, "게시글 글 수정 성공"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
+        } catch (Exception e) {
+            log.error("게시글 수정 오류", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
+        }
     }
 
     // 게시판 글 삭제
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id) {
-        boardService.deleteBoard(id);
-        return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
+        try {
+            boardService.deleteBoard(id);
+            return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
+        } catch (Exception e) {
+            log.error("게시글 삭제 오류", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
+        }
     }
 }
