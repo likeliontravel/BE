@@ -11,15 +11,14 @@ import org.example.be.board.repository.BoardRepository;
 import org.example.be.place.place_category.PlaceCategoryService;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,17 +38,17 @@ public class BoardService {
     // 게시글 PK ( ID )로 게시글 조회
     @Transactional
     public BoardDTO getBoard(Long id) {
-        Optional<Board> boardOptional = boardRepository.findById(id);
-        if (boardOptional.isPresent()) {
-            Board board = boardOptional.get();
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Id 해당 게시글을 찾을 수 없습니다. id: " + id));
 
-            // 게시글 조회 성공 시 조회수 1 증가
-            increaseBoardHits(board);
+        increaseBoardHits(board);
 
-            return BoardDTO.toDTO(board);
-        } else {
-            throw new NoSuchElementException("해당 게시글을 찾을 수 없습니다. id: " + id);
-        }
+        BoardDTO dto = BoardDTO.toDTO(board);
+
+        UnifiedUsersNameAndProfileImageUrl profile = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(board.getWriterIdentifier());
+        dto.setWriterProfileImageUrl(profile.getProfileImageUrl());
+
+        return dto;
     }
 
     // 조회수 증가 처리
@@ -239,6 +238,31 @@ public class BoardService {
         // 실제 삭제 쿼리 강제 실행
         boardRepository.flush();
     }
+
+    // ========== 내부 메서드 ==========
+
+    // 게시글 반환결과(List<BoardDTO>)에 작성자 profile image url 추가
+    private List<BoardDTO> enrichWithProfileImage(List<Board> boards) {
+        Set<String> writerIdentifiers = boards.stream()
+                .map(Board::getWriterIdentifier)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<String, UnifiedUsersNameAndProfileImageUrl> userProfileMap = writerIdentifiers.stream()
+                .map(identifier -> Map.entry(identifier, unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(identifier)))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return boards.stream().map(board -> {
+            BoardDTO dto = BoardDTO.toDTO(board);
+            UnifiedUsersNameAndProfileImageUrl profile = userProfileMap.get(board.getWriterIdentifier());
+            if (profile != null) {
+                dto.setWriterProfileImageUrl(profile.getProfileImageUrl());
+            }
+            return dto;
+        }).toList();
+    }
+
+
 
     // 게시글 입력DTO 유효성 검사
     private void validateBoardDTO(BoardDTO boardDTO) {

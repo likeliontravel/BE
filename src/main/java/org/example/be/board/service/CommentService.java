@@ -6,9 +6,14 @@ import org.example.be.board.entity.Board;
 import org.example.be.board.entity.Comment;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.board.repository.CommentRepository;
+import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
+import org.example.be.unifieduser.service.UnifiedUserService;
+import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,56 +22,91 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final BoardRepository boardRepository;
+    private final UnifiedUserService unifiedUserService;
+    private final MailProperties mailProperties;
 
-    public void writecomment(CommentDTO commentDTO) {
-        //부모엔티티를 먼저 조회 후 일반 댓글 작성
-        Optional<Board> optionalBoardEntity = boardRepository.findById(commentDTO.getBoardId());
-        if (optionalBoardEntity.isPresent()) {
-            Board boardEntity = optionalBoardEntity.get();
+    // 해당 게시글 댓글 조회
+    public List<CommentDTO> getAllComments(Long boardId) {
 
-            //일반 댓글 생성(부모 댓글)
-            if (commentDTO.getParentCommentId() == null) {
-                Comment comment = Comment.toSaveEntity(commentDTO, boardEntity);
-                commentRepository.save(comment).getId();
-            } else {
-                Comment parentComment = commentRepository.findById(commentDTO.getParentCommentId()).orElseThrow(() -> new RuntimeException("부모 댓글이 존재 하지 않습니다."));
-                Comment comment = Comment.toSaveReplyEntity(commentDTO,boardEntity,parentComment);
-                commentRepository.save(comment).getId();
+        boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. boardId: " + boardId));
+
+        List<Comment> commentList = commentRepository.findByBoardId(boardId);
+
+        return commentList.stream().map(comment -> {
+            CommentDTO dto = new CommentDTO();
+            dto.setId(comment.getId());
+            dto.setCommentContent(comment.getCommentContent());
+            dto.setBoardId(boardId);
+            dto.setCommentWriterIdentifier(comment.getCommentWriterIdentifier());
+            dto.setCommentCreatedTime(comment.getCreatedTime());
+
+            if (comment.getParentComment() != null) {
+                dto.setParentCommentId(comment.getParentComment().getId());
             }
 
-        } else {
-            throw new RuntimeException("해당 게시글이 존재하지 않습니다.");
-        }
+            // 작성자 프로필 정보 (이름, 프로필 사진) 별도 조회 후 dto set
+            UnifiedUsersNameAndProfileImageUrl profile = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(comment.getCommentWriterIdentifier());
+            dto.setCommentWriter(profile.getName());
+            dto.setCommentWriterProfileImageUrl(profile.getProfileImageUrl());
+
+            return dto;
+        }).toList();
+
     }
 
-    public void updatecommemt(CommentDTO commentDTO) {
-        // 댓글을 ID로 찾음
-        Comment comment = commentRepository.findById(commentDTO.getId())
-                .orElseThrow(() -> new RuntimeException("해당 댓글이 존재하지 않습니다."));
+    // 댓글 작성
+    @Transactional
+    public void writecomment(CommentDTO commentDTO) {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        String writer = unifiedUserService.getNameByUserIdentifier(userIdentifier);
 
-        // BoardRepository를 사용하여 Board를 조회
-        Board board = boardRepository.findById(commentDTO.getBoardId())
-                .orElseThrow(() -> new RuntimeException("해당 게시글이 존재하지 않습니다."));
+        Board boardEntity = boardRepository.findById(commentDTO.getBoardId())
+                        .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. boardId: " + commentDTO.getBoardId()));
 
-        // 대댓글인지 일반 댓글인지를 확인
-        if (comment.getParentComment() != null) {
-            // 대댓글 수정 시 부모 댓글을 변경하지 않고, 대댓글만 수정
-            comment.setCommentContent(commentDTO.getCommentContent()); // 대댓글 수정 내용
-            comment.setCommentWriter(commentDTO.getCommentWriter()); // 대댓글 작성자 수정 내용
-            comment.setBoard(board); // 댓글이 속한 게시글 설정
-            commentRepository.save(comment); // 대댓글 저장
+        Comment comment;
+
+        if (commentDTO.getParentCommentId() == null) {
+            comment = new Comment();
         } else {
-            // 일반 댓글 수정
-            comment.setCommentContent(commentDTO.getCommentContent()); // 일반 댓글 수정 내용
-            comment.setCommentWriter(commentDTO.getCommentWriter()); // 일반 댓글 작성자 수정 내용
-            comment.setBoard(board); // 댓글이 속한 게시글 설정
-            commentRepository.save(comment); // 일반 댓글 저장
+            Comment parent = commentRepository.findById(commentDTO.getParentCommentId())
+                    .orElseThrow(() -> new IllegalArgumentException("이 자식 댓글의 부모 댓글이 존재하지 않습니다. "));
+            comment = new Comment();
+            comment.setParentComment(parent);
         }
+        comment.setBoard(boardEntity);
+        comment.setCommentWriter(writer);
+        comment.setCommentWriterIdentifier(userIdentifier);
+        comment.setCommentContent(commentDTO.getCommentContent());
+
+        commentRepository.save(comment);
+    }
+
+    // 댓글 수정
+    @Transactional
+    public void updatecommemt(CommentDTO commentDTO) {
+        String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+
+        Comment comment = commentRepository.findById(commentDTO.getId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다. id: " + commentDTO.getId()));
+
+        if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
+            throw new IllegalArgumentException("작성자 본인만 수정할 수 있습니다.");
+        }
+
+        comment.setCommentContent(commentDTO.getCommentContent());
+        commentRepository.save(comment);
     }
 
     @Transactional
     public void deletecomment(Long id) {
+        String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+
+        if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
+            throw new IllegalArgumentException("작성자 본인만 삭제할 수 있습니다.");
+        }
         commentRepository.delete(comment);
         commentRepository.flush();
     }

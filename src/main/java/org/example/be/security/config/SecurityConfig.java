@@ -83,7 +83,7 @@ public class SecurityConfig {
                                 "/error",
                                 "/mail/**",
                                 "/board/get/**",
-                                "/comment/**",
+                                "/comment/board/**",
                                 "/ws/**"
                         ).permitAll()
 

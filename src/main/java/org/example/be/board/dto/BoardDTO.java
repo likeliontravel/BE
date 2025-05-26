@@ -20,6 +20,8 @@ public class BoardDTO {
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
     private String writerIdentifier; // 작성자 본인확인 로직 강화 - 0520 추가
+    private String writerProfileImageUrl;
+
 
     // 엔티티를 dto로 변환
     public static BoardDTO toDTO(Board board) {
