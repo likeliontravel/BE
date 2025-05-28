@@ -87,42 +87,21 @@ public class BoardController {
     // 게시판 글 생성 ( 작성 )
     @PostMapping("/create")
     public ResponseEntity<CommonResponse<BoardDTO>> writeBoard(@RequestBody BoardDTO boardDTO) {
-        try {
             BoardDTO savedBoardDTO = boardService.writeBoard(boardDTO);
             return ResponseEntity.ok(CommonResponse.success(savedBoardDTO, "게시글 저장 성공"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
-        } catch (Exception e) {
-            log.error("게시글 생성 오류", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
-        }
     }
 
     // 게시판 글 수정
     @PutMapping("/update")
     public ResponseEntity<CommonResponse<BoardDTO>> updateBoard(@RequestBody BoardDTO boardDTO) {
-        try {
             BoardDTO updatedBoardDTO = boardService.updateBoard(boardDTO);
             return ResponseEntity.ok(CommonResponse.success(updatedBoardDTO, "게시글 글 수정 성공"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
-        } catch (Exception e) {
-            log.error("게시글 수정 오류", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
-        }
     }
 
     // 게시판 글 삭제
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id) {
-        try {
             boardService.deleteBoard(id);
             return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
-        } catch (Exception e) {
-            log.error("게시글 삭제 오류", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, "서버 내부 오류"));
-        }
     }
 }

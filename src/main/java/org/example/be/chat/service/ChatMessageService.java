@@ -42,6 +42,9 @@ public class ChatMessageService {
         Group group = findGroupAndValidateMember(groupName, userIdentifier);
 
         List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
+        if (messages.isEmpty()) {
+            throw new NoSuchElementException("해당 그룹에 메시지가 존재하지 않습니다. groupName: " + groupName);
+        }
         return buildMessageWithProfiles(messages);
     }
 
@@ -52,6 +55,9 @@ public class ChatMessageService {
         Group group = findGroupAndValidateMember(groupName, userIdentifier);
 
         List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group, lastMessageId);
+        if (messages.isEmpty()) {
+            throw new NoSuchElementException("해당 메시지 이전에 전송된 메시지가 없습니다. messageId: " + lastMessageId);
+        }
         return buildMessageWithProfiles(messages);
     }
 
@@ -62,6 +68,9 @@ public class ChatMessageService {
         Group group = findGroupAndValidateMember(groupName, userIdentifier);
 
         List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(group, keyword);
+        if (messages.isEmpty()) {
+            throw new NoSuchElementException("해당 키워드로 검색된 결과가 없습니다. keyword: " + keyword);
+        }
         return buildMessageWithProfiles(messages);
     }
 
@@ -70,8 +79,12 @@ public class ChatMessageService {
     public ChatMessageDTO getLatestMessageOfGroup(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         Group group = findGroupAndValidateMember(groupName, userIdentifier);
-        ChatMessage message= chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
-        return toDTO(message);
+        Optional<ChatMessage> message= chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
+        if (message.isPresent()) {
+            return toDTO(message.get());
+        } else {
+            throw new NoSuchElementException("해당 그룹의 메시지가 없습니다. groupName: " + groupName);
+        }
     }
 
     // ==================== 메시지 저장 관련 ====================

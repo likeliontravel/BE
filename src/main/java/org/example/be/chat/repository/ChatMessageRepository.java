@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
@@ -20,5 +21,5 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     List<ChatMessage> findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(Group group, String keyword);
 
     // 그룹별 최신 메시지 1개 조회 - ( 그룹 채팅방 목록에서 표시할 정보 )
-    ChatMessage findTop1ByGroupOrderBySendAtDesc(Group group);
+    Optional<ChatMessage> findTop1ByGroupOrderBySendAtDesc(Group group);
 }

@@ -37,25 +37,18 @@ public class CommentController {
 
     // 댓글 수정 - 작성자 본인만 수정 가능
     @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> update(@PathVariable Long id,@RequestBody CommentDTO commentDTO) {
-        try {
-
-            commentDTO.setId(id);
-            commentService.updatecommemt(commentDTO);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(CommonResponse.error(400, e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(CommonResponse.error(500, "서버 내부 오류 발생"));
-        }
+    public ResponseEntity<CommonResponse<String>> update(@PathVariable Long id, @RequestBody CommentDTO commentDTO) {
+        commentDTO.setId(id);
+        commentService.updatecommemt(commentDTO);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
     }
 
     // 댓글 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long id) {
         commentService.deletecomment(id);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"댓글 삭제 성공"));
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "댓글 삭제 성공"));
     }
 
 }

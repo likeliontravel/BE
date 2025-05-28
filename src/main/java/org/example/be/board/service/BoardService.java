@@ -8,6 +8,10 @@ import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.SortType;
 import org.example.be.board.repository.BoardRepository;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.exception.custom.ResourceCreationException;
+import org.example.be.exception.custom.ResourceDeletionException;
+import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.place.place_category.PlaceCategoryService;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.security.util.SecurityUtil;
@@ -179,7 +183,7 @@ public class BoardService {
             return BoardDTO.toDTO(savedBoard);
 
         } catch (Exception e) {
-            throw new IllegalArgumentException("게시글 저장 실패. : \n" + e.getMessage());
+            throw new ResourceCreationException("게시글 저장 실패. : \n" + e.getMessage());
         }
     }
 
@@ -194,7 +198,7 @@ public class BoardService {
                 .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
         if (!userIdentifier.equals(originalBoard.getWriterIdentifier())) {
-            throw new IllegalArgumentException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
+            throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
         }
 
         // 들어온 수정데이터 유효성 확인
@@ -213,7 +217,7 @@ public class BoardService {
             Board savedBoard = boardRepository.save(updatedBoard);
             return BoardDTO.toDTO(savedBoard);
         } catch (Exception e) {
-            throw new IllegalArgumentException("게시글 수정 실패. : \n" + e.getMessage());
+            throw new ResourceUpdateException("게시글 수정 실패. : \n" + e.getMessage());
         }
     }
 
@@ -227,16 +231,19 @@ public class BoardService {
         // 사용자 인증 정보 확인
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         if (!userIdentifier.equals(board.getWriterIdentifier())) {
-            throw new IllegalArgumentException("작성자 본인만 삭제할 수 있습니다.");
+            throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
         }
+            // Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
+            // 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
+            board.getCommentList().size();
 
-        // Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
-        // 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
-        board.getCommentList().size();
-
-        boardRepository.delete(board);
-        // 실제 삭제 쿼리 강제 실행
-        boardRepository.flush();
+        try {
+            boardRepository.delete(board);
+            // 실제 삭제 쿼리 강제 실행
+            boardRepository.flush();
+        } catch (Exception e) {
+            throw new ResourceDeletionException("게시글 삭제 실패. : \n" + e.getMessage());
+        }
     }
 
     // ========== 내부 메서드 ==========

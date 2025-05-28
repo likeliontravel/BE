@@ -6,6 +6,10 @@ import org.example.be.board.entity.Board;
 import org.example.be.board.entity.Comment;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.board.repository.CommentRepository;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.exception.custom.ResourceCreationException;
+import org.example.be.exception.custom.ResourceDeletionException;
+import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.example.be.unifieduser.service.UnifiedUserService;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -29,9 +34,13 @@ public class CommentService {
     public List<CommentDTO> getAllComments(Long boardId) {
 
         boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. boardId: " + boardId));
+                .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. boardId: " + boardId));
 
         List<Comment> commentList = commentRepository.findByBoardId(boardId);
+
+        if (commentList.isEmpty()) {
+            throw new NoSuchElementException("해당 게시글에 댓글이 존재하지 않습니다. boardId: " + boardId);
+        }
 
         return commentList.stream().map(comment -> {
             CommentDTO dto = new CommentDTO();
@@ -62,7 +71,7 @@ public class CommentService {
         String writer = unifiedUserService.getNameByUserIdentifier(userIdentifier);
 
         Board boardEntity = boardRepository.findById(commentDTO.getBoardId())
-                        .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. boardId: " + commentDTO.getBoardId()));
+                        .orElseThrow(() -> new NoSuchElementException("해당 게시글이 존재하지 않습니다. boardId: " + commentDTO.getBoardId()));
 
         Comment comment;
 
@@ -70,7 +79,7 @@ public class CommentService {
             comment = new Comment();
         } else {
             Comment parent = commentRepository.findById(commentDTO.getParentCommentId())
-                    .orElseThrow(() -> new IllegalArgumentException("이 자식 댓글의 부모 댓글이 존재하지 않습니다. "));
+                    .orElseThrow(() -> new NoSuchElementException("이 자식 댓글의 부모 댓글이 존재하지 않습니다. "));
             comment = new Comment();
             comment.setParentComment(parent);
         }
@@ -79,7 +88,11 @@ public class CommentService {
         comment.setCommentWriterIdentifier(userIdentifier);
         comment.setCommentContent(commentDTO.getCommentContent());
 
-        commentRepository.save(comment);
+        try {
+            commentRepository.save(comment);
+        } catch (Exception e) {
+            throw new ResourceCreationException("댓글 작성 실패", e);
+        }
     }
 
     // 댓글 수정
@@ -88,26 +101,34 @@ public class CommentService {
         String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         Comment comment = commentRepository.findById(commentDTO.getId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 댓글이 존재하지 않습니다. id: " + commentDTO.getId()));
+                .orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentDTO.getId()));
 
         if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
-            throw new IllegalArgumentException("작성자 본인만 수정할 수 있습니다.");
+            throw new ForbiddenResourceAccessException("작성자 본인만 수정할 수 있습니다.");
         }
 
         comment.setCommentContent(commentDTO.getCommentContent());
-        commentRepository.save(comment);
+        try {
+            commentRepository.save(comment);
+        } catch (Exception e) {
+            throw new ResourceUpdateException("댓글 수정 실패", e);
+        }
     }
 
     @Transactional
     public void deletecomment(Long id) {
         String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+        Comment comment = commentRepository.findById(id).orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
 
         if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
-            throw new IllegalArgumentException("작성자 본인만 삭제할 수 있습니다.");
+            throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
         }
-        commentRepository.delete(comment);
-        commentRepository.flush();
+        try {
+            commentRepository.delete(comment);
+            commentRepository.flush();
+        } catch (Exception e) {
+            throw new ResourceDeletionException("댓글 삭제 실패", e);
+        }
     }
 }
