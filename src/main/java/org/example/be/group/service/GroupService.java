@@ -2,6 +2,8 @@ package org.example.be.group.service;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.exception.custom.UserAuthenticationNotFoundException;
 import org.example.be.group.dto.*;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
@@ -25,11 +27,12 @@ public class GroupService {
     private final EntityManager entityManager;
 
     // 그룹 생성하기
+    @Transactional
     public GroupResponseDTO createGroup(GroupCreationRequestDTO request) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         UnifiedUser creator = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+                .orElseThrow(() -> new UserAuthenticationNotFoundException("해당 사용자를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         Group group = new Group();
         group.setGroupName(request.getGroupName());
@@ -43,12 +46,13 @@ public class GroupService {
     }
 
     // 그룹에 멤버 추가 (그룹 초대 구현 후 수정될 수 있음)
+    @Transactional
     public void addMemberToGroup(GroupAddMemberRequestDTO request) {
         String groupName = request.getGroupName();
         String userIdentifier = request.getUserIdentifier();
 
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
 
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 userIdentifier의 유저를 찾을 수 없습니다. userIdnetifier : " + userIdentifier));
@@ -69,7 +73,7 @@ public class GroupService {
         String description = request.getDescription();
 
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
 
         // 변경 전 요청을 보낸 사람이 그룹 내 멤버가 맞는지 확인하기
         if (isContains(groupName, userIdentifier)) {
@@ -78,7 +82,7 @@ public class GroupService {
             }
             groupRepository.save(group);
         } else {
-            throw new IllegalArgumentException("이 그룹에 포함되어 있지 않은 멤버입니다. userIdentifier : " + userIdentifier + ", groupName : " + groupName);
+            throw new ForbiddenResourceAccessException("이 그룹에 포함되어 있지 않은 멤버입니다. userIdentifier : " + userIdentifier + ", groupName : " + groupName);
         }
     }
 
@@ -89,7 +93,7 @@ public class GroupService {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
 
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
@@ -103,11 +107,12 @@ public class GroupService {
             }
 
         } else {
-            throw new NoSuchElementException("이 그룹에 포함되어 있지 않은 멤버입니다. groupName : " + groupName + ", userIdentifier : " + userIdentifier);
+            throw new ForbiddenResourceAccessException("이 그룹에 포함되어 있지 않은 멤버입니다. groupName : " + groupName + ", userIdentifier : " + userIdentifier);
         }
     }
 
     // 유저가 가입한 그룹 정보 조회하기
+    @Transactional(readOnly = true)
     public List<GroupResponseDTO> getAllGroups() {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
@@ -115,7 +120,7 @@ public class GroupService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         List<Group> groups = groupRepository.findByMembersContaining(user)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 가입한 그룹을 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+                .orElseThrow(() -> new NoSuchElementException("해당 유저가 가입한 그룹을 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         List<GroupResponseDTO> groupDTOList;
         if(!groups.isEmpty()) {
@@ -130,13 +135,14 @@ public class GroupService {
     }
 
     // 그룹 삭제하기 (그룹 생성한 유저만 가능)
+    @Transactional
     public void deleteGroup(GroupExitOrDeleteRequestDTO request) {
 
         String groupName = request.getGroupName();
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
 
         if (isContains(groupName, userIdentifier)){
             if (userIdentifier.equals(group.getCreatedBy().getUserIdentifier())) {  // 그룹의 멤버이면 그룹을 만든 사람인지 검증
@@ -148,18 +154,19 @@ public class GroupService {
 
 
             } else {
-                throw new IllegalArgumentException("그룹 창설자만 그룹을 삭제할 수 있습니다.");
+                throw new ForbiddenResourceAccessException("그룹 창설자만 그룹을 삭제할 수 있습니다.");
             }
         } else {
-            throw new IllegalArgumentException("요청한 사용자가 그룹의 멤버가 아닙니다. groupName : " + groupName + ", userIdentifier : " + userIdentifier);
+            throw new ForbiddenResourceAccessException("요청한 사용자가 그룹의 멤버가 아닙니다. groupName : " + groupName + ", userIdentifier : " + userIdentifier);
         }
 
     }
 
     // 이 그룹에 해당 멤버가 있는지 조회하기
+    @Transactional(readOnly = true)
     public Boolean isContains(String groupName, String userIdentifier) {
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName : " + groupName));
 
         UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));

@@ -22,9 +22,9 @@ public class UnifiedUserController {
     private final UnifiedUserService unifiedUserService;
 
     // 통합 유저 삭제 ( 회원 탈퇴 )
-    @DeleteMapping("/{userIdentifier}")
-    public ResponseEntity<CommonResponse<String>> deleteUser(@PathVariable String userIdentifier) {
-        unifiedUserService.deleteUnifiedUser(userIdentifier);
+    @DeleteMapping("/delete")
+    public ResponseEntity<CommonResponse<String>> deleteUser() {
+        unifiedUserService.deleteUnifiedUser();
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
     }
 

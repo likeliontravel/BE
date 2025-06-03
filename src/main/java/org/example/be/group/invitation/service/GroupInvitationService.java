@@ -1,6 +1,8 @@
 package org.example.be.group.invitation.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.exception.custom.InvalidInvitationException;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.repository.GroupInvitationRepository;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,9 +46,9 @@ public class GroupInvitationService {
         });
 
         if (expiredOptional.isPresent()) {
-            throw new IllegalStateException("초대 링크가 만료되었습니다. 새로 생성하세요.");
+            throw new InvalidInvitationException("초대 링크가 만료되었습니다. 새로 생성하세요.");
         } else {
-            throw new IllegalArgumentException("초대 링크가 없습니다. 초대 링크를 생성하세요.");
+            throw new NoSuchElementException("초대 링크가 없습니다. 초대 링크를 생성하세요.");
         }
     }
 
@@ -74,10 +77,10 @@ public class GroupInvitationService {
     // 그룹 창설자 검증
     private Group validateGroupCreator(String groupName, String userIdentifier) {
         Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
 
         if (!group.getCreatedBy().getUserIdentifier().equals(userIdentifier)) {
-            throw new IllegalArgumentException("해당 그룹의 창설자만 접근할 수 있습니다.");
+            throw new ForbiddenResourceAccessException("해당 그룹의 창설자만 접근할 수 있습니다.");
         }
         return group;
     }
@@ -87,7 +90,7 @@ public class GroupInvitationService {
     public GroupInvitation getValidInvitation(String invitationCode) {
         LocalDateTime now = LocalDateTime.now();
         return invitationRepository.findByInvitationCodeAndActiveTrueAndExpiresAtAfter(invitationCode, now)
-                .orElseThrow(() -> new IllegalArgumentException("초대 링크가 유효하지 않거나 만료되었습니다. 초대 코드: " + invitationCode));
+                .orElseThrow(() -> new InvalidInvitationException("초대 링크가 유효하지 않거나 만료되었습니다. 초대 코드: " + invitationCode));
     }
 
 //    // 그룹 초대 링크 생성 메서드

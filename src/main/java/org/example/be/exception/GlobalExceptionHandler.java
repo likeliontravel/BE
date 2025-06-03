@@ -1,10 +1,7 @@
 package org.example.be.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.exception.custom.ResourceCreationException;
-import org.example.be.exception.custom.ResourceDeletionException;
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.exception.custom.*;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +29,7 @@ public class GlobalExceptionHandler {
     }
 
     // NoSuchElementException - 찾을 수 없음
-    // 응답 코드 : NotFound 404
+    // 응답 코드 : Not Found 404
     @ExceptionHandler(NoSuchElementException.class)
     @ResponseBody
     public ResponseEntity<CommonResponse<Void>> handleNoSuchElementException(NoSuchElementException e) {
@@ -85,6 +82,48 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(CommonResponse.error(403, e.getMessage()));
     }
 
+    // GCSUploadFailedException - GCS에 파일 업로드 중 오류
+    // 응답 코드 : Internal Server Error - 500
+    @ExceptionHandler(GCSUploadFailedException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleGCSUploadFailedException(GCSUploadFailedException e) {
+        log.error("[GCS 업로드 실패] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, e.getMessage()));
+    }
 
+    // GCSDeletionFailedException - GCS에서 파일 삭제 중 오류
+    // 응답 코드 : Internal Server Error - 500
+    @ExceptionHandler(GCSDeletionFailedException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleGCSDeletionFailedException(GCSDeletionFailedException e) {
+        log.error("[GCS 삭제 실패] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, e.getMessage()));
+    }
 
+    // InvalidInvitationException - 유효하지 않은 초대 코드 요청
+    // 응답 코드 : Bad Request 400
+    @ExceptionHandler(InvalidInvitationException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleInvalidInvitationException(InvalidInvitationException e) {
+        log.error("[그룹 초대 코드 오류] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(400, e.getMessage()));
+    }
+
+    // UserAuthenticationNotFoundException - 인증은 되었으나 해당 유저 정보를 찾을 수 없음
+    // 응답 코드 : 401 Unauthorized
+    @ExceptionHandler(UserAuthenticationNotFoundException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleUserAuthenticationNotFoundException(UserAuthenticationNotFoundException e) {
+        log.error("[유저 정보 없음] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(CommonResponse.error(500, e.getMessage()));
+    }
+
+    // SecurityAuthenticationException - 인증이 되지 않았거나 인증객체를 찾을 수 없음
+    // 응답 코드 : 500 Internal Server Error
+    @ExceptionHandler(SecurityAuthenticationException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleSecurityAuthenticationException(SecurityAuthenticationException e) {
+        log.error("[유저 인증 실패] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CommonResponse.error(401, e.getMessage()));
+    }
 }

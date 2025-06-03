@@ -1,6 +1,7 @@
 package org.example.be.group.announcement.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.group.announcement.dto.GroupAnnouncementCreationRequestDTO;
 import org.example.be.group.announcement.dto.GroupAnnouncementDeleteRequestDTO;
 import org.example.be.group.announcement.dto.GroupAnnouncementResponseDTO;
@@ -12,9 +13,11 @@ import org.example.be.group.service.GroupService;
 import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,70 +31,63 @@ public class GroupAnnouncementService {
     private final UnifiedUserService unifiedUserService;
 
     // 그룹 공지 생성
-    public GroupAnnouncementResponseDTO createGroupAnnouncement(GroupAnnouncementCreationRequestDTO groupAnnouncementCreationRequestDTO) {
+    @Transactional
+    public GroupAnnouncementResponseDTO createGroupAnnouncement(GroupAnnouncementCreationRequestDTO dto) {
         // 저장할 정보 가져오기
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        String groupName = groupAnnouncementCreationRequestDTO.getGroupName();
-        String title = groupAnnouncementCreationRequestDTO.getTitle();
-        String content = groupAnnouncementCreationRequestDTO.getContent();
-        LocalDateTime timeStamp = LocalDateTime.now();
 
-        // 작성자가 그룹 멤버인지 검증
-        Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
-        if (groupOptional.isPresent()) {
-            Group group = groupOptional.get();
-            if (groupService.isContains(groupName, userIdentifier)) {
-                GroupAnnouncement newGroupAnnouncement = new GroupAnnouncement();
-                newGroupAnnouncement.setGroup(group);
-                newGroupAnnouncement.setTitle(title);
-                newGroupAnnouncement.setContent(content);
-                newGroupAnnouncement.setTimeStamp(timeStamp);
-                newGroupAnnouncement.setWriterName(
-                        unifiedUserService.getNameByUserIdentifier(userIdentifier)
-                );
-                GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.save(newGroupAnnouncement);
-                return toResponseDTO(groupAnnouncement);
-            } else {
-                throw new IllegalArgumentException("요청자가 해당 그룹의 멤버가 아닙니다.");
-            }
-        } else {
-            throw new IllegalArgumentException("그룹을 찾을 수 없습니다. groupName: " + groupName);
+        Group group = groupRepository.findByGroupName(dto.getGroupName())
+                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + dto.getGroupName()));
+
+        if (!groupService.isContains(dto.getGroupName(), userIdentifier)) {
+            throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
         }
 
+        GroupAnnouncement newAnnouncement = new GroupAnnouncement();
+        newAnnouncement.setGroup(group);
+        newAnnouncement.setTitle(dto.getTitle());
+        newAnnouncement.setContent(dto.getContent());
+        newAnnouncement.setTimeStamp(LocalDateTime.now());
+        newAnnouncement.setWriterName(unifiedUserService.getNameByUserIdentifier(userIdentifier));
+
+        return toResponseDTO(groupAnnouncementRepository.save(newAnnouncement));
     }
 
     // 최상단 노출 그룹 공지 1개만 조회
+    @Transactional(readOnly = true)
     public GroupAnnouncementResponseDTO getLatestAnnouncement(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        // 요청자가 그룹 멤버인지 검증
-        if (groupService.isContains(groupName, userIdentifier)) {
-            Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
-            if (groupOptional.isPresent()) {
-                Group group = groupOptional.get();
-                GroupAnnouncement latestGroupAnnouncement = groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(group)
-                        .orElseThrow(() -> new IllegalArgumentException("해당 그룹에 등록된 공지사항이 없습니다."));
-                return toResponseDTO(latestGroupAnnouncement);
-            } else {
-                throw new IllegalArgumentException("그룹을 찾을 수 없습니다. groupName: " + groupName);
-            }
-        } else {
-            throw new IllegalArgumentException("요청자가 해당 그룹의 멤버가 아닙니다.");
+        Group group = groupRepository.findByGroupName(groupName)
+                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+
+        if (!groupService.isContains(groupName, userIdentifier)) {
+            throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
         }
+
+        Optional<GroupAnnouncement> latestAnnouncementOptional = groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(group);
+
+        if (latestAnnouncementOptional.isEmpty()) {
+            throw new NoSuchElementException("해당 그룹에 등록된 공지가 없습니다.");
+        }
+
+        return toResponseDTO(latestAnnouncementOptional.get());
     }
 
     // 그룹 공지 전부 조회 (최신순 정렬되어 반환됨)
+    @Transactional(readOnly = true)
     public List<GroupAnnouncementResponseDTO> getAllGroupAnnouncements(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
+
         // 요청자가 그룹 멤버인지 검증
         if (!groupService.isContains(groupName, userIdentifier)) {
-            throw new IllegalArgumentException("요청자가 해당 그룹의 멤버가 아닙니다.");
+            throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
         }
 
         Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
         // 해당 이름의 그룹이 존재하는지 확인
         if (groupOptional.isEmpty()) {
-            throw new IllegalArgumentException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName);
+            throw new NoSuchElementException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName);
         }
 
         Group group = groupOptional.get();
@@ -102,19 +98,14 @@ public class GroupAnnouncementService {
     }
 
     // 그룹 공지 삭제
+    @Transactional
     public void deleteGroupAnnouncement(GroupAnnouncementDeleteRequestDTO request) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         String groupName = request.getGroupName();
-        Long id = request.getId();
 
-        Optional<GroupAnnouncement> groupAnnouncementOptional = groupAnnouncementRepository.findById(id);
+        GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.getId())
+                .orElseThrow(() -> new NoSuchElementException("삭제하려는 공지사항을 찾을 수 없습니다. id: " + request.getId()));
 
-        // 삭제하려는 공지가 존재하는지 확인
-        if (groupAnnouncementOptional.isEmpty()) {
-            throw new IllegalArgumentException("삭제하려는 공지를 찾을 수 없습니다. Id: " + id);
-        }
-
-        GroupAnnouncement groupAnnouncement = groupAnnouncementOptional.get();
         // 요청한 그룹이 공지의 그룹과 일치하는지 확인
         if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {
             throw new IllegalArgumentException("삭제하려는 공지가 요청한 그룹의 공지가 아닙니다. 요청한 groupName: " + groupName + ", 삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());

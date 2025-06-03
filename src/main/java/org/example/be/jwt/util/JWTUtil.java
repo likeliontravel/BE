@@ -19,7 +19,7 @@ public class JWTUtil {
         if (secret.length() < 32) {
 
             ///  비밀 키가 32 자리가 아니면 예외 발생
-           throw new IllegalArgumentException("JWT secret key must be at least 32 characters long");
+           throw new RuntimeException("JWT secret key must be at least 32 characters long");
         }
 
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());

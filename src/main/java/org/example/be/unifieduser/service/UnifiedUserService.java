@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -49,15 +50,17 @@ public class UnifiedUserService {
 
     // 통합 유저 삭제 ( 회원 탈퇴 )
     @Transactional
-    public void deleteUnifiedUser(String userIdentifier) {
+    public void deleteUnifiedUser() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+                .orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         // unified user 삭제. Cascade와 OrphanRemoval옵션으로 연결된 데이터(소셜 또는 일반) 자동삭제.
         unifiedUserRepository.delete(unifiedUser);
         unifiedUserRepository.flush();  // DB에 반영해줌
-//
+
+        // 혹시 몰라 수동 제거로직을 추가했는데, 계속 문제 없으면 없앨 예정
         if (userIdentifier.startsWith("gen_")) {
             generalUserRepository.findByUserIdentifier(userIdentifier)
                     .ifPresent(generalUserRepository::delete);
@@ -70,11 +73,11 @@ public class UnifiedUserService {
     @Transactional
     // 약관 동의 상태 변경 - 원하는 상태는 프론트에서 보내줘야됩니다.
     public void updatePolicy(PolicyUpdateRequestDTO dto) {
-        String userIdentifier = dto.getUserIdentifier();
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         Boolean policyAgreed = dto.getPolicyAgreed();
 
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+                .orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         unifiedUser.setPolicyAgreed(policyAgreed);
         unifiedUserRepository.save(unifiedUser);
@@ -83,11 +86,11 @@ public class UnifiedUserService {
     // 구독 여부 상태 변경 - 원하는 상태는 프론트에서 보내줘야됩니다.
     @Transactional
     public void updateSubscribed(SubscribedUpdateRequestDTO dto) {
-        String userIdentifier = dto.getUserIdentifier();
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
         Boolean subscribed = dto.getSubscribed();
 
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+                .orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
         unifiedUser.setSubscribed(subscribed);
         unifiedUserRepository.save(unifiedUser);
@@ -107,7 +110,7 @@ public class UnifiedUserService {
         unifiedUserRepository.save(unifiedUser);
     }
 
-    // 해당 userIdentifier를 가진 유저가 존재하는지 확인하는 메서드
+    // 해당 userIdentifier를 가진 유저가 존재하는지 확인하는 메서드 - test용
     public boolean unifiedUserExists(String userIdentifier) {
         return unifiedUserRepository.findByUserIdentifier(userIdentifier).isPresent();
     }

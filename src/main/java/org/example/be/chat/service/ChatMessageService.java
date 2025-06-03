@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.chat.dto.ChatMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.exception.custom.GCSUploadFailedException;
+import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.gcs.GCSService;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
@@ -43,7 +46,7 @@ public class ChatMessageService {
 
         List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
         if (messages.isEmpty()) {
-            throw new NoSuchElementException("해당 그룹에 메시지가 존재하지 않습니다. groupName: " + groupName);
+            throw new NoSuchElementException("해당 그룹에 아직 메시지가 존재하지 않습니다. groupName: " + groupName);
         }
         return buildMessageWithProfiles(messages);
     }
@@ -96,7 +99,9 @@ public class ChatMessageService {
             validateImageFile(image);
             return gcsService.uploadChatImage(image, senderIdentifier, groupName);
         } catch (IOException e) {
-            throw new RuntimeException("이미지 업로드 중 오류가 발생했습니다.", e);
+            throw new GCSUploadFailedException("이미지 업로드 중 오류가 발생했습니다.", e);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -110,7 +115,7 @@ public class ChatMessageService {
         ChatMessage.MessageType messageType;
         try {
             messageType = ChatMessage.MessageType.valueOf(type.toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("지원하지 않는 메시지 타입입니다.");
         }
 
@@ -121,7 +126,12 @@ public class ChatMessageService {
                 .type(messageType)
                 .sendAt(LocalDateTime.now())
                 .build();
-        return chatMessageRepository.save(chatMessage);
+        try {
+            return chatMessageRepository.save(chatMessage);
+        } catch (Exception e) {
+            throw new ResourceCreationException("메시지 저장에 실패했습니다.");
+        }
+
 
     }
 
@@ -151,7 +161,7 @@ public class ChatMessageService {
                 .anyMatch(user -> user.getUserIdentifier().equals(userIdentifier));
 
         if (!isMember) {
-            throw new IllegalArgumentException("해당 그룹에 가입되어 있지 않습니다.");
+            throw new ForbiddenResourceAccessException("해당 그룹에 가입되어 있지 않습니다.");
         }
         return group;
     }
@@ -159,7 +169,7 @@ public class ChatMessageService {
     // userIdentifier로 UnifiedUser 찾아 반환
     private UnifiedUser findUser(String userIdentifier) {
         return unifiedUserRepository.findByUserIdentifier(userIdentifier)
-                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+                .orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
     }
 
     // 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.

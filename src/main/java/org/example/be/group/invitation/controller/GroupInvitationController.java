@@ -25,38 +25,27 @@ public class GroupInvitationController {
     // 초대 링크 조회하기
     @GetMapping("/{groupName}/invitation")
     public ResponseEntity<CommonResponse<InvitationResponseDTO>> getInvitation(@DecodedPathVariable String groupName) {
-        try {
             GroupInvitation invitation = invitationService.getValidOrExpireInvitation(groupName);
+
             InvitationResponseDTO dto = new InvitationResponseDTO();
             dto.setInvitationUrl("https://localhost:8080/invite/" + invitation.getInvitationCode());
             dto.setInvitationCode(invitation.getInvitationCode());
             dto.setExpiresAt(invitation.getExpiresAt());
 
             return ResponseEntity.ok(CommonResponse.success(dto, "초대 링크 조회 성공"));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(CommonResponse.error(HttpStatus.GONE.value(), e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
-        }
     }
 
     // 강제로 새로운 초대 링크 발급 ( 기존 링크 무효화 )
     @PostMapping("/{groupName}/invitation/generateNew")
     public ResponseEntity<CommonResponse<InvitationResponseDTO>> generateNewInvitation(@DecodedPathVariable String groupName) {
-        try {
             GroupInvitation invitation = invitationService.forceGenerateNewInvitation(groupName);
+
             InvitationResponseDTO dto = new InvitationResponseDTO();
             dto.setInvitationUrl("https://localhost:8080/invite/" + invitation.getInvitationCode());
             dto.setInvitationCode(invitation.getInvitationCode());
             dto.setExpiresAt(invitation.getExpiresAt());
 
             return ResponseEntity.ok(CommonResponse.success(dto, "새 초대 링크 생성 성공"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(CommonResponse.error(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
-        }
     }
 
 
