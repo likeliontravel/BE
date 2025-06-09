@@ -21,7 +21,7 @@ public abstract class Place {
     private String addr1;     // 주소
     private String addr2;       // 세부 주소 ( 건물 내 층수나 주소설명
     private String areaCode;    // 지역 코드
-    private String sigunguCode; // 시군구 코드
+    private String siGunGuCode; // 시군구 코드
 
     private String cat1;        // 대분류 코드
     private String cat2;        // 중분류 코드

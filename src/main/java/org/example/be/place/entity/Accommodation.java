@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Accommodation extends Place{
+public class Accommodation extends Place {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

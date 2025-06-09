@@ -109,7 +109,7 @@ public class AccommodationService {
                 .addr1((String) item.get("addr1"))
                 .addr2((String) item.get("addr2"))
                 .areaCode((String) item.get("areacode"))
-                .sigunguCode((String) item.get("sigungucode"))
+                .siGunGuCode((String) item.get("sigungucode"))
                 .cat1((String) item.get("cat1"))
                 .cat2((String) item.get("cat2"))
                 .cat3((String) item.get("cat3"))
