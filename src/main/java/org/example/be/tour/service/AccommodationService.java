@@ -103,7 +103,7 @@ public class AccommodationService { //숙박 정보 불러오기
                 Object areaCodeObj = item.get("areacode");
                 if (areaCodeObj != null) {
                     int areaCodeFromItem = Integer.parseInt(areaCodeObj.toString());
-                    TourRegion location = tourRegionRepository.findByAreaCode(areaCodeFromItem).orElse(null);
+                    TourRegion location = tourRegionRepository.findFirstByAreaCode(areaCodeFromItem).orElse(null);
                     accommodation.setTourRegion(location);
                 }
 

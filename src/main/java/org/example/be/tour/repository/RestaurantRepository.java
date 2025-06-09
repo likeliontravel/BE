@@ -7,5 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
-    Optional<Restaurant> findByContentId(Long contentId);  // areaCode에 맞는 맛집을 찾는 메서드
+    // List<Restaurant> findByContentId(Long contentId);
+
+    boolean existsByContentId(Long contentId);
 }

@@ -121,34 +121,42 @@ public class TourismController {
                     .body("숙박 정보 저장 중 오류 발생: " + e.getMessage());
         }
     }
-    @GetMapping("/restaurant/{areaCode}")
-    public ResponseEntity<List<Map<String, Object>>> getRestaurants(@PathVariable int areaCode) {
+    @GetMapping("/fetch/restaurants/{areaCode}/{sigunguCode}")
+    public ResponseEntity<List<Map<String, Object>>> fetchRestaurants(
+            @PathVariable int areaCode,
+            @PathVariable int sigunguCode,
+            @RequestParam(defaultValue = "1") int pageNo
+    ) {
         try {
-            // areaCode를 지역명으로 변환
-            String state = getStateByAreaCode(areaCode);
+            int contentTypeId = 39;  // 음식점입니당.
+            int numOfRows = 1000;
 
-            if (state == null) {
-                return ResponseEntity.badRequest().body(null); // 잘못된 areaCode 처리
+            List<Map<String, Object>> restaurants;
+
+            if (pageNo <= 0) {
+                restaurants = restaurantService.getAllData(areaCode, sigunguCode, contentTypeId, numOfRows);
+            } else {
+                // 지정한 페이지만 호출
+                restaurants = restaurantService.getData(areaCode, sigunguCode, contentTypeId, numOfRows, pageNo);
             }
 
-            List<Map<String, Object>> restaurants = restaurantService.getData((areaCode), 39,10);
             return ResponseEntity.ok(restaurants);
         } catch (Exception e) {
             logger.error("식당 정보를 가져오는 중 오류 발생: ", e);
-            return ResponseEntity.internalServerError().build(); // 에러 처리
-        }
-    }
-    @PostMapping("/restaurant/save/{areaCode}")
-    public ResponseEntity<String> saveRestaurants(@PathVariable int areaCode) {
-        try {
-            restaurantService.saveRestaurants(areaCode);
-            return ResponseEntity.ok("식당 정보가 성공적으로 저장되었습니다.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("식당 정보 저장 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
     }
+//    @PostMapping("/restaurant/save/{areaCode}")
+//    public ResponseEntity<String> saveRestaurants(@PathVariable int areaCode) {
+//        try {
+//            restaurantService.saveRestaurants(areaCode);
+//            return ResponseEntity.ok("식당 정보가 성공적으로 저장되었습니다.");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("식당 정보 저장 중 오류 발생: " + e.getMessage());
+//        }
+//    }
 
 
 /*    // 지역 코드로 관광지 목록 조회
