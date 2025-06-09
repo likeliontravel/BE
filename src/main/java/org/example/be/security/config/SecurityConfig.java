@@ -80,7 +80,7 @@ public class SecurityConfig {
                         .requestMatchers("/mail/**").permitAll()
                         .requestMatchers("/board/**").permitAll()
                         .requestMatchers("/comment/**").permitAll()
-                        .requestMatchers("/tourism/**").permitAll()
+                        .requestMatchers("/tour/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

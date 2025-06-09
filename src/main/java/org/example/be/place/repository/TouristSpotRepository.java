@@ -1,6 +1,6 @@
-package org.example.be.tour.repository;
+package org.example.be.place.repository;
 
-import org.example.be.tour.entity.TouristSpot;
+import org.example.be.place.entity.TouristSpot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
