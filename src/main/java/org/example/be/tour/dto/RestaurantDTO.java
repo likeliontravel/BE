@@ -1,5 +1,6 @@
 package org.example.be.tour.dto;
 
+
 import lombok.*;
 
 @Getter
@@ -7,8 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
-public class TouristSpotDTO {
+public class RestaurantDTO {
     private String contentId;
     private String title;
     private String addr1;

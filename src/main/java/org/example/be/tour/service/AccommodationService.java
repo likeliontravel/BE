@@ -1,114 +1,148 @@
+
 package org.example.be.tour.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.example.be.tour.entity.Accommodation;
-import org.example.be.tour.entity.TourRegion;
-import org.example.be.tour.repository.AccommodationRepository;
-import org.example.be.tour.repository.TourRegionRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import lombok.extern.slf4j.Slf4j;
 
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import org.example.be.tour.dto.AccommodationDTO;
+import org.example.be.tour.entity.Accommodation;
+import org.example.be.tour.repository.AccommodationRepository;
+import org.example.be.tour.util.TourApiClient;
+import org.example.be.tour.util.TourApiParser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AccommodationService { //숙박 정보 불러오기
+@Slf4j
+public class AccommodationService {
+
     private final AccommodationRepository accommodationRepository;
-    private final TourRegionRepository tourRegionRepository;
+    private final TourApiClient tourApiClient;
+    private final TourApiParser tourApiParser;
 
     @Value("${service-key}")
     private String serviceKey;
 
-    public List<Map<String, Object>> getData(int areaCode, int numOfRows) throws Exception {
-
-        String link = "https://apis.data.go.kr/B551011/KorService1/searchStay1";
-        String MobileOS = "ETC";
-        String MobileApp = "Test";
-        String _type = "json";
-
-        // ✅ serviceKey 자동 디코딩 (안전한 방식)
-        String decodedServiceKey = URLDecoder.decode(serviceKey, StandardCharsets.UTF_8);
-
-        String url = UriComponentsBuilder.fromHttpUrl(link)
-                .queryParam("MobileOS", "ETC")
-                .queryParam("MobileApp", "Test")
-                .queryParam("_type", "json")
-                .queryParam("numOfRows", numOfRows)
-                .queryParam("listYN", "Y")
-                .queryParam("arrange", "A")
-                .queryParam("serviceKey", serviceKey) // 인코딩 방지 적용
-                .build(false)  // 자동 인코딩 방지!
-                .toUriString();
-
-        System.out.println("Generated URL: " + url); // 디버깅용 로그
-        URI uri = new URI(url);
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-
-        String response = restTemplate.getForObject(uri, String.class);
-
-        // JSON 파싱
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> map = objectMapper.readValue(response, Map.class);
-
-        Map<String, Object> responseMap = (Map<String, Object>) map.get("response");
-        Map<String, Object> bodyMap = (Map<String, Object>) responseMap.get("body");
-        Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
-        List<Map<String, Object>> itemMap = (List<Map<String, Object>>) itemsMap.get("item");
-
-        List<Map<String, Object>> filteredItems = itemMap.stream()
-                .filter(item -> {
-                    Object areaCodeObj = item.get("areacode");
-                    if (areaCodeObj == null) {
-                        return false;
-                    }
-                    try {
-                        int parsedAreaCode = Integer.parseInt(areaCodeObj.toString().trim());
-                        return parsedAreaCode == areaCode;
-                    } catch (NumberFormatException e) {
-                        return false;
-                    }
-                })
-                .collect(Collectors.toList());
-
-        return filteredItems;
-    }
-
-    public void saveAccommodations(int areaCode) throws Exception {
-        List<Map<String, Object>> accommodations = getData(areaCode, Integer.MAX_VALUE);
-
-        for (Map<String, Object> item : accommodations) {
-            Long contentId = Long.parseLong(item.get("contentid").toString());
-
-            // 중복 검사 후 저장
-            if (accommodationRepository.findByContentId(contentId).isEmpty()) {
-                Accommodation accommodation = new Accommodation();
-
-                accommodation.setName(item.getOrDefault("title"," ").toString()); // 숙소 이름
-                accommodation.setAddress(item.getOrDefault("addr1", "").toString()); // 주소
-                accommodation.setCategory(item.getOrDefault("cat3", "").toString()); // 카테고리 (예: B02010700)
-                accommodation.setImageUrl(item.getOrDefault("firstimage", "").toString()); // 이미지
-                accommodation.setContentId(contentId); // contentId 저장
-                // ✅ 지역 설정
-                Object areaCodeObj = item.get("areacode");
-                if (areaCodeObj != null) {
-                    int areaCodeFromItem = Integer.parseInt(areaCodeObj.toString());
-                    TourRegion location = tourRegionRepository.findFirstByAreaCode(areaCodeFromItem).orElse(null);
-                    accommodation.setTourRegion(location);
-                }
-
-                accommodationRepository.save(accommodation);
-            }
+    // 컨트롤러 입력 -> 페이지 입력에 따라 데이터 저장 함수 분기
+    public List<AccommodationDTO> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws Exception {
+        int contentTypeId = 32; // 숙소 ContentTypeId 32 고정
+        if (pageNo <= 0) {
+            return getAllData(areaCode, state, contentTypeId, numOfRows);
+        } else {
+            return getPageData(areaCode, state, contentTypeId, numOfRows, pageNo);
         }
     }
+
+    // Page 입력 시 해당 단위 데이터 저장
+    private List<AccommodationDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
+        String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+        log.debug("[TourAPI JSON 응답 - 숙소] \n {}",json);
+        List<Map<String, Object>> items = tourApiParser.parseItems(json);
+        log.debug("숙소 parse items size: {}", items.size());
+
+        return items.stream()
+                .filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
+                .peek(this::saveIfNotExist)
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Page 미입력 시 전체 결과 저장
+    private List<AccommodationDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws Exception {
+        int pageNo = 1;
+        List<AccommodationDTO> allItems = new ArrayList<>();
+
+        while (true) {
+            String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+            log.debug("[숙소 Raw Json] {}", json);
+            List<Map<String, Object>> items = tourApiParser.parseItems(json);
+            log.debug("[숙소 parsed items size: {}", items.size());
+
+            List<Map<String, Object>> filtered = items.stream()
+                    .filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
+                    .collect(Collectors.toList());
+
+            if (filtered.isEmpty()) break;
+
+            filtered.forEach(this::saveIfNotExist);
+            allItems.addAll(filtered.stream().map(this::toDTO).toList());
+            pageNo++;
+        }
+        return allItems;
+    }
+
+    // DB에 저장 ( contentId가 존재하지 않는 것만 저장 )
+    private void saveIfNotExist(Map<String, Object> item) {
+        String contentId = String.valueOf(item.get("contentid"));
+        if (!accommodationRepository.existsByContentId(contentId)) {
+            Accommodation accommodation = Accommodation.builder()
+                    .contentId(contentId)
+                    .title(item.get("title").toString())
+                    .addr1(item.get("addr1").toString())
+                    .addr2(item.get("addr2").toString())
+                    .areaCode((String) item.get("areacode"))
+                    .cat1(item.get("cat1").toString())
+                    .cat2(item.get("cat2").toString())
+                    .cat3(item.get("cat3").toString())
+                    .imageUrl((String) item.get("firstimage"))
+                    .thumbnailImageUrl((String) item.get("firstimage2"))
+                    .mapX(toDouble(item.get("mapx")))
+                    .mapY(toDouble(item.get("mapy")))
+                    .mLevel(toInteger(item.get("mlevel")))
+                    .tel(item.get("tel").toString())
+                    .modifiedTime((String) item.get("modifiedtime"))
+                    .createdTime((String) item.get("createdtime"))
+                    .build();
+            accommodationRepository.save(accommodation);
+        }
+    }
+
+    // Map<String, Object> -> DTO
+    private AccommodationDTO toDTO(Map<String, Object> item) {
+        return AccommodationDTO.builder()
+                .contentId((String) item.get("contentid"))
+                .title((String) item.get("title"))
+                .addr1((String) item.get("addr1"))
+                .addr2((String) item.get("addr2"))
+                .areaCode((String) item.get("areacode"))
+                .siGunGuCode((String) item.get("sigungucode"))
+                .cat1((String) item.get("cat1"))
+                .cat2((String) item.get("cat2"))
+                .cat3((String) item.get("cat3"))
+                .imageUrl((String) item.get("firstimage"))
+                .thumbnailImageUrl((String) item.get("firstimage2"))
+                .mapX(toDouble(item.get("mapx")))
+                .mapY(toDouble(item.get("mapy")))
+                .mLevel(toInteger(item.get("mlevel")))
+                .tel((String) item.get("tel"))
+                .modifiedTime((String) item.get("modifiedtime"))
+                .createdTime((String) item.get("createdtime"))
+                .build();
+    }
+
+    private Double toDouble(Object obj) {
+        try {
+            return obj != null ? Double.parseDouble(obj.toString()) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Integer toInteger(Object obj) {
+        try {
+            return obj != null ? Integer.parseInt(obj.toString()) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+
+
 }

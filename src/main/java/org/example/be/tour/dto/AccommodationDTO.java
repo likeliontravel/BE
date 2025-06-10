@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString
-public class TouristSpotDTO {
+public class AccommodationDTO {
     private String contentId;
     private String title;
     private String addr1;
