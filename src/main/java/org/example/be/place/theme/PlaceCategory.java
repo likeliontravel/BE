@@ -25,9 +25,6 @@ public class PlaceCategory {
     @Column(name = "cat2")
     private String cat2;
 
-    @Column(name = "cat3")
-    private String cat3;
-
     @Column(name = "large_classification")
     private String largeClassification;
 

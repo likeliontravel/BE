@@ -3,9 +3,8 @@ package org.example.be.place.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.be.place.dto.AccommodationDTO;
 import org.example.be.place.dto.TouristSpotDTO;
-import org.example.be.place.entity.Accommodation;
-import org.example.be.place.service.AccommodationService;
-import org.example.be.place.service.TouristSpotService;
+import org.example.be.place.service.AccommodationFetchService;
+import org.example.be.place.service.TouristSpotFetchService;
 import org.example.be.place.util.AreaCodeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +18,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TourismController {
 
-    private final TouristSpotService touristSpotService;
-    private final AccommodationService accommodationService;
+    private final TouristSpotFetchService touristSpotFetchService;
+    private final AccommodationFetchService accommodationFetchService;
     private final AreaCodeResolver areaCodeResolver;
     private static final Logger logger = LoggerFactory.getLogger(TourismController.class);
 
@@ -33,7 +32,7 @@ public class TourismController {
             throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
         }
 
-        List<TouristSpotDTO> result = touristSpotService.getTouristSpots(
+        List<TouristSpotDTO> result = touristSpotFetchService.getTouristSpots(
                 code, state, 12, 1000, pageNo
         );
 
@@ -51,7 +50,7 @@ public class TourismController {
             throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
         }
 
-        List<AccommodationDTO> result = accommodationService.getAccommodations(
+        List<AccommodationDTO> result = accommodationFetchService.getAccommodations(
                 code, state, 1000, pageNo
         );
 

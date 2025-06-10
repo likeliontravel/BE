@@ -2,9 +2,9 @@ package org.example.be.place.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.be.place.dto.AccommodationDTO;
-import org.example.be.place.entity.Accommodation;
-import org.example.be.place.repository.AccommodationRepository;
+import org.example.be.place.dto.TouristSpotDTO;
+import org.example.be.place.entity.TouristSpot;
+import org.example.be.place.repository.TouristSpotRepository;
 import org.example.be.place.util.TourApiClient;
 import org.example.be.place.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,18 +18,16 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AccommodationService {
+public class TouristSpotFetchService {
 
-    private final AccommodationRepository accommodationRepository;
+    private final TouristSpotRepository touristSpotRepository;
     private final TourApiClient tourApiClient;
     private final TourApiParser tourApiParser;
 
     @Value("${service-key}")
     private String serviceKey;
 
-    // 컨트롤러 입력 -> 페이지 입력에 따라 데이터 저장 함수 분기
-    public List<AccommodationDTO> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws Exception {
-        int contentTypeId = 32; // 숙소 ContentTypeId 32 고정
+    public List<TouristSpotDTO> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
         if (pageNo <= 0) {
             return getAllData(areaCode, state, contentTypeId, numOfRows);
         } else {
@@ -37,12 +35,12 @@ public class AccommodationService {
         }
     }
 
-    // Page 입력 시 해당 단위 데이터 저장
-    private List<AccommodationDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
+    // 페이지 입력 시 fetch
+    private List<TouristSpotDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
         String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-        log.debug("[TourAPI JSON 응답 - 숙소] \n {}",json);
+        log.debug("[TourAPI JSON 응답] {}", json);
         List<Map<String, Object>> items = tourApiParser.parseItems(json);
-        log.debug("숙소 parse items size: {}", items.size());
+        log.debug("[Debug] parsed items size: " + items.size());
 
         return items.stream()
                 .filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
@@ -51,19 +49,23 @@ public class AccommodationService {
                 .collect(Collectors.toList());
     }
 
-    // Page 미입력 시 전체 결과 저장
-    private List<AccommodationDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws Exception {
+    // 페이지 미입력시 전체 데이터 fetch
+    private List<TouristSpotDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws Exception {
         int pageNo = 1;
-        List<AccommodationDTO> allItems = new ArrayList<>();
+        List<TouristSpotDTO> allItems = new ArrayList<>();
 
         while (true) {
-            String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-            log.debug("[숙소 Raw Json] {}", json);
+            String json =tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+            System.out.println("[Debug] Raw Json from tour api: \n" + json);
+            log.debug("[Debug] Raw Json from tour api: \n {}", json);
             List<Map<String, Object>> items = tourApiParser.parseItems(json);
-            log.debug("[숙소 parsed items size: {}", items.size());
+            log.debug("[Debug] parsed items size: {} ", items.size());
 
             List<Map<String, Object>> filtered = items.stream()
-                    .filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
+                    .filter(item -> {
+                        log.debug("addr1: {}", item.get("addr1"));
+                        return item.get("addr1") != null && item.get("addr1").toString().contains(state);
+                    })
                     .collect(Collectors.toList());
 
             if (filtered.isEmpty()) break;
@@ -72,38 +74,40 @@ public class AccommodationService {
             allItems.addAll(filtered.stream().map(this::toDTO).toList());
             pageNo++;
         }
+
         return allItems;
     }
 
-    // DB에 저장 ( contentId가 존재하지 않는 것만 저장 )
+    // contentId로 조회 시 없는 경우 ( 기존에 없던 장소일 경우 ) 새로 저장
     private void saveIfNotExist(Map<String, Object> item) {
         String contentId = String.valueOf(item.get("contentid"));
-        if (!accommodationRepository.existsByContentId(contentId)) {
-            Accommodation accommodation = Accommodation.builder()
+        if (!touristSpotRepository.existsByContentId(contentId)) {
+            TouristSpot touristSpot = TouristSpot.builder()
                     .contentId(contentId)
-                    .title(item.get("title").toString())
-                    .addr1(item.get("addr1").toString())
-                    .addr2(item.get("addr2").toString())
+                    .title((String) item.get("title"))
+                    .addr1((String) item.get("addr1"))
+                    .addr2((String) item.get("addr2"))
                     .areaCode((String) item.get("areacode"))
-                    .cat1(item.get("cat1").toString())
-                    .cat2(item.get("cat2").toString())
-                    .cat3(item.get("cat3").toString())
+                    .siGunGuCode((String) item.get("sigungucode"))
+                    .cat1((String) item.get("cat1"))
+                    .cat2((String) item.get("cat2"))
+                    .cat3((String) item.get("cat3"))
                     .imageUrl((String) item.get("firstimage"))
                     .thumbnailImageUrl((String) item.get("firstimage2"))
                     .mapX(toDouble(item.get("mapx")))
                     .mapY(toDouble(item.get("mapy")))
                     .mLevel(toInteger(item.get("mlevel")))
-                    .tel(item.get("tel").toString())
+                    .tel((String) item.get("tel"))
                     .modifiedTime((String) item.get("modifiedtime"))
                     .createdTime((String) item.get("createdtime"))
                     .build();
-            accommodationRepository.save(accommodation);
+            touristSpotRepository.save(touristSpot);
         }
     }
 
-    // Map<String, Object> -> DTO
-    private AccommodationDTO toDTO(Map<String, Object> item) {
-        return AccommodationDTO.builder()
+    // TouristSpot -> DTO 변환
+    private TouristSpotDTO toDTO(Map<String, Object> item) {
+        return TouristSpotDTO.builder()
                 .contentId((String) item.get("contentid"))
                 .title((String) item.get("title"))
                 .addr1((String) item.get("addr1"))
@@ -133,14 +137,10 @@ public class AccommodationService {
     }
 
     private Integer toInteger(Object obj) {
-        try {
+        try{
             return obj != null ? Integer.parseInt(obj.toString()) : null;
         } catch (Exception e) {
             return null;
         }
     }
-
-
-
-
 }
