@@ -64,7 +64,7 @@ public class TourismController {
         return ResponseEntity.ok(result);
     }
 
-    // ✅ 식당 정보 조회 (추가된 부분)
+    // 식당 정보 저장
     @GetMapping("/fetch/restaurant/{areaCode}")
     public ResponseEntity<List<RestaurantDTO>> fetchRestaurants(
             @PathVariable String areaCode,
@@ -76,12 +76,7 @@ public class TourismController {
         if (state == null) {
             throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
         }
-
-        int contentTypeId = 39; // 음식점
-        int numOfRows = 1000;
-
-        List<RestaurantDTO> result = restaurantService.getData(code, contentTypeId, numOfRows, pageNo);
-
+        List<RestaurantDTO> result = restaurantService.getData(code, 39, 1000, pageNo);
         return ResponseEntity.ok(result);
     }
 }

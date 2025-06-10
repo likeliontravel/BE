@@ -26,23 +26,21 @@ public class RestaurantService {
     @Value("${service-key}")
     private String serviceKey;
 
-    // 페이지 단위로 식당 데이터를 가져와 저장 및 DTO 리스트 반환
+    //식당 데이터를 가져와 저장 및 DTO 리스트 반환하기
     public List<RestaurantDTO> getData(int areaCode, int contentTypeId, int numOfRows, int pageNo) throws Exception {
-        String rawJson = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-        log.debug("[TourAPI 응답 - 식당] pageNo={}, rawJson={}", pageNo, rawJson);
+        String rawJson = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey); //tourApiClient에서 정보에 맞는 데이터를 가져옴
 
-        List<Map<String, Object>> items = tourApiParser.parseItems(rawJson);
-        log.debug("[식당 데이터 개수] {}", items.size());
+        List<Map<String, Object>> items = tourApiParser.parseItems(rawJson); //tourApiParser에서 데이터를 파싱함
 
         // DB에 중복 저장 & DTO 변환
         return items.stream()
-                .peek(this::saveIfNotExists)
+                .peek(this::save)
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     // DB 저장 (contentId 중복 체크 후 신규만 저장)
-    private void saveIfNotExists(Map<String, Object> item) {
+    private void save(Map<String, Object> item) {
         String contentId = String.valueOf(item.get("contentid"));
         if (!restaurantRepository.existsByContentId(contentId)) {
             Restaurant restaurant = Restaurant.builder()
@@ -69,7 +67,6 @@ public class RestaurantService {
         }
     }
 
-    // Map -> DTO 변환
     private RestaurantDTO toDTO(Map<String, Object> item) {
         return RestaurantDTO.builder()
                 .contentId(String.valueOf(item.get("contentid")))
