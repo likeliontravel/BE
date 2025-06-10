@@ -81,6 +81,7 @@ public class SecurityConfig {
                         .requestMatchers("/board/**").permitAll()
                         .requestMatchers("/comment/**").permitAll()
                         .requestMatchers("/tourism/**").permitAll()
+                        .requestMatchers("/places/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

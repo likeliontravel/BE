@@ -3,7 +3,6 @@ package org.example.be.tour.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.example.be.board.entity.Base;
 
 @Entity
 @Getter

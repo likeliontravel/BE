@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TouristSpotService {
+public class TouristSpotFetchService {
 
     private final TouristSpotRepository touristSpotRepository;
     private final TourApiClient tourApiClient;
@@ -107,7 +107,7 @@ public class TouristSpotService {
         }
     }
 
-
+    // TouristSpot -> DTO 변환
     private TouristSpotDTO toDTO(Map<String, Object> item) {
         return TouristSpotDTO.builder()
                 .contentId((String) item.get("contentid"))

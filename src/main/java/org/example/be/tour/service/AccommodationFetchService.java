@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AccommodationService {
+public class AccommodationFetchService {
 
     private final AccommodationRepository accommodationRepository;
     private final TourApiClient tourApiClient;
@@ -87,6 +87,7 @@ public class AccommodationService {
                     .addr1(item.get("addr1").toString())
                     .addr2(item.get("addr2").toString())
                     .areaCode((String) item.get("areacode"))
+                    .siGunGuCode((String) item.get("sigungucode"))
                     .cat1(item.get("cat1").toString())
                     .cat2(item.get("cat2").toString())
                     .cat3(item.get("cat3").toString())
@@ -141,8 +142,4 @@ public class AccommodationService {
             return null;
         }
     }
-
-
-
-
 }
