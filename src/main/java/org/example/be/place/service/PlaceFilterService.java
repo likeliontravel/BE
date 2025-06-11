@@ -2,20 +2,14 @@ package org.example.be.place.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.place.dto.AccommodationResponseDTO;
-import org.example.be.place.dto.TouristSpotResponseDTO;
 import org.example.be.place.entity.Accommodation;
-import org.example.be.place.entity.PlaceSortType;
-import org.example.be.place.entity.TouristSpot;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.repository.AccommodationRepository;
 import org.example.be.place.repository.TouristSpotRepository;
 import org.example.be.place.theme.PlaceCategory;
 import org.example.be.place.theme.PlaceCategoryRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,6 +23,8 @@ public class PlaceFilterService {
     private final AccommodationRepository accommodationRepository;
     private final TourRegionRepository tourRegionRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
+
+
 
     // 숙소 필터링
     public List<AccommodationResponseDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword, Pageable pageable) {

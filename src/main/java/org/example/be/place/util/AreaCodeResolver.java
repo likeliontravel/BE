@@ -24,7 +24,7 @@ public class AreaCodeResolver {
             Map.entry(36, "경남"),
             Map.entry(37, "전북"),
             Map.entry(38, "전라남도"),
-            Map.entry(39, "제주도")
+            Map.entry(39, "제주")
     );
 
     public String getState(int code) {
