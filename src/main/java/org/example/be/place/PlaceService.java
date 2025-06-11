@@ -1,3 +1,4 @@
+/*
 package org.example.be.place;
 
 import jakarta.persistence.EntityManager;
@@ -42,3 +43,4 @@ public class PlaceService {
 
 
 }
+*/

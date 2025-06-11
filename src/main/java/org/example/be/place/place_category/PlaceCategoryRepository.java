@@ -1,3 +1,4 @@
+/*
 package org.example.be.place.place_category;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,3 +24,4 @@ public interface PlaceCategoryRepository extends JpaRepository<PlaceCategory, St
     // 테마를 입력해 해당 테마가 DB에 존재하는지 확인
     boolean existsPlaceCategoryByTheme(String theme);
 }
+*/

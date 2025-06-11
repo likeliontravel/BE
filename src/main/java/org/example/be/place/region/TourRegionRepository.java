@@ -1,3 +1,4 @@
+/*
 package org.example.be.place.region;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,3 +17,4 @@ public interface TourRegionRepository extends JpaRepository<TourRegion, String> 
     // 지역을 입력해 db에 있는지 확인
     boolean existsByRegion(String region);
 }
+*/

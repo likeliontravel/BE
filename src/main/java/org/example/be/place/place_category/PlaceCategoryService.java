@@ -1,3 +1,4 @@
+/*
 package org.example.be.place.place_category;
 
 import lombok.RequiredArgsConstructor;
@@ -29,3 +30,4 @@ public class PlaceCategoryService {
     }
 }
 
+*/

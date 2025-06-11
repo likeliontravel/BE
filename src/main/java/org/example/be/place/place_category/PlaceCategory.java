@@ -1,3 +1,4 @@
+/*
 package org.example.be.place.place_category;
 
 import jakarta.persistence.Column;
@@ -38,3 +39,4 @@ public class PlaceCategory {
     // 자연 속에서 힐링 / 문화예술 및 역사탐방 / 미식 여행 및 먹방 중심
     // / 열정적인 쇼핑투어 / 체험 및 액티비티 / 기타( 기타에는 분류하기애매한애들 또는 안되는애들 모아놨어요 )
 }
+*/

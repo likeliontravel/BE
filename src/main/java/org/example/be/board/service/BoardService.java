@@ -1,3 +1,4 @@
+/*
 package org.example.be.board.service;
 
 import lombok.RequiredArgsConstructor;
@@ -261,3 +262,4 @@ public class BoardService {
         }
     }
 }
+*/

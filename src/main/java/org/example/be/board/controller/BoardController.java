@@ -1,3 +1,4 @@
+/*
 package org.example.be.board.controller;
 
 import lombok.RequiredArgsConstructor;
@@ -102,3 +103,4 @@ public class BoardController {
         return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
     }
 }
+*/

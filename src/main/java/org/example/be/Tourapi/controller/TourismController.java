@@ -1,0 +1,61 @@
+package org.example.be.Tourapi.controller;
+
+
+
+import lombok.RequiredArgsConstructor;
+import org.example.be.Tourapi.dto.AccommodationDTO;
+import org.example.be.Tourapi.dto.TouristSpotDTO;
+import org.example.be.Tourapi.service.AccommodationFetchService;
+import org.example.be.Tourapi.service.TouristSpotFetchService;
+import org.example.be.Tourapi.util.AreaCodeResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/tour")
+@RequiredArgsConstructor
+public class TourismController {
+
+    private final TouristSpotFetchService touristSpotFetchService;
+    private final AccommodationFetchService accommodationFetchService;
+    private final AreaCodeResolver areaCodeResolver;
+    private static final Logger logger = LoggerFactory.getLogger(TourismController.class);
+
+    // 관광지 정보(TouristSpot)를 TourAPI에서 가져와 중복을 제거하고 저장하는 엔드포인트
+    @GetMapping("/fetch/touristSpot/{areaCode}")
+    public ResponseEntity<List<TouristSpotDTO>> fetch(@PathVariable String areaCode, @RequestParam(defaultValue = "1") int pageNo) throws Exception {
+        int code = Integer.parseInt(areaCode);
+        String state = areaCodeResolver.getState(code);
+        if (state == null) {
+            throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
+        }
+
+        List<TouristSpotDTO> result = touristSpotFetchService.getTouristSpots(
+                code, state, 12, 1000, pageNo
+        );
+
+        return ResponseEntity.ok(result);
+    }
+
+    // 숙소 정보(Accommodation)를 TourAPI에서 가져와 중복을 제거하고 저장하는 엔드포인트
+    @GetMapping("/fetch/accommodation/{areaCode}")
+    public ResponseEntity<List<AccommodationDTO>> fetchAccommodations(
+            @PathVariable String areaCode, @RequestParam(defaultValue = "1") int pageNo
+    ) throws Exception {
+        int code = Integer.parseInt(areaCode);
+        String state = areaCodeResolver.getState(code);
+        if (state == null) {
+            throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
+        }
+
+        List<AccommodationDTO> result = accommodationFetchService.getAccommodations(
+                code, state, 1000, pageNo
+        );
+
+        return ResponseEntity.ok(result);
+    }
+}

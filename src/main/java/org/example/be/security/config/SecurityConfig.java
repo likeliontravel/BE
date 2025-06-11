@@ -84,7 +84,8 @@ public class SecurityConfig {
                                 "/mail/**",
                                 "/board/get/**",
                                 "/comment/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/tourism/fetch/**"
                         ).permitAll()
 
                         .anyRequest().authenticated()

@@ -60,6 +60,14 @@ dependencies {
     // websocket + STOMP
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Jackson XML 의존성 추가
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+    // Min 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+
 }
 
     dependencyManagement {

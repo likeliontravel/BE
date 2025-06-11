@@ -1,0 +1,29 @@
+/*
+package org.example.be.Tourapi.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "restaurant")
+public class Restaurant extends BaseEntity {
+
+    private String name;
+    private String address;
+    private String category;  // 한식, 양식, 중식 등
+    private String imageUrl;
+
+    @Column(unique = true)
+    private String contentId;   // TourAPI에서 제공하는 고유 ID
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")  // 'area_id' -> 'location_id'
+    private Location location;  // 'area' -> 'location'
+}*/

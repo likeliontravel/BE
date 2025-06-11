@@ -1,3 +1,4 @@
+/*
 package org.example.be.place.region;
 
 import lombok.RequiredArgsConstructor;
@@ -28,3 +29,4 @@ public class TourRegionService {
     }
 
 }
+*/
