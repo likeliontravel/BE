@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RestaurantService {
+public class RestaurantFetchService {
 
     private final TourApiClient tourApiClient;
     private final TourApiParser tourApiParser;

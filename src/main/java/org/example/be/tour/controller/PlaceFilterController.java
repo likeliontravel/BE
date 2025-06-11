@@ -64,7 +64,7 @@ public class PlaceFilterController {
     ){
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
         List<RestaurantResponseDTO> result = placeFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);
-        return ResponseEntity.ok(CommonResponse.success(result, "숙소 필터링 조회 성공"));
+        return ResponseEntity.ok(CommonResponse.success(result, "식당 필터링 조회 성공"));
     }
 
 }

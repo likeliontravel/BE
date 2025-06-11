@@ -6,7 +6,7 @@ import org.example.be.tour.dto.AccommodationDTO;
 import org.example.be.tour.dto.RestaurantDTO;
 import org.example.be.tour.dto.TouristSpotDTO;
 import org.example.be.tour.service.AccommodationFetchService;
-import org.example.be.tour.service.RestaurantService;
+import org.example.be.tour.service.RestaurantFetchService;
 import org.example.be.tour.service.TouristSpotFetchService;
 import org.example.be.tour.util.AreaCodeResolver;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ public class TourismController {
 
     private final TouristSpotFetchService touristSpotFetchService;
     private final AccommodationFetchService accommodationFetchService;
-    private final RestaurantService restaurantService;
+    private final RestaurantFetchService restaurantFetchService;
     private final AreaCodeResolver areaCodeResolver;
 
     private static final Logger logger = LoggerFactory.getLogger(TourismController.class);
@@ -76,7 +76,7 @@ public class TourismController {
         if (state == null) {
             throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
         }
-        List<RestaurantDTO> result = restaurantService.getData(code, 39, 1000, pageNo);
+        List<RestaurantDTO> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
         return ResponseEntity.ok(result);
     }
 }
