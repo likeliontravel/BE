@@ -16,7 +16,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     // 지역 또는 테마 또는 키워드로 필터링해서 조회
     @Query("""
-                SELECT t FROM TouristSpot t
+                SELECT t FROM Restaurant t
                 WHERE (:regions IS NULL OR CONCAT(t.areaCode, t.siGunGuCode) IN (
                     SELECT CONCAT(tr.areaCode, tr.siGunGuCode)
                     FROM TourRegion tr
@@ -36,8 +36,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                     )
             """)
     List<Restaurant> findByFilters(
-            @Param("region") List<String> regions,
-            @Param("theme") List<String> themes,
+            @Param("regions") List<String> regions,
+            @Param("themes") List<String> themes,
             @Param("keyword") String keyword,
             Pageable pageable
     );
