@@ -12,6 +12,7 @@ import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @RequiredArgsConstructor
 public class JWTFilter extends OncePerRequestFilter {
@@ -107,11 +109,16 @@ public class JWTFilter extends OncePerRequestFilter {
                 String newAccessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간 토큰 발급
 
                 // 새로운 Access 토큰을 쿠키에 추가
-                Cookie newAccessTokenCookie = new Cookie("Authorization", newAccessToken);
-                newAccessTokenCookie.setHttpOnly(true);
-                newAccessTokenCookie.setPath("/");
-                newAccessTokenCookie.setMaxAge(60 * 60); // 1시간 유효
-                response.addCookie(newAccessTokenCookie);
+                String cookieString = ResponseCookie.from("Authorization", newAccessToken)
+                        .httpOnly(true)
+                        .secure(true)
+                        .sameSite("None")
+                        .path("/")
+                        .maxAge(Duration.ofHours(1))
+                        .build()
+                        .toString();
+
+                response.setHeader("Set-Cookie", cookieString);
 
             } else {
 

@@ -50,6 +50,12 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         // Refresh 토큰을 HTTP 응답에 포함 (로컬 스토리지 저장용)
         response.addHeader("Refresh-Token", refreshToken);
+        Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7);
+        response.addCookie(refreshTokenCookie);
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
