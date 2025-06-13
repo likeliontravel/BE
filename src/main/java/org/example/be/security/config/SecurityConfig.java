@@ -1,11 +1,11 @@
 package org.example.be.security.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.example.be.jwt.service.JWTBlackListService;
-import org.example.be.jwt.util.JWTUtil;
 import org.example.be.jwt.filter.JWTFilter;
 import org.example.be.jwt.provider.JWTProvider;
-import org.example.be.oauth.dto.CustomOAuth2User;
+import org.example.be.jwt.service.JWTBlackListService;
+import org.example.be.jwt.util.JWTUtil;
 import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.security.filter.RestAuthenticationFilter;
@@ -76,12 +76,27 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler))
 
                 .authorizeHttpRequests(auth -> auth
+<<<<<<< HEAD
                         .requestMatchers("/user/SignUp").permitAll()
                         .requestMatchers("/mail/**").permitAll()
                         .requestMatchers("/board/**").permitAll()
                         .requestMatchers("/comment/**").permitAll()
                         .requestMatchers("/tourism/**").permitAll()
                         .requestMatchers("/places/**").permitAll()
+=======
+                        .requestMatchers(
+                                "/general-user/signup",
+                                "/login",
+                                "/oauth2/**",
+                                "/error",
+                                "/mail/**",
+                                "/board/get/**",
+                                "/comment/**",
+                                "/ws/**",
+                                "/tourism/fetch/**"
+                        ).permitAll()
+
+>>>>>>> origin/dudu_Tourapi
                         .anyRequest().authenticated()
                 )
 
@@ -102,8 +117,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                         .accessDeniedHandler(new RestAccessDeniedHandler())
-                )
-        ;
+                );
 
         return http.build();
     }
@@ -125,10 +139,11 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 허용할 Origin
+        configuration.setAllowedOrigins(List.of("https://localhost:5500")); // 허용할 Origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
         configuration.setAllowCredentials(true); // 쿠키 허용
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 

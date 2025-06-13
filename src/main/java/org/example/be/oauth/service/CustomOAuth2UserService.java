@@ -1,93 +1,128 @@
 package org.example.be.oauth.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.be.oauth.dto.*;
-import org.example.be.oauth.entity.SocialUserEntity;
-import org.example.be.oauth.repository.UserSocialRepository;
+import org.example.be.oauth.entity.SocialUser;
+import org.example.be.oauth.repository.SocialUserRepository;
+import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.unifieduser.dto.UnifiedUserDTO;
+import org.example.be.unifieduser.entity.UnifiedUser;
+import org.example.be.unifieduser.repository.UnifiedUserRepository;
+import org.example.be.unifieduser.service.UnifiedUserService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.Optional;
+
 @Service // 이 클래스는 Spring의 서비스 빈으로 등록되어 DI(의존성 주입) 받는다.
+@RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final UserSocialRepository userSocialRepository; // UserSocialRepository 의존성 주입
+    private final SocialUserRepository socialUserRepository;
+    private final UnifiedUserRepository unifiedUserRepository;
+    private final UnifiedUserService unifiedUserService;
 
-    // 생성자: UserSocialRepository를 받아서 초기화한다.
-    public CustomOAuth2UserService(UserSocialRepository userSocialRepository) {
-        this.userSocialRepository = userSocialRepository; // 생성자를 통해 UserSocialRepository 초기화
-    }
-
-    // loadUser 메서드 오버라이드: OAuth2UserRequest 객체를 통해 OAuth2User를 로드
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        System.out.println(oAuth2User);
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+        System.out.println("OAuth2 사용자 정보 로드 완료: " + attributes);
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuth2Response oAuth2Response = null;
-        if (registrationId.equals("google")) {
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();    // provider
 
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
+        OAuth2Response response = createOAuth2Response(oAuth2User.getAttributes(), registrationId);
+        OAuth2User customOAuth2User = processOAuth2User(response, attributes);
+
+        setAuthenticationContext(customOAuth2User);
+        return customOAuth2User;
+    }
+
+    // 각 Provider에 맞는 ResponseDTO 생성
+    private OAuth2Response createOAuth2Response(Map<String, Object> attributes, String provider) {
+        switch (provider) {
+            case "google":
+                return new GoogleResponse(attributes);
+            case "kakao":
+                return new KakaoResponse(attributes);
+            case "naver":
+                return new NaverResponse(attributes);
+            default:
+                throw new IllegalArgumentException("지원되지 않는 provider입니다. : " + provider);
         }
-        else if (registrationId.equals("naver")) {
+    }
 
-            oAuth2Response = new NaverResponse(oAuth2User.getAttributes());
-        } else if (registrationId.equals("kakao")) {
+    // SocialUser테이블에 저장
+    private OAuth2User processOAuth2User(OAuth2Response response, Map<String, Object> attributes) {
+        String email = response.getEmail();
+        String name = response.getName();
+        String provider = response.getProvider();
+        String providerId = response.getProviderId();
+        String userIdentifier = provider + "_" + email;
+        String profileImageUrl = response.getProfileImage();
 
-            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+        System.out.println("생성된 userIdentifier: " + userIdentifier);
+
+        // 소셜 유저 조회 (ProviderId 기반)
+        Optional<SocialUser> existingSocialUser = socialUserRepository.findByProviderId(providerId);
+        Optional<UnifiedUser> existingUnifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier);
+
+        SocialUser socialUser;
+
+        if (existingSocialUser.isEmpty()) {
+            socialUser = new SocialUser();
+            socialUser.setEmail(email);
+            socialUser.setName(name);
+            socialUser.setProvider(provider);
+            socialUser.setProviderId(providerId);
+            socialUser.setRole("ROLE_USER");
+            socialUser.setUserIdentifier(userIdentifier);
+            socialUser.setProfileImageUrl(profileImageUrl);
+
+            socialUserRepository.save(socialUser);
+
+            // UnifiedUser가 없으면 생성
+            if (existingUnifiedUser.isEmpty()) {
+                UnifiedUser unifiedUser = unifiedUserService.createUnifiedUser(
+                        new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER")
+                );
+                unifiedUser.setProfileImageUrl(profileImageUrl);
+                unifiedUserRepository.save(unifiedUser);
+            }
         } else {
-            return null;
+            socialUser = existingSocialUser.get();
         }
 
-        // social 로그인에 사용될 username 생성 (provider + providerId 조합)
-        String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
+        return new CustomOAuth2User(socialUser, attributes);
+    }
 
-        // 이미 해당 username으로 회원이 존재하는지 확인
-        SocialUserEntity existData = userSocialRepository.findByUsername(username);
+    // SecurityContext에 OAuth2 인증 정보 설정
+    private void setAuthenticationContext(OAuth2User customOAuth2User) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
 
-        // 회원이 존재하지 않으면 새로 회원을 생성
-        if (existData == null) {
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authenticationToken);
+        SecurityContextHolder.setContext(context);
 
-            // 새로운 사용자 엔티티 생성
-            SocialUserEntity socialUserEntity = new SocialUserEntity();
-            socialUserEntity.setUsername(username);
-            socialUserEntity.setEmail(oAuth2Response.getEmail()); // 이메일 설정
-            socialUserEntity.setName(oAuth2Response.getName()); // 이름 설정
-            socialUserEntity.setRole("ROLE_USER"); // 기본 역할을 ROLE_USER로 설정
+        System.out.println("SecurityContext에 OAuth2 사용자 정보 저장 완료");
+    }
 
-            // 데이터베이스에 사용자 정보 저장
-            userSocialRepository.save(socialUserEntity);
-
-            // SocialUserDTO 객체 생성하여 사용자 정보를 담기
-            SocialUserDTO socialUserDTO = new SocialUserDTO();
-            socialUserDTO.setUsername(username);
-            socialUserDTO.setName(oAuth2Response.getName());
-            socialUserDTO.setRole("ROLE_USER"); // 기본 역할 설정
-
-            // CustomOAuth2User 객체를 생성하여 반환
-            return new CustomOAuth2User(socialUserDTO);
-        }
-        // 회원이 이미 존재하는 경우, 정보를 업데이트
-        else {
-
-            // 기존 회원 정보 업데이트
-            existData.setEmail(oAuth2Response.getEmail());
-            existData.setName(oAuth2Response.getName());
-
-            // 업데이트된 사용자 정보 저장
-            userSocialRepository.save(existData);
-
-            // SocialUserDTO 객체 생성하여 업데이트된 사용자 정보 담기
-            SocialUserDTO socialUserDTO = new SocialUserDTO();
-            socialUserDTO.setUsername(existData.getUsername());
-            socialUserDTO.setName(oAuth2Response.getName());
-            socialUserDTO.setRole(existData.getRole()); // 기존 역할 유지
-
-            // CustomOAuth2User 객체를 생성하여 반환
-            return new CustomOAuth2User(socialUserDTO);
-        }
+    // 엔티티 -> DTO 변환
+    private SocialUserDTO mapToDTO(SocialUser entity) {
+        SocialUserDTO dto = new SocialUserDTO();
+        dto.setId(entity.getId());
+        dto.setEmail(entity.getEmail());
+        dto.setName(entity.getName());
+        dto.setProvider(entity.getProvider());
+        dto.setUserIdentifier(entity.getUserIdentifier());
+        dto.setRole(entity.getRole());
+        return dto;
     }
 }

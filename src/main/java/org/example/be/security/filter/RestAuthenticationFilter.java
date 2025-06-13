@@ -42,7 +42,7 @@ public class RestAuthenticationFilter extends AbstractAuthenticationProcessingFi
             throw new AuthenticationServiceException("유저의 아이디나 비밀번호가 정상적으로 제공되지 않음");
         }
 
-        RestAuthenticationToken restAuthenticationToken = new RestAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword());
+        RestAuthenticationToken restAuthenticationToken = new RestAuthenticationToken("gen_" + loginDTO.getEmail(), loginDTO.getPassword());
 
         return getAuthenticationManager().authenticate(restAuthenticationToken);
     }

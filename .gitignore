@@ -35,6 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+.DS_Store
 
 ### 인증 파일 ###
 src/main/resources/toleave-b9a7b3a17267.json

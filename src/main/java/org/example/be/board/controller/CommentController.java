@@ -26,14 +26,14 @@ public class CommentController {
     }
     //댓글 수정
     @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<CommonResponse<String>> update(@PathVariable Long id,@RequestBody CommentDTO commentDTO) {
         commentDTO.setId(id);
         commentService.updatecommemt(commentDTO);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) {
+    public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long id) {
         commentService.deletecomment(id);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"댓글 삭제 성공"));
     }
