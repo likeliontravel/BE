@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.be.place.dto.TouristSpotDTO;
 import org.example.be.place.entity.TouristSpot;
 import org.example.be.place.repository.TouristSpotRepository;
-import org.example.be.place.util.TourApiClient;
-import org.example.be.place.util.TourApiParser;
+import org.example.be.place.tour_api.util.TourApiClient;
+import org.example.be.place.tour_api.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

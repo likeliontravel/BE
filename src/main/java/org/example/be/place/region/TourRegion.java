@@ -1,5 +1,6 @@
 package org.example.be.place.region;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 

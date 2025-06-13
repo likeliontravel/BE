@@ -1,12 +1,12 @@
-package org.example.be.place.service;
+package org.example.be.place.tour_api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.be.place.dto.AccommodationDTO;
 import org.example.be.place.entity.Accommodation;
 import org.example.be.place.repository.AccommodationRepository;
-import org.example.be.place.util.TourApiClient;
-import org.example.be.place.util.TourApiParser;
+import org.example.be.place.tour_api.util.TourApiClient;
+import org.example.be.place.tour_api.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

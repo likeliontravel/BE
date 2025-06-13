@@ -2,6 +2,7 @@ package org.example.be.place.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.place.dto.AccommodationResponseDTO;
+import org.example.be.place.dto.RestaurantResponseDTO;
 import org.example.be.place.entity.PlaceSortType;
 import org.example.be.place.service.PlaceFilterService;
 import org.example.be.response.CommonResponse;
@@ -44,10 +45,26 @@ public class PlaceFilterController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "30") int size,
-            @RequestParam(defaultValue = "TITLE_ASC")PlaceSortType sortType
-            ) {
+            @RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
+    ) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
         List<AccommodationResponseDTO> result = placeFilterService.getFilteredAccommodations(regions, themes, keyword, pageable);
         return ResponseEntity.ok(CommonResponse.success(result, "숙소 필터링 조회 성공"));
     }
+
+    // 식당 필터링 API
+    @GetMapping("/restaurants")
+    public ResponseEntity<CommonResponse<List<RestaurantResponseDTO>>> getFilteredRestaurants(
+            @RequestParam(required = false) List<String> regions,
+            @RequestParam(required = false) List<String> themes,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "30") int size,
+            @RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
+    ){
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
+        List<RestaurantResponseDTO> result = placeFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);
+        return ResponseEntity.ok(CommonResponse.success(result, "식당 필터링 조회 성공"));
+    }
+
 }

@@ -1,4 +1,4 @@
-package org.example.be.place.util;
+package org.example.be.place.tour_api.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;

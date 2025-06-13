@@ -1,16 +1,20 @@
 package org.example.be.place.service;
 
+
 import lombok.RequiredArgsConstructor;
-import org.example.be.place.dto.AccommodationResponseDTO;
+
+import org.example.be.place.dto.RestaurantResponseDTO;
 import org.example.be.place.entity.Accommodation;
-import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.repository.AccommodationRepository;
-import org.example.be.place.repository.TouristSpotRepository;
-import org.example.be.place.theme.PlaceCategory;
+import org.example.be.place.entity.Restaurant;
+import org.example.be.place.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategoryRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.example.be.place.dto.*;
+import org.example.be.place.region.TourRegion;
+import org.example.be.place.theme.PlaceCategory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,12 +23,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlaceFilterService {
 
-    private final TouristSpotRepository touristSpotRepository;
     private final AccommodationRepository accommodationRepository;
     private final TourRegionRepository tourRegionRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
-
-
+    private final RestaurantRepository restaurantRepository;
 
     // 숙소 필터링
     public List<AccommodationResponseDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
@@ -53,6 +55,36 @@ public class PlaceFilterService {
                 .region(region)
                 .theme(theme)
                 .address(accommodation.getAddr1() + (accommodation.getAddr2() != null ? accommodation.getAddr2() : ""))
+                .build();
+    }
+
+    // 식당 필터링
+    public List<RestaurantResponseDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
+        List<Restaurant> restaurants = restaurantRepository.findByFilters(regions, themes, keyword, pageable);
+        return restaurants.stream()
+                .map(this::toRestaurantResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Restaurant -> ResponseDTO 변환
+    private RestaurantResponseDTO toRestaurantResponseDTO(Restaurant restaurant) {
+        String region = tourRegionRepository
+                .findByAreaCodeAndSiGunGuCode(restaurant.getAreaCode(), restaurant.getSiGunGuCode())
+                .map(TourRegion::getRegion)
+                .orElse("기타");
+
+        String theme = placeCategoryRepository
+                .findByCat3(restaurant.getCat3())
+                .map(PlaceCategory::getTheme)
+                .orElse("기타");
+
+        return RestaurantResponseDTO.builder()
+                .contentId(restaurant.getContentId())
+                .title(restaurant.getTitle())
+                .imageUrl(restaurant.getThumbnailImageUrl())  // 300 X 200 정형화된 firstimage2 이미지
+                .region(region)
+                .theme(theme)
+                .address(restaurant.getAddr1() + (restaurant.getAddr2() != null ? restaurant.getAddr2() : ""))
                 .build();
     }
 

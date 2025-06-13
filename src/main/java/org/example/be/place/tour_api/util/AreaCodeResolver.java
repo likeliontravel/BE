@@ -1,4 +1,4 @@
-package org.example.be.place.util;
+package org.example.be.place.tour_api.util;
 
 import org.springframework.stereotype.Component;
 
