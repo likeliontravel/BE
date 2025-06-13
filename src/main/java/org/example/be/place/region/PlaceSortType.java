@@ -1,4 +1,4 @@
-package org.example.be.tour.entity;
+package org.example.be.place.region;
 
 import lombok.Getter;
 import org.springframework.data.domain.Sort;
