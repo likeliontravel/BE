@@ -1,5 +1,6 @@
 package org.example.be.place.restaurant.controller;
 
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.example.be.place.restaurant.service.RestaurantFilterService;
 import org.example.be.place.restaurant.dto.RestaurantResponseDTO;
@@ -29,8 +30,8 @@ public class RestaurantFilterController {
             @RequestParam(required = false) List<String> regions,
             @RequestParam(required = false) List<String> themes,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "30") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "30") @Min(1) int size,
             @RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
     ){
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
