@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
 
     // 유효성 검사 실패 시 잡아서 처리
     @ExceptionHandler({BindException.class, MethodArgumentNotValidException.class})
-    public ResponseEntity<org.example.be.Tourapi.util.CommonResponse<Void>> handleValidationException(Exception ex) {
+    public ResponseEntity<CommonResponse<Void>> handleValidationException(Exception ex) {
         String errorMsg = "요청 파라미터가 유효하지 않습니다.";
         if (ex instanceof BindException bindEx && !bindEx.getAllErrors().isEmpty()) {
             errorMsg = bindEx.getAllErrors().get(0).getDefaultMessage();
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest()
-                .body(org.example.be.Tourapi.util.CommonResponse.fail(errorMsg));
+                .body(CommonResponse.error(500, errorMsg));
     }
 
 }

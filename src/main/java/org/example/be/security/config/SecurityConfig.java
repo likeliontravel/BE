@@ -76,14 +76,12 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler))
 
                 .authorizeHttpRequests(auth -> auth
-<<<<<<< HEAD
                         .requestMatchers("/user/SignUp").permitAll()
                         .requestMatchers("/mail/**").permitAll()
                         .requestMatchers("/board/**").permitAll()
                         .requestMatchers("/comment/**").permitAll()
                         .requestMatchers("/tourism/**").permitAll()
                         .requestMatchers("/places/**").permitAll()
-=======
                         .requestMatchers(
                                 "/general-user/signup",
                                 "/login",
@@ -93,10 +91,10 @@ public class SecurityConfig {
                                 "/board/get/**",
                                 "/comment/**",
                                 "/ws/**",
-                                "/tourism/fetch/**"
+                                "/tourism/**",
+                                "/places/**"
                         ).permitAll()
 
->>>>>>> origin/dudu_Tourapi
                         .anyRequest().authenticated()
                 )
 

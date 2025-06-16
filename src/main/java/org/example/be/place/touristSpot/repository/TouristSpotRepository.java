@@ -24,8 +24,8 @@ public interface TouristSpotRepository extends JpaRepository<TouristSpot, Long> 
                         )
                     )
                     AND (:themes IS NULL OR t.cat3 IN (
-                        SELECT pc.cat3\s
-                        FROM PlaceCategory pc\s
+                        SELECT pc.cat3
+                        FROM PlaceCategory pc
                         WHERE pc.contentTypeId = '12' AND pc.theme IN :themes
                     ))
                     AND (
@@ -36,8 +36,8 @@ public interface TouristSpotRepository extends JpaRepository<TouristSpot, Long> 
                     )
             """)
     List<TouristSpot> findAllByFilters(
-            @Param("region") List<String> regions,
-            @Param("theme") List<String> themes,
+            @Param("regions") List<String> regions,
+            @Param("themes") List<String> themes,
             @Param("keyword") String keyword,
             Pageable pageable
     );
