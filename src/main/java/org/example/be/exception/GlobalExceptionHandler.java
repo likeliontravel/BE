@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
     // 유효성 검사 실패 시 잡아서 처리
     @ExceptionHandler({BindException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<CommonResponse<Void>> handleValidationException(Exception ex) {
-        String errorMsg = "요청 파라미터가 유효하지 않습니다.";
+        String errorMsg = "요청 파라미터가 유효하지 않습니다. 페이지 또는 사이즈 값을 확인하세요.";
         if (ex instanceof BindException bindEx && !bindEx.getAllErrors().isEmpty()) {
             errorMsg = bindEx.getAllErrors().get(0).getDefaultMessage();
         } else if (ex instanceof MethodArgumentNotValidException validEx && !validEx.getBindingResult().getAllErrors().isEmpty()) {
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest()
-                .body(CommonResponse.error(500, errorMsg));
+                .body(CommonResponse.error(400, errorMsg));
     }
 
 }
