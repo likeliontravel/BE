@@ -5,6 +5,8 @@ import org.example.be.exception.custom.*;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -126,4 +128,19 @@ public class GlobalExceptionHandler {
         log.error("[유저 인증 실패] {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CommonResponse.error(401, e.getMessage()));
     }
+
+    // 유효성 검사 실패 시 잡아서 처리
+    @ExceptionHandler({BindException.class, MethodArgumentNotValidException.class})
+    public ResponseEntity<CommonResponse<Void>> handleValidationException(Exception ex) {
+        String errorMsg = "요청 파라미터가 유효하지 않습니다. 페이지 또는 사이즈 값을 확인하세요.";
+        if (ex instanceof BindException bindEx && !bindEx.getAllErrors().isEmpty()) {
+            errorMsg = bindEx.getAllErrors().get(0).getDefaultMessage();
+        } else if (ex instanceof MethodArgumentNotValidException validEx && !validEx.getBindingResult().getAllErrors().isEmpty()) {
+            errorMsg = validEx.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        }
+
+        return ResponseEntity.badRequest()
+                .body(CommonResponse.error(400, errorMsg));
+    }
+
 }

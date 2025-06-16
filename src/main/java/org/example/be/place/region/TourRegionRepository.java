@@ -1,18 +1,18 @@
 package org.example.be.place.region;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface TourRegionRepository extends JpaRepository<TourRegion, String> {
+@Repository
+public interface TourRegionRepository extends JpaRepository<TourRegion, Long> {
 
-    // 시군구 코드로 TourRegion 객체 가져오기
+    // areaCode, siGunGuCode 조합으로 지역 찾기에 이용
     Optional<TourRegion> findByAreaCodeAndSiGunGuCode(String areaCode, String siGunGuCode);
 
-    // 지원하는 지역으로 TourRegion 전부 가져오기
-    List<TourRegion> findAllByRegion(String region);
+    // 지역으로 areaCode, siGunGuCode 조합 찾기에 이용
+    Optional<TourRegion> findByRegion(String region);
 
-    // 지역을 입력해 db에 있는지 확인
     boolean existsByRegion(String region);
 }

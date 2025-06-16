@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.be.board.dto.BoardDTO;
 import org.example.be.board.dto.BoardSearchRequestDTO;
 import org.example.be.board.dto.SimplePageableRequestDTO;
-import org.example.be.board.entity.SortType;
+import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
 import org.example.be.response.CommonResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,54 +30,54 @@ public class BoardController {
 
     // ==================== 게시판 목록 조회 ==================== //
     // 전체 게시판 글 목록 조회 ( 인기순 / 최신순 )
-    // * param : page, size, SortType( POPULAR / RECENT ) default:POPULAR
+    // * param : page, size, BoardSortType( POPULAR / RECENT ) default:POPULAR
     // * return : 입력한 정렬타입으로 정렬한 전체 BoardDTO List
     @GetMapping("/all")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getAllBoard(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) SortType sortType) {
-        SimplePageableRequestDTO request = new SimplePageableRequestDTO(page, size, sortType);
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        SimplePageableRequestDTO request = new SimplePageableRequestDTO(page, size, boardSortType);
         List<BoardDTO> allBoardList = boardService.getSortedBoardList(request);
         return ResponseEntity.ok(CommonResponse.success(allBoardList, "정렬된 전체 게시글 조회 성공"));
     }
 
     // 키워드 검색으로 게시판 글 목록 조회
-    // * param : SortType( POPULAR / RECENT ), searchKeyword
+    // * param : BoardSortType( POPULAR / RECENT ), searchKeyword
     // * return : 입력한 정렬타입으로 정렬한 키워드 검색 결과 BoardDTO List
     @GetMapping("/search")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getSearchedBoard(
             @RequestParam String searchKeyword,
-            @RequestParam(required = false) SortType sortType) {
-        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, null, searchKeyword, sortType, null,null);
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, null, searchKeyword, boardSortType, null,null);
         List<BoardDTO> searchedBoardList = boardService.searchBoardByKeyword(request);
         return ResponseEntity.ok(CommonResponse.success(searchedBoardList, "게시판 키워드 검색 성공"));
     }
 
     // 테마 별 게시판 글 목록 조회
-    // * param : SortType( POPULAR / RECENT ), theme
+    // * param : BoardSortType( POPULAR / RECENT ), theme
     // * return : 입력한 정렬타입으로 정렬한 해당 테마 검색 결과 BoardDTO List
     @GetMapping("/byTheme")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoardListByTheme(
             @RequestParam String theme,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) SortType sortType) {
-        BoardSearchRequestDTO request = new BoardSearchRequestDTO(theme, null, null, sortType, page, size);
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(theme, null, null, boardSortType, page, size);
         List<BoardDTO> boardDTOList = boardService.searchBoardByTheme(request);
         return ResponseEntity.ok(CommonResponse.success(boardDTOList, "테마 별 게시판 목록 조회 성공"));
     }
 
     // 지역 별 게시판 글 목록 조회
-    // * param : SortType( POPULAR / RECENT ), region
+    // * param : BoardSortType( POPULAR / RECENT ), region
     // * return : 입력한 정렬타입으로 정렬한 해당 지역 검색 결과 BoardDTO List
     @GetMapping("/byRegion")
     public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoardListByRegion(
             @RequestParam String region,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) SortType sortType) {
-        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, region, null, sortType, page, size);
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, region, null, boardSortType, page, size);
         List<BoardDTO> boardDTOList = boardService.searchBoardByRegion(request);
         return ResponseEntity.ok(CommonResponse.success(boardDTOList, "지역 별 게시판 목록 조회 성공"));
     }

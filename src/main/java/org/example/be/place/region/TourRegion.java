@@ -1,22 +1,20 @@
 package org.example.be.place.region;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
-@Getter
 @Entity
 @Table(name = "tour_region")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TourRegion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "siGunGuCode")
-    private String siGunGuCode;    // Integer타입
-
-    @Column(name = "SiGunGuName")
-    private String siGunGuName;
 
     @Column(name = "areaCode")
     private String areaCode;
@@ -24,6 +22,12 @@ public class TourRegion {
     @Column(name = "areaName")
     private String areaName;
 
+    @Column(name = "siGunGuCode")
+    private String siGunGuCode;
+
+    @Column(name = "siGunGuName")
+    private String siGunGuName;
+
     @Column(name = "region")
-    private String region;   // 우리 서비스에서 지원하는 지역 ( 미리 나눠둔 지역 )
+    private String region;
 }

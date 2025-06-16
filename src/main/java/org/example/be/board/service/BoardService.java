@@ -6,14 +6,14 @@ import org.example.be.board.dto.BoardDTO;
 import org.example.be.board.dto.BoardSearchRequestDTO;
 import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.Board;
-import org.example.be.board.entity.SortType;
+import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
-import org.example.be.place.place_category.PlaceCategoryService;
 import org.example.be.place.region.TourRegionService;
+import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.example.be.unifieduser.service.UnifiedUserService;
@@ -70,16 +70,16 @@ public class BoardService {
         int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
         int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();
 
-        SortType sortType = Optional.ofNullable(request.getSortType()).orElse(SortType.POPULAR);
+        BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return switch (sortType) {
+        return switch (boardSortType) {
             case POPULAR -> boardRepository.findAllByOrderByBoardHitsDesc(pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
             case RECENT -> boardRepository.findAllByOrderByUpdatedTimeDesc(pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. sortType: " + sortType);
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
         };
     }
 
@@ -91,16 +91,16 @@ public class BoardService {
             throw new IllegalArgumentException("키워드를 입력해야 합니다.");
         }
 
-        SortType sortType = Optional.ofNullable(request.getSortType()).orElse(SortType.POPULAR);
+        BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
-        return switch (sortType) {
+        return switch (boardSortType) {
             case POPULAR -> boardRepository
                     .findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(searchKeyword, searchKeyword, searchKeyword)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
             case RECENT -> boardRepository
                     .findByTitleContainingOrContentContainingOrWriterContainingOrderByUpdatedTimeDesc(searchKeyword, searchKeyword, searchKeyword)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. sortType: " + sortType);
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
         };
     }
 
@@ -117,16 +117,16 @@ public class BoardService {
             throw new IllegalArgumentException("테마를 입력해야 합니다.");
         }
 
-        SortType sortType = Optional.ofNullable(request.getSortType()).orElse(SortType.POPULAR);
+        BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return switch (sortType) {
+        return switch (boardSortType) {
             case POPULAR -> boardRepository.findByThemeOrderByBoardHitsDesc(theme, pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
             case RECENT -> boardRepository.findByThemeOrderByUpdatedTimeDesc(theme, pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. sortType: " + sortType);
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
         };
     }
 
@@ -143,16 +143,16 @@ public class BoardService {
             throw new IllegalArgumentException("지역을 입력해야 합니다.");
         }
 
-        SortType sortType = Optional.ofNullable(request.getSortType()).orElse(SortType.POPULAR);
+        BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return switch (sortType) {
+        return switch (boardSortType) {
             case POPULAR -> boardRepository.findByRegionOrderByBoardHitsDesc(region, pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
             case RECENT -> boardRepository.findByRegionOrderByUpdatedTimeDesc(region, pageable)
                     .stream().map(BoardDTO::toDTO).collect(Collectors.toList());
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. sortType: " + sortType);
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
         };
     }
 
