@@ -13,6 +13,7 @@ import org.example.be.place.region.TourRegion;
 import org.example.be.place.theme.PlaceCategory;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,11 @@ public class AccommodationFilterService {
     // 숙소 필터링
     public List<AccommodationResponseDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
         List<Accommodation> accommodations = accommodationRepository.findByFilters(regions, themes, keyword, pageable);
+
+        if (accommodations.isEmpty()) {
+            throw new NoSuchElementException("요청하신 조건에 해당하는 숙소가 존재하지 않습니다.");
+        }
+
         return accommodations.stream()
                 .map(this::toAccommodationResponseDTO)
                 .collect(Collectors.toList());

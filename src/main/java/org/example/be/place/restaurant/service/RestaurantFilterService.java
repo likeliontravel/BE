@@ -13,6 +13,7 @@ import org.example.be.place.region.TourRegion;
 import org.example.be.place.theme.PlaceCategory;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,11 @@ public class RestaurantFilterService {
     // 식당 필터링
     public List<RestaurantResponseDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
         List<Restaurant> restaurants = restaurantRepository.findByFilters(regions, themes, keyword, pageable);
+
+        if (restaurants.isEmpty()) {
+            throw new NoSuchElementException("요청하신 조건에 해당하는 식당이 존재하지 않습니다.");
+        }
+
         return restaurants.stream()
                 .map(this::toRestaurantResponseDTO)
                 .collect(Collectors.toList());

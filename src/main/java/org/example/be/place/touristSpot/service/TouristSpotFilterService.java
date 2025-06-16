@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,6 +20,11 @@ public class TouristSpotFilterService {
 
     public List<TouristSpotDTO> getFilteredTouristSpots(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
         List<TouristSpot> filtered = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
+
+        if (filtered.isEmpty()) {
+            throw new NoSuchElementException("요청하진 조건에 해당하는 관광지가 존재하지 않습니다.");
+        }
+
         return filtered.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
