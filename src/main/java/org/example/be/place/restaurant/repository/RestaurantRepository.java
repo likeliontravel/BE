@@ -7,11 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     boolean existsByContentId(String contentId);
+
+    // 일정 생성 할때 식당의 contentId를 기준으로 가져옴
+    Optional<Restaurant> findByContentId(String contentId);
 
     // 지역 또는 테마 또는 키워드로 필터링해서 조회
     @Query("""

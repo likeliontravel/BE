@@ -7,12 +7,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.swing.text.html.Option;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AccommodationRepository extends JpaRepository<Accommodation, Long> {
     // contentId 중복 체크용
     boolean existsByContentId(String contentId);
+
+    // 일정 생성 할때 숙소의 contentId를 기준으로 가져옴
+    Optional<Accommodation> findByContentId(String contentId);
 
 
     // 지역 또는 테마 또는 키워드로 필터링
