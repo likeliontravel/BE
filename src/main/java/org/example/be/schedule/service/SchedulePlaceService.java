@@ -53,7 +53,7 @@ public class SchedulePlaceService {
         var place = schedulePlaceRepository.findById(placeId)
                 .orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
 
-        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());
 
         place.setContentId(dto.getContentId());
         place.setPlaceType(dto.getPlaceType());

@@ -24,7 +24,7 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final GroupRepository groupRepository;
-    private final PlaceValidationService placeValidationService;  // 새로 주입
+    private final PlaceValidationService placeValidationService;
 
     @Transactional
     public ScheduleResponseDTO createSchedule(ScheduleRequestDTO requestDTO) {

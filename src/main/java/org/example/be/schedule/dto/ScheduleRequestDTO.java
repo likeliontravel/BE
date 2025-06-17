@@ -13,10 +13,7 @@ import java.util.List;
 public class ScheduleRequestDTO {
 
     private LocalDateTime startSchedule;
-
     private LocalDateTime endSchedule;
-
     private Long groupId;
-
     private List<SchedulePlaceRequestDTO> schedulePlaces;
 }
