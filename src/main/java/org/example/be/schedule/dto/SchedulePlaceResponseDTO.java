@@ -10,18 +10,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SchedulePlaceRequestDTO {
-    private Long scheduleId;
+public class SchedulePlaceResponseDTO {
 
+    private Long id;                  // SchedulePlace ID
     private String contentId;
-
     private PlaceType placeType;
-
     private LocalDateTime visitStart;
-
     private LocalDateTime visitedEnd;
-
     private Integer dayOrder;
-
     private Integer orderInDay;
 }

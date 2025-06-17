@@ -36,6 +36,7 @@ public class Schedule {
 
     // 해당 일정에 포함된 장소들(식당이나 숙소 관광지들)
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<SchedulePlace> schedulePlaces = new ArrayList<>();
 
 }

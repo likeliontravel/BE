@@ -86,7 +86,7 @@ public class SecurityConfig {
                         .requestMatchers("/places/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/schedule").permitAll()
+                        .requestMatchers("/schedule/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
