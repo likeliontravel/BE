@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class SchedulePlaceResponseDTO {
 
-    private Long id;                  // SchedulePlace ID
+    private Long id;
     private String contentId;
     private PlaceType placeType;
     private LocalDateTime visitStart;
