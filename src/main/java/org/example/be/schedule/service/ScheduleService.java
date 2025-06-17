@@ -6,9 +6,6 @@ import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
-import org.example.be.place.accommodation.repository.AccommodationRepository;
-import org.example.be.place.restaurant.repository.RestaurantRepository;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
 import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
 import org.example.be.schedule.dto.ScheduleRequestDTO;
 import org.example.be.schedule.dto.ScheduleResponseDTO;
@@ -27,10 +24,7 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final GroupRepository groupRepository;
-    private final TouristSpotRepository touristSpotRepository;
-    private final RestaurantRepository restaurantRepository;
-    private final AccommodationRepository accommodationRepository;
-
+    private final PlaceValidationService placeValidationService;  // 새로 주입
 
     @Transactional
     public ScheduleResponseDTO createSchedule(ScheduleRequestDTO requestDTO) {
@@ -44,7 +38,7 @@ public class ScheduleService {
                 .build();
 
         for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
-            validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());
+            placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId()); // 변경됨
 
             SchedulePlace schedulePlace = SchedulePlace.builder()
                     .schedule(schedule)
@@ -57,7 +51,6 @@ public class ScheduleService {
                     .build();
 
             schedule.getSchedulePlaces().add(schedulePlace);
-
         }
         try {
             Schedule savedSchedule = scheduleRepository.save(schedule);
@@ -81,9 +74,8 @@ public class ScheduleService {
 
         schedule.getSchedulePlaces().clear();
 
-        // 새 장소들 등록
         for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
-            validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());
+            placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());  // 변경됨
 
             SchedulePlace schedulePlace = SchedulePlace.builder()
                     .schedule(schedule)
@@ -105,28 +97,17 @@ public class ScheduleService {
         }
     }
 
-        @Transactional
-        public void deleteSchedule(Long scheduleId) {
-            Schedule schedule = scheduleRepository.findById(scheduleId)
-                    .orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
+    @Transactional
+    public void deleteSchedule(Long scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
-            try {
-                scheduleRepository.delete(schedule);
-            } catch (Exception e) {
-                throw new ResourceDeletionException("일정 삭제에 실패했습니다.", e);
-            }
-        }
-
-    private void validateContentIdByPlaceType(PlaceType placeType, String contentId) {
-        boolean exists = switch (placeType) {
-            case TouristSpot -> touristSpotRepository.findByContentId(contentId).isPresent();
-            case Restaurant -> restaurantRepository.findByContentId(contentId).isPresent();
-            case Accommodation -> accommodationRepository.findByContentId(contentId).isPresent();
-        };
-
-        if (!exists) {
-            throw new NoSuchElementException("존재하지 않는 장소입니다.");
+        try {
+            scheduleRepository.delete(schedule);
+        } catch (Exception e) {
+            throw new ResourceDeletionException("일정 삭제에 실패했습니다.", e);
         }
     }
+
 
 }

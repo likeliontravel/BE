@@ -4,13 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
-import org.example.be.place.accommodation.repository.AccommodationRepository;
-import org.example.be.place.restaurant.repository.RestaurantRepository;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
 import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
 import org.example.be.schedule.dto.SchedulePlaceResponseDTO;
-import org.example.be.schedule.entity.PlaceType;
-import org.example.be.schedule.entity.Schedule;
 import org.example.be.schedule.entity.SchedulePlace;
 import org.example.be.schedule.repository.SchedulePlaceRepository;
 import org.example.be.schedule.repository.ScheduleRepository;
@@ -25,17 +20,14 @@ public class SchedulePlaceService {
 
     private final SchedulePlaceRepository schedulePlaceRepository;
     private final ScheduleRepository scheduleRepository;
-
-    private final TouristSpotRepository touristSpotRepository;
-    private final RestaurantRepository restaurantRepository;
-    private final AccommodationRepository accommodationRepository;
+    private final PlaceValidationService placeValidationService;
 
     @Transactional
     public SchedulePlaceResponseDTO createSchedulePlace(SchedulePlaceRequestDTO dto) {
-        Schedule schedule = scheduleRepository.findById(dto.getScheduleId())
+        var schedule = scheduleRepository.findById(dto.getScheduleId())
                 .orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
 
-        validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());
+        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
 
         SchedulePlace schedulePlace = SchedulePlace.builder()
                 .schedule(schedule)
@@ -48,7 +40,7 @@ public class SchedulePlaceService {
                 .build();
 
         try {
-            SchedulePlace saved = schedulePlaceRepository.save(schedulePlace);
+            var saved = schedulePlaceRepository.save(schedulePlace);
             return toResponseDTO(saved);
         } catch (Exception e) {
             throw new ResourceCreationException("세부 일정 생성에 실패했습니다.", e);
@@ -57,10 +49,10 @@ public class SchedulePlaceService {
 
     @Transactional
     public SchedulePlaceResponseDTO updateSchedulePlace(Long placeId, SchedulePlaceRequestDTO dto) {
-        SchedulePlace place = schedulePlaceRepository.findById(placeId)
+        var place = schedulePlaceRepository.findById(placeId)
                 .orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
 
-        validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());
+        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
 
         place.setContentId(dto.getContentId());
         place.setPlaceType(dto.getPlaceType());
@@ -78,24 +70,12 @@ public class SchedulePlaceService {
 
     @Transactional
     public void deleteSchedulePlace(Long placeId) {
-        SchedulePlace place = schedulePlaceRepository.findById(placeId)
+        var place = schedulePlaceRepository.findById(placeId)
                 .orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
         try {
             schedulePlaceRepository.delete(place);
         } catch (Exception e) {
             throw new ResourceDeletionException("세부 일정 삭제에 실패했습니다.", e);
-        }
-    }
-
-    private void validateContentIdByPlaceType(PlaceType placeType, String contentId) {
-        boolean exists = switch (placeType) {
-            case TouristSpot -> touristSpotRepository.findByContentId(contentId).isPresent();
-            case Restaurant -> restaurantRepository.findByContentId(contentId).isPresent();
-            case Accommodation -> accommodationRepository.findByContentId(contentId).isPresent();
-        };
-
-        if (!exists) {
-            throw new NoSuchElementException("해당 장소가 존재하지 않습니다.");
         }
     }
 
