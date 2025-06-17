@@ -1,10 +1,10 @@
 package org.example.be.security.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.generaluser.domain.GeneralUser;
+import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.security.dto.UserContext;
-import org.example.be.user.domain.User;
-import org.example.be.user.dto.UserDTO;
-import org.example.be.user.repository.UserRepository;
+import org.example.be.unifieduser.entity.UnifiedUser;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,30 +21,19 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final GeneralUserRepository generalUserRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userIdentifier) throws UsernameNotFoundException {
 
-        Optional<User> user = userRepository.findByUserEmail(email);
+        Optional<GeneralUser> user = generalUserRepository.findByUserIdentifier(userIdentifier);
 
         if (user.isEmpty()) {
 
-            throw new UsernameNotFoundException(email + " 해당 이메일을 찾을 수 없습니다.");
+            throw new UsernameNotFoundException(userIdentifier + " 해당 userIdentifier을 찾을 수 없습니다.");
         }
 
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.get().getUserRole()));
-
-        UserDTO userDTO = new UserDTO();
-
-        userDTO.setId(user.get().getId());
-        userDTO.setEmail(user.get().getUserEmail());
-        userDTO.setPassword(user.get().getUserPwd());
-        userDTO.setName(user.get().getUserName());
-        userDTO.setRole(user.get().getUserRole());
-        userDTO.setPolicy(user.get().getUserPolicy());
-        userDTO.setSubscribe(user.get().getUserSubscribe());
-
-        return new UserContext(userDTO, authorities);
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(user.get().getRole()));
+        return new UserContext(user.get().mapToDTO(), authorities);
     }
 }

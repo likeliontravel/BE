@@ -1,88 +1,106 @@
 package org.example.be.board.controller;
 
-import jakarta.persistence.Id;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.be.board.dto.BoardDTO;
+import org.example.be.board.dto.BoardSearchRequestDTO;
+import org.example.be.board.dto.SimplePageableRequestDTO;
+import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
 import org.example.be.response.CommonResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/board")
 public class BoardController {
+
     private final BoardService boardService;
-
-    // 전체 게시판 글 조회
-    @GetMapping
-    public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoards(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
-    ) {
-        List<BoardDTO> boardDTOList = boardService.getAllBoards(page, size);
-        return ResponseEntity.ok(CommonResponse.success(boardDTOList, "게시판 글 조회 성공"));
-    }
-    //게시판 글 조회
+    // ==================== 게시판 1개 조회 ==================== //
+    // id로 게시판 글 1개 조회
     @GetMapping("/{id}")
-    public ResponseEntity<CommonResponse<BoardDTO>> getBoardById(@PathVariable int id) {
+    public ResponseEntity<CommonResponse<BoardDTO>> getBoard(@PathVariable Long id) {
         BoardDTO boardDTO = boardService.getBoard(id);
-        return ResponseEntity.ok(CommonResponse.success(boardDTO, "게시글 조회 성공"));
+        return ResponseEntity.ok(CommonResponse.success(boardDTO, "게시판 글 조회 성공"));
     }
 
-    // 인기순 게시판 글 조회 (조회수 기준)
-    @GetMapping("/popular")
-    public ResponseEntity<CommonResponse<List<BoardDTO>>> getPopularBoards(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
-    ) {
-        List<BoardDTO> popularBoards = boardService.getBoardsSortedByHits(page, size);
-        return ResponseEntity.ok(CommonResponse.success(popularBoards, "인기순 게시판 글 조회 성공"));
-    }
-    // 최신 게시판 글 조회
-    @GetMapping("/recent")
-    public ResponseEntity<CommonResponse<List<BoardDTO>>> getRecentBoards(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
-    ){
-        List<BoardDTO> recentBoards = boardService.getBoardSortedByRecents(page, size);
-        return ResponseEntity.ok(CommonResponse.success(recentBoards, "최신순 게시판 글 조회 성공"));
+    // ==================== 게시판 목록 조회 ==================== //
+    // 전체 게시판 글 목록 조회 ( 인기순 / 최신순 )
+    // * param : page, size, BoardSortType( POPULAR / RECENT ) default:POPULAR
+    // * return : 입력한 정렬타입으로 정렬한 전체 BoardDTO List
+    @GetMapping("/all")
+    public ResponseEntity<CommonResponse<List<BoardDTO>>> getAllBoard(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        SimplePageableRequestDTO request = new SimplePageableRequestDTO(page, size, boardSortType);
+        List<BoardDTO> allBoardList = boardService.getSortedBoardList(request);
+        return ResponseEntity.ok(CommonResponse.success(allBoardList, "정렬된 전체 게시글 조회 성공"));
     }
 
-    // 게시글 작성
-    @PostMapping
-    public ResponseEntity<CommonResponse<String>> writeBoard(@ModelAttribute BoardDTO boardDTO) throws IOException {
-        boardService.write(boardDTO);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success("게시판이 작성되었습니다.", "게시글 등록 성공"));
-    }
-
-
-    // 게시글 수정
-    @PostMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> update(@PathVariable int id,@ModelAttribute BoardDTO boardDTO) throws IOException {
-        boardDTO.setId(id);
-        boardService.updateBoard(boardDTO);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CommonResponse.success("게시판이 수정되었습니다.", "게시글 수정 성공"));
-    }
-
-    // 게시글 삭제
-    @DeleteMapping("/{id}")
-    public ResponseEntity<CommonResponse<String>> delete(@PathVariable int id) throws IOException {
-        boardService.deleteBoard(id);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null,"게시글 삭제"));
-    }
-
-    // 게시판 검색 (제목이나 내용으로 검색)
+    // 키워드 검색으로 게시판 글 목록 조회
+    // * param : BoardSortType( POPULAR / RECENT ), searchKeyword
+    // * return : 입력한 정렬타입으로 정렬한 키워드 검색 결과 BoardDTO List
     @GetMapping("/search")
-    public ResponseEntity<CommonResponse<List<BoardDTO>>> searchBoards(@RequestParam String keyword) {
-        List<BoardDTO> searchBoardList = boardService.searchBoardsByKeyword(keyword);
-        return ResponseEntity.ok(CommonResponse.success(searchBoardList, "게시판 검색 성공"));
+    public ResponseEntity<CommonResponse<List<BoardDTO>>> getSearchedBoard(
+            @RequestParam String searchKeyword,
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, null, searchKeyword, boardSortType, null,null);
+        List<BoardDTO> searchedBoardList = boardService.searchBoardByKeyword(request);
+        return ResponseEntity.ok(CommonResponse.success(searchedBoardList, "게시판 키워드 검색 성공"));
+    }
+
+    // 테마 별 게시판 글 목록 조회
+    // * param : BoardSortType( POPULAR / RECENT ), theme
+    // * return : 입력한 정렬타입으로 정렬한 해당 테마 검색 결과 BoardDTO List
+    @GetMapping("/byTheme")
+    public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoardListByTheme(
+            @RequestParam String theme,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(theme, null, null, boardSortType, page, size);
+        List<BoardDTO> boardDTOList = boardService.searchBoardByTheme(request);
+        return ResponseEntity.ok(CommonResponse.success(boardDTOList, "테마 별 게시판 목록 조회 성공"));
+    }
+
+    // 지역 별 게시판 글 목록 조회
+    // * param : BoardSortType( POPULAR / RECENT ), region
+    // * return : 입력한 정렬타입으로 정렬한 해당 지역 검색 결과 BoardDTO List
+    @GetMapping("/byRegion")
+    public ResponseEntity<CommonResponse<List<BoardDTO>>> getBoardListByRegion(
+            @RequestParam String region,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) BoardSortType boardSortType) {
+        BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, region, null, boardSortType, page, size);
+        List<BoardDTO> boardDTOList = boardService.searchBoardByRegion(request);
+        return ResponseEntity.ok(CommonResponse.success(boardDTOList, "지역 별 게시판 목록 조회 성공"));
+    }
+
+    // ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
+    // 게시판 글 생성 ( 작성 )
+    @PostMapping("/create")
+    public ResponseEntity<CommonResponse<BoardDTO>> writeBoard(@RequestBody BoardDTO boardDTO) {
+            BoardDTO savedBoardDTO = boardService.writeBoard(boardDTO);
+            return ResponseEntity.ok(CommonResponse.success(savedBoardDTO, "게시글 저장 성공"));
+    }
+
+    // 게시판 글 수정
+    @PutMapping("/update")
+    public ResponseEntity<CommonResponse<BoardDTO>> updateBoard(@RequestBody BoardDTO boardDTO) {
+            BoardDTO updatedBoardDTO = boardService.updateBoard(boardDTO);
+            return ResponseEntity.ok(CommonResponse.success(updatedBoardDTO, "게시글 글 수정 성공"));
+    }
+
+    // 게시판 글 삭제
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id) {
+            boardService.deleteBoard(id);
+            return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
     }
 }

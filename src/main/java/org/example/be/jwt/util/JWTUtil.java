@@ -19,7 +19,7 @@ public class JWTUtil {
         if (secret.length() < 32) {
 
             ///  비밀 키가 32 자리가 아니면 예외 발생
-           throw new IllegalArgumentException("JWT secret key must be at least 32 characters long");
+           throw new RuntimeException("JWT secret key must be at least 32 characters long");
         }
 
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
@@ -28,9 +28,9 @@ public class JWTUtil {
     /*
     * JWT 토큰에서 유저 이름 추출
     * email 이였음 */
-    public String getUsername(String token) {
+    public String getUserIdentifier(String token) {
 
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("userIdentifier", String.class);
     }
 
     // JWT 토큰에서 역할 추출
@@ -71,10 +71,10 @@ public class JWTUtil {
     }
 
     // JWT 생성 하는 함수
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(String userIdentifier, String role, Long expiredMs) {
 
         return Jwts.builder()
-                .claim("username", username)
+                .claim("userIdentifier", userIdentifier)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))

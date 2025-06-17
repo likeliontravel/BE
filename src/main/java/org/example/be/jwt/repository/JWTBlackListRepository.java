@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface JWTBlackListRepository extends JpaRepository<JWTBlackListToken, Integer> {
 
-    Iterable<JWTBlackListToken> findAllByEmail(String email);
+    Iterable<JWTBlackListToken> findAllByUserIdentifier(String userIdentifier);
 
     JWTBlackListToken findByAccessToken(String token);
 }

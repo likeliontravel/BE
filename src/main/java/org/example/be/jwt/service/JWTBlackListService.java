@@ -16,10 +16,10 @@ public class JWTBlackListService {
 
     private final JWTBlackListRepository jwtBlackListRepository;
 
-    public boolean isBlacklistedByEmail(String email, String accessToken, String refreshToken) {
+    public boolean isBlacklistedByUserIdentifier(String userIdentifier, String accessToken, String refreshToken) {
 
         // 이메일로 블랙리스트에 등록된 토큰 가져오기
-        Iterable<JWTBlackListToken> blackListTokens = jwtBlackListRepository.findAllByEmail(email);
+        Iterable<JWTBlackListToken> blackListTokens = jwtBlackListRepository.findAllByUserIdentifier(userIdentifier);
 
         // 이메일로 찾은 모든 블랙리스트 토큰과 현재 토큰을 비교
         for (JWTBlackListToken token : blackListTokens) {
@@ -34,11 +34,11 @@ public class JWTBlackListService {
     }
 
     //블랙리스트에 토큰 추가 (만료시간 저장)
-    public void addToBlackList(String email, String accessToken, String refreshToken, Date expiredTime) {
+    public void addToBlackList(String userIdentifier, String accessToken, String refreshToken, Date expiredTime) {
 
         JWTBlackListToken blackListToken = new JWTBlackListToken();
 
-        blackListToken.setEmail(email);
+        blackListToken.setUserIdentifier(userIdentifier);
         blackListToken.setAccessToken(accessToken);
         blackListToken.setRefreshToken(refreshToken);
 

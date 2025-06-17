@@ -13,4 +13,6 @@ public interface TourRegionRepository extends JpaRepository<TourRegion, Long> {
 
     // 지역으로 areaCode, siGunGuCode 조합 찾기에 이용
     Optional<TourRegion> findByRegion(String region);
+
+    boolean existsByRegion(String region);
 }

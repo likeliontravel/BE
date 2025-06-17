@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 public class CommentDTO {
-    private int id;
+    private Long id;
     private String commentWriter;
+    private String commentWriterIdentifier; // 권한 확인용
+    private String commentWriterProfileImageUrl;
     private String commentContent;
-    private int boardId;
-    private Integer parentCommentId; // 대댓글에 사용
+    private Long boardId;
+    private Long parentCommentId; // 대댓글에 사용
     private LocalDateTime commentCreatedTime;
 
 }

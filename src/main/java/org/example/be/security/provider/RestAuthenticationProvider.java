@@ -29,11 +29,11 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        String email = authentication.getName();
+        String userIdentifier = authentication.getName();   // RestAuthenticationToken을 생성할 때 principal값이 userIdentifier로 설정되어있기 때문에 userIdentifier가 넘어온다.
         String password = (String) authentication.getCredentials();
 
         // userDetailsService 사용하여 loadUserByName 으로 해당 유저가 있는지 확인
-        UserContext userContext = (UserContext) customUserDetailsService.loadUserByUsername(email);
+        UserContext userContext = (UserContext) customUserDetailsService.loadUserByUsername(userIdentifier);
 
         //실제 인증하는 비밀번호가 일치 하는지 인증하는 코드
         if (!passwordEncoder.matches(password, userContext.getPassword())) {
@@ -41,7 +41,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
 
         //Authentication 토큰을 만들어 권한 및 User 각종 정보를 반환 비밀번호는 null 반환
-        return new RestAuthenticationToken(userContext.getAuthorities(), userContext.getUserDTO(), null);
+        return new RestAuthenticationToken(userContext.getAuthorities(), userContext.getGeneralUserDTO(), null);
     }
 
     /*

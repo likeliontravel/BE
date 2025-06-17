@@ -7,9 +7,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
-import org.example.be.jwt.provider.JWTProvider;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -24,156 +24,125 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
-
     private final JWTProvider jwtProvider;
-
     private final JWTBlackListService jwtBlackListService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+        System.out.println("JWTFilter - 요청 URL : " + request.getRequestURI());
 
-        //Request 에서 쿠키 추출
-       Cookie[] cookies = request.getCookies();
-
-       //Request 에서 로컬스토리지 추출
-        String refreshToken = request.getHeader("Refresh_token");
-
-       // 쿠키가 없고 리프레쉬 토큰도 없으면 다음 필터로 넘어감
-        if (cookies == null && (refreshToken == null || refreshToken.isEmpty())) {
-
-            System.out.println("No cookies found or refresh token is empty");
-
+        // 일반회원가입과 로그인 요청, 웹소켓 연결은 JWT 필터 적용 제외
+        if (requestURI.equals("/general-user/signup") || requestURI.equals("/login")
+                || requestURI.startsWith("/ws") || requestURI.startsWith("/mail") || requestURI.startsWith("/tourism/fetch/") || requestURI.startsWith("/places")) {
             filterChain.doFilter(request, response);
-
             return;
         }
 
-        String authorization = null;
+        // 헤더에서 토큰 추출
+        String accessToken = extractTokenFromHeaderAndCookie(request, "Authorization", "accessToken");
+        String refreshToken = extractTokenFromHeaderAndCookie(request, "Refresh-Token", "refreshToken");
 
-        // 쿠키 값을 for 문을 통해 Authorization 이름을 가진 쿠키를 찾음
-        if (cookies != null) {
-
-            for (Cookie cookie : cookies) {
-
-                if ("Authorization".equals(cookie.getName())) {
-
-                    authorization = cookie.getValue();
-                }
-            }
-        }
-
-        // 토큰이 없으면 다음 필터로 넘김
-        if (authorization == null) {
-
-            System.out.println("Access Token is null");
-
-            filterChain.doFilter(request, response);
-
+        // AccessToken이 없으면 인증 실패 처리
+        if (accessToken == null || !jwtUtil.isValid(accessToken)) {
+            System.out.println("AccessToken 없음");
+            sendUnauthorizedResponse(response, "Access Token이 필요합니다.");
             return;
         }
 
-        String accessToken = authorization;
-
-        /*
-        * 토큰 블랙리스트 검증 로직 */
-        if (jwtBlackListService.isBlacklistedByEmail(jwtUtil.getUsername(accessToken),accessToken, refreshToken)) {
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.UNAUTHORIZED.value(), "토큰이 블랙리스트에 올라가 있습니다.");
-
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType("application/json;charset=utf-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-            response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
+        // userIdentifier 꺼내기
+        String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
+        if (userIdentifier == null || userIdentifier.isEmpty()) {
+            System.out.println("JWT에서 userIdentifier 추출 실패");
+            sendUnauthorizedResponse(response, "JWT에서 userIdentifier 추출 실패");
             return;
         }
 
-        // 토큰이 만료시간이 지나면 401 에러 보냄
+        // 블랙리스트에 등록된 토큰인지 확인
+        if (jwtBlackListService.isBlacklistedByUserIdentifier(userIdentifier, accessToken, refreshToken)) {
+            System.out.println("블랙리스트에 등록된 토큰");
+            sendUnauthorizedResponse(response, "토큰이 블랙리스트에 등록되어 있습니다.");
+            return;
+        }
+
+        // AccessToken 만료 시 검증
         if (jwtUtil.isExpired(accessToken)) {
+            System.out.println("AccessToken 만료됨");
 
-            System.out.println("Access Token expired");
-
-            // 리프레시 토큰 검증 및 Access 토큰 재발급
-
-            if (refreshToken != null && jwtUtil.isValid(refreshToken) && jwtUtil.isExpired(refreshToken)) {
-
-                String email = jwtUtil.getUsername(refreshToken);
+            // RefreshToken이 존재하며 유효하고 만료되지 않은 경우 AccessToken 재발급
+            if (refreshToken != null && jwtUtil.isValid(refreshToken) && !jwtUtil.isExpired(refreshToken)) {
+                System.out.println("Refresh토큰이 유효하여 AccessToken을 재발급합니다.");
                 String role = jwtUtil.getRole(refreshToken);
+                String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60);   // 1시간
 
-                String newAccessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간 토큰 발급
-
-                // 새로운 Access 토큰을 쿠키에 추가
-                Cookie newAccessTokenCookie = new Cookie("Authorization", newAccessToken);
-                newAccessTokenCookie.setHttpOnly(true);
-                newAccessTokenCookie.setPath("/");
-                newAccessTokenCookie.setMaxAge(60 * 60); // 1시간 유효
-                response.addCookie(newAccessTokenCookie);
-
+                response.addCookie(createCookie("Authorization", newAccessToken));
+                response.setHeader("Authorization", "Bearer " + newAccessToken);
+                accessToken = newAccessToken;
             } else {
-
-                ObjectMapper mapper = new ObjectMapper();
-
-                CommonResponse<String> commonResponse = CommonResponse.error(
-                        HttpStatus.UNAUTHORIZED.value(), "토큰 만료 시간이 지났습니다.");
-
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                response.setContentType("application/json;charset=utf-8");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-                response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
+                System.out.println("Refresh Token도 만료됨. 재로그인 필요.");
+                sendUnauthorizedResponse(response, "Access Token이 만료되었으며 Refresh Token이 유효하지 않습니다.");
                 return;
             }
         }
 
         try {
+            Authentication authentication = jwtProvider.getUserDetails(userIdentifier);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            String email = jwtUtil.getUsername(accessToken);
-            String role = jwtUtil.getRole(accessToken);
-
-            if (email != null && role != null) {
-
-                // 유저 객체 정보 가져오기
-                Authentication authentication = jwtProvider.getUserDetails(email);
-
-                // 유저 객체 정보 토큰에 담기
-                SecurityContext context = getSecurityContext(authentication);
-                SecurityContextHolder.setContext(context);
-            }
-
-            // 여러가지 오류들
+            System.out.println("인증 성공 : " + userIdentifier);
         } catch (Exception e) {
-
-            System.out.println("Invalid JWT token: " + e.getMessage());
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            CommonResponse<String> commonResponse = CommonResponse.error(
-                    HttpStatus.UNAUTHORIZED.value(), e.getMessage());
-
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType("application/json;charset=utf-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);// 401 상태 반환
-
-            response.getWriter().write(mapper.writeValueAsString(commonResponse));
-
+            System.out.println("JWT 검증 실패: " + e.getMessage());
+            sendUnauthorizedResponse(response, "유효하지 않은 JWT 토큰");
             return;
         }
 
+        System.out.println("[JWTFilter 마지막] SecurityContextHolder 인증 객체: " +
+                SecurityContextHolder.getContext().getAuthentication());
         filterChain.doFilter(request, response);
     }
 
-    private static SecurityContext getSecurityContext(Authentication authentication) {
 
-        // 권한 설정을 위한 시큐리티 컨텍스트 홀더에 유저 객체 정보 저장
-        SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
-        SecurityContext context = securityContextHolderStrategy.createEmptyContext();
-        context.setAuthentication(authentication);
+    // 헤더에서 먼저 토큰 탐색, 발견되지 않으면 쿠키에서 탐색
+    private String extractTokenFromHeaderAndCookie(HttpServletRequest request, String headerName, String paramName) {
+        // 헤더 선 탐색
+        String token = request.getHeader(headerName);
 
-        return context;
+        // 헤더에서 발견되지 않을 경우 쿠키 탐색
+        if (token == null) {
+            System.out.println("헤더에서 " + headerName + " 발견되지 않음. 쿠키 탐색 시작");
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals(headerName)) {
+                        return cookie.getValue();
+                    }
+                }
+            }
+        } else if (token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+
+        // 쿼리 파라미터에서 탐색
+        token = request.getParameter(paramName);
+        if (token != null) {
+            return token;
+        }
+
+        return null;
     }
+
+    private Cookie createCookie(String key, String value) {
+        Cookie cookie = new Cookie(key, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60); // 1시간
+        return cookie;
+    }
+
+    // 인증 실패 응답 보내기
+    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
+    }
+
 }
