@@ -31,6 +31,8 @@ public class ScheduleService {
         Group group = groupRepository.findById(requestDTO.getGroupId())
                 .orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
+        placeValidationService.validateSchedulePlaceList(requestDTO.getSchedulePlaces());
+
         Schedule schedule = Schedule.builder()
                 .startSchedule(requestDTO.getStartSchedule())
                 .endSchedule(requestDTO.getEndSchedule())
@@ -38,7 +40,7 @@ public class ScheduleService {
                 .build();
 
         for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
-            placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId()); // 변경됨
+            placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());
 
             SchedulePlace schedulePlace = SchedulePlace.builder()
                     .schedule(schedule)
@@ -52,6 +54,7 @@ public class ScheduleService {
 
             schedule.getSchedulePlaces().add(schedulePlace);
         }
+
         try {
             Schedule savedSchedule = scheduleRepository.save(schedule);
             return new ScheduleResponseDTO(savedSchedule.getId());

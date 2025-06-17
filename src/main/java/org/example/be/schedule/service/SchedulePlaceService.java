@@ -27,7 +27,8 @@ public class SchedulePlaceService {
         var schedule = scheduleRepository.findById(dto.getScheduleId())
                 .orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
 
-        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());
+        placeValidationService.validateVisitTime(dto.getVisitStart(), dto.getVisitedEnd());
 
         SchedulePlace schedulePlace = SchedulePlace.builder()
                 .schedule(schedule)
