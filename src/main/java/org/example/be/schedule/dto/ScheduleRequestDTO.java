@@ -16,7 +16,7 @@ public class ScheduleRequestDTO {
 
     private LocalDateTime endSchedule;
 
-    private Long groupId;
+    private String groupName;
 
     private List<SchedulePlaceRequestDTO> schedulePlaces;
 }

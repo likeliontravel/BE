@@ -1,6 +1,7 @@
 package org.example.be.schedule.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
 import org.example.be.schedule.dto.ScheduleRequestDTO;
 import org.example.be.schedule.dto.ScheduleResponseDTO;
@@ -16,12 +17,21 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
 
+    // 일정 생성하기
     @PostMapping
     public ResponseEntity<CommonResponse<ScheduleResponseDTO>> createSchedule(@RequestBody ScheduleRequestDTO requestDTO) {
         ScheduleResponseDTO response = scheduleService.createSchedule(requestDTO);
         return ResponseEntity.ok(CommonResponse.success(response, "일정 생성 성공"));
     }
 
+    // 일정 조회하기
+    @GetMapping("/get/{groupName}")
+    public ResponseEntity<CommonResponse<ScheduleResponseDTO>> getScheduleByGroupName(@DecodedPathVariable String groupName) {
+        ScheduleResponseDTO response = scheduleService.getScheduleByGroupName(groupName);
+        return ResponseEntity.ok(CommonResponse.success(response, "일정 조회 성공"));
+    }
+
+    // 일정 수정하기
     @PutMapping("/{scheduleId}")
     public ResponseEntity<CommonResponse<ScheduleResponseDTO>> updateSchedule(
             @PathVariable Long scheduleId,
@@ -31,6 +41,7 @@ public class ScheduleController {
         return ResponseEntity.ok(CommonResponse.success(response, "일정 수정 성공"));
     }
 
+    // 일정 삭제하기
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<CommonResponse<Void>> deleteSchedule(@PathVariable Long scheduleId) {
         scheduleService.deleteSchedule(scheduleId);

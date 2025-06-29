@@ -1,7 +1,7 @@
 package org.example.be.schedule.dto;
 
 import lombok.*;
-import org.example.be.schedule.entity.PlaceType;
+import org.example.be.place.entity.PlaceType;
 
 import java.time.LocalDateTime;
 

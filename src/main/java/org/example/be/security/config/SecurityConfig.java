@@ -13,6 +13,7 @@ import org.example.be.security.handler.*;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -86,7 +87,7 @@ public class SecurityConfig {
                         .requestMatchers("/places/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/schedule/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/schedule/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

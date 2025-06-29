@@ -3,6 +3,7 @@ package org.example.be.group.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.be.group.dto.*;
 import org.example.be.group.service.GroupService;
+import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,13 @@ public class GroupController {
         GroupResponseDTO groupResponse = groupService.createGroup(request);
 
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(groupResponse, "그룹 생성 성공"));
+    }
+
+    // 그룹 상세 조회
+    @GetMapping("/{groupName}/detail")
+    public ResponseEntity<CommonResponse<GroupDetailDTO>> getGroupDetail(@DecodedPathVariable String groupName) {
+        GroupDetailDTO groupDetail = groupService.getGroupDetail(groupName);
+        return ResponseEntity.ok(CommonResponse.success(groupDetail, "그룹 상세 정보 조회 성공"));
     }
 
     // (임시) 그룹에 멤버 추가 -> 그룹 초대링크 구현 후 수정 또는 삭제 예정

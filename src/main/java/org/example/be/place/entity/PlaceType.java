@@ -1,4 +1,4 @@
-package org.example.be.schedule.entity;
+package org.example.be.place.entity;
 
 public enum PlaceType {
     TouristSpot,

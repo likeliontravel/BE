@@ -7,6 +7,7 @@ import org.example.be.group.entitiy.Group;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.repository.GroupInvitationRepository;
 import org.example.be.group.repository.GroupRepository;
+import org.example.be.group.service.GroupService;
 import org.example.be.security.util.SecurityUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +23,14 @@ public class GroupInvitationService {
 
     private final GroupInvitationRepository invitationRepository;
     private final GroupRepository groupRepository;
+    private final GroupService groupService;
     private static final long INVITATION_VALID_HOURS = 24; // 초대코드가 만료될 시간 24으로 초기화
 
     // 초대 링크 조회 ( 만료된 링크라면 무효화하고 메시지 반환 )
     @Transactional
     public GroupInvitation getValidOrExpireInvitation(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        Group group = validateGroupCreator(groupName, userIdentifier);
+        Group group = groupService.validateGroupCreator(groupName, userIdentifier);
 
         LocalDateTime now = LocalDateTime.now();
         Optional<GroupInvitation> validOptional = invitationRepository.findByGroupAndActiveTrueAndExpiresAtAfter(group, now);
@@ -56,7 +58,7 @@ public class GroupInvitationService {
     @Transactional
     public GroupInvitation forceGenerateNewInvitation(String groupName) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        Group group = validateGroupCreator(groupName, userIdentifier);
+        Group group = groupService.validateGroupCreator(groupName, userIdentifier);
 
         invitationRepository.findByGroupAndActiveTrue(group)
                 .ifPresent(existing -> {
@@ -72,17 +74,6 @@ public class GroupInvitationService {
         invitation.setInvitationCode(UUID.randomUUID().toString().replace("-",""));
 
         return invitationRepository.save(invitation);
-    }
-
-    // 그룹 창설자 검증
-    private Group validateGroupCreator(String groupName, String userIdentifier) {
-        Group group = groupRepository.findByGroupName(groupName)
-                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
-
-        if (!group.getCreatedBy().getUserIdentifier().equals(userIdentifier)) {
-            throw new ForbiddenResourceAccessException("해당 그룹의 창설자만 접근할 수 있습니다.");
-        }
-        return group;
     }
 
     // 초대 코드를 받아 해당 그룹 초대링크객체를 반환해주는 메서드

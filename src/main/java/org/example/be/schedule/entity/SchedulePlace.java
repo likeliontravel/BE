@@ -2,6 +2,7 @@ package org.example.be.schedule.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.be.place.entity.PlaceType;
 
 import java.time.LocalDateTime;
 

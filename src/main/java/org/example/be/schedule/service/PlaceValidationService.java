@@ -1,7 +1,7 @@
 package org.example.be.schedule.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.be.schedule.entity.PlaceType;
+import org.example.be.place.entity.PlaceType;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
