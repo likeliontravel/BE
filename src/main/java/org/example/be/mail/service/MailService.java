@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.be.mail.domain.Mail;
 import org.example.be.mail.dto.MailDTO;
 import org.example.be.mail.repository.MailRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,10 @@ import java.util.Random;
 public class MailService {
 
     private final JavaMailSender mailSender;
-
     private final MailRepository mailRepository;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     private static final int CODE_EXPIRATION_MINUTES = 5; // 인중 코드 유효시간 (5분)
 
@@ -42,6 +45,8 @@ public class MailService {
 
             // 이메일 전송
             SimpleMailMessage message = new SimpleMailMessage();
+
+            message.setFrom(fromEmail);
 
             message.setTo(email);
             message.setSubject("이메일 인증 코드 요청");
@@ -102,5 +107,4 @@ public class MailService {
 
         return String.valueOf(code);
     }
-
 }
