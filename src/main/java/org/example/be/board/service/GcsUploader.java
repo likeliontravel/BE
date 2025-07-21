@@ -2,6 +2,7 @@ package org.example.be.board.service;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,14 +17,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GcsUploader {
 
-    private final Storage storage;
+    private Storage storage;
+
+    @Value("${spring.cloud.gcp.credentials.location}")
+    private String credentialsPath;
 
     @Value("${gcs.bucket.toleave}")
     private String bucketName;
 
     // 생성자에서 Storage 객체를 생성하면서 인증을 명시적으로 설정
-    public GcsUploader() throws IOException {
-        this.storage = StorageOptions.newBuilder().setCredentials(GoogleCredentials.fromStream(new FileInputStream("/Users/yeboong99/Desktop/toleave_yechan/src/main/resources/toleave-b9a7b3a17267.json"))).build().getService();
+    // Spring이 @Value 주입을 완료한 후 초기화
+    @PostConstruct
+    public void init() throws IOException {
+        String actualPath = credentialsPath.replaceFirst("^file:", ""); // file: 접두어 제거
+        this.storage = StorageOptions.newBuilder()
+                .setCredentials(GoogleCredentials.fromStream(new FileInputStream(actualPath)))
+                .build()
+                .getService();
     }
 
     @Transactional

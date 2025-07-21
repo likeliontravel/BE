@@ -137,6 +137,7 @@ public class JWTFilter extends OncePerRequestFilter {
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(60 * 60); // 1시간
+        cookie.setDomain("toleave.shop");
         return cookie;
     }
 
