@@ -37,7 +37,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/certbot/conf:/etc/letsencrypt   # 인증서 저장소
+      - /etc/letsencrypt:/etc/letsencrypt   # 인증서 저장소
       - ./nginx/certbot/www:/var/www/certbot    # 인증서 발급용 웹루트
     depends_on:
       - app
