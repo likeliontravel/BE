@@ -44,18 +44,6 @@ services:
     networks:
       - toleave-network
 
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-    depends_on:
-      - nginx
-    command: certonly --webroot --webroot-path=/var/www/certbot \
-             --email yechani9905@gmail.com --agree-tos --no-eff-email \
-             -d api.toleave.shop
-
 volumes:
   mysql-data:
 
