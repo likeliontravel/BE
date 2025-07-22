@@ -70,7 +70,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
 
-        response.sendRedirect("http://localhost:3000");
+        response.sendRedirect("https://toleave.shop/");
     }
 
     private Cookie createCookie(String key, String value) {

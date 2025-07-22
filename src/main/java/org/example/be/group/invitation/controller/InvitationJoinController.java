@@ -58,12 +58,12 @@ public class InvitationJoinController {
             }
 
             // 로그인 상태가 아니라면 초대코드를 쿼리파라미터로 추가하여 login페이지로 리다이렉트
-            String redirectUrl = "https://localhost:3000/login?invitationCode=" + invitationCode;
+            String redirectUrl = "https://api.toleave.shop/login?invitationCode=" + invitationCode;
             response.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
             // 초대코드가 유효하지 않으면 쿼리파라미터 없이 로그인페이지로 리다이렉트
-            response.sendRedirect("https://localhost:3000/login");
+            response.sendRedirect("https://toleave.shop/login");
         }
 
     }
