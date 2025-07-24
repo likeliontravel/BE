@@ -134,7 +134,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
         configuration.setAllowCredentials(true); // 쿠키 허용
-
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
