@@ -117,7 +117,9 @@ public class UnifiedUserService {
 
     // 유저 정보 조회하기
     @Transactional(readOnly = true)
-    public UnifiedUserDTO getUserProfile(String userIdentifier) {
+    public UnifiedUserDTO getUserProfile() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+
         UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new IllegalArgumentException("이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
 
