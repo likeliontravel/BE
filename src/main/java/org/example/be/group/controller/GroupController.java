@@ -28,7 +28,7 @@ public class GroupController {
 
     // 그룹 상세 조회
     @GetMapping("/{groupName}/detail")
-    public ResponseEntity<CommonResponse<GroupDetailDTO>> getGroupDetail(@DecodedPathVariable String groupName) {
+    public ResponseEntity<CommonResponse<GroupDetailDTO>> getGroupDetail(@DecodedPathVariable("groupName") String groupName) {
         GroupDetailDTO groupDetail = groupService.getGroupDetail(groupName);
         return ResponseEntity.ok(CommonResponse.success(groupDetail, "그룹 상세 정보 조회 성공"));
     }
