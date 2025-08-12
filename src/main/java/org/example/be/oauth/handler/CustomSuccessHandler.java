@@ -37,8 +37,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = customUserDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst().orElse("ROLE_USER");
 
         // AccessToken, RefreshToken 발급
-        String accessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 2); //1시간(1000L * 60 * 60), 2분(1000L * 60 * 2)
-        String refreshToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 5); // 7일(1000L * 60 * 60 * 24 * 7)
+        String accessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60); //1시간(1000L * 60 * 60), 2분(1000L * 60 * 2)
+        String refreshToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60 * 24 * 7); // 7일(1000L * 60 * 60 * 24 * 7)
 
         System.out.println("로그인 성공: " + userIdentifier);
         System.out.println("생성된 accessToken 토큰 : " + accessToken);
@@ -75,7 +75,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60);
+        cookie.setMaxAge(60 * 60 * 24 * 7);
         cookie.setSecure(true); // https 적용 시 주석 해제할 것
         cookie.setPath("/");
         cookie.setHttpOnly(true);

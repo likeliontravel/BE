@@ -65,7 +65,7 @@ public class JWTFilter extends OncePerRequestFilter {
                         userIdentifier = jwtUtil.getUserIdentifier(refreshToken);
                         String role = jwtUtil.getRole(refreshToken);
 
-                        String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 2);    // 새 AccessToken 유효기간 2분
+                        String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60);    // 새 AccessToken 유효기간 2분
                         response.addCookie(createCookie("Authorization", newAccessToken));
                         response.setHeader("Authorization", "Bearer " + newAccessToken);
                         accessToken = newAccessToken;
