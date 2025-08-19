@@ -2,6 +2,7 @@ package org.example.be.chat.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.chat.dto.ChatMessageDTO;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.service.ChatMessageService;
 import org.example.be.resolver.DecodedPathVariable;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -58,6 +60,13 @@ public class ChatMessageController {
     ) {
         ChatMessageDTO result = chatMessageService.getLatestMessageOfGroup(groupName);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 조회 성공"));
+    }
+
+    // 채팅방 목록 조회 ( 최근 메시지 1개 포함 )
+    @GetMapping("/user-groups/with-latest")
+    public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageDTO>>> getGroupsWithLatestMessages() {
+        List<ChatRoomListWithLatestMessageDTO> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage();
+        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
     }
 
     // 이미지 메시지 업로드 ( REST 방식 - 미리보기를 띄우기 위해 publicURL을 먼저 보여줄 때 호출 )

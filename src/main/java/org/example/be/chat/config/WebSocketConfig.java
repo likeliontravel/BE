@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .addInterceptors(new CustomHandshakeInterceptor(jwtUtil, jwtBlackListService, groupRepository))
                 .setHandshakeHandler(new CustomHandshakeHandler())
-                .setAllowedOrigins("https://localhost:3000")
+                .setAllowedOrigins("https://localhost:3000", "https://localhost:5500")
                 .withSockJS();  // SockJS fallback 지원
     }
 

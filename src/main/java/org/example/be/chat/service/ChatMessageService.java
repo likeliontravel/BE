@@ -2,6 +2,7 @@ package org.example.be.chat.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.be.chat.dto.ChatMessageDTO;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
@@ -90,6 +91,54 @@ public class ChatMessageService {
         }
     }
 
+    // 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
+    @Transactional(readOnly = true)
+    public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+
+        // 요청자가 속한 그룹 목록
+        List<Group> groups = groupRepository.findByMembersContaining(user);
+        if (groups.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // groupName -> latest ChatMessage 메핑
+        Map<String, ChatMessage> latestByGroupName = new HashMap<>();
+        for (Group group : groups) {
+            Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
+            latestByGroupName.put(group.getGroupName(), latest.orElse(null));
+        }
+
+        // DTO로 변환
+        List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
+        for (Group group : groups) {
+            ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
+            String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
+            LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
+            ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
+
+            ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
+                    .groupName(group.getGroupName())
+                    .latestMessage(latestMessageContent)
+                    .sendAt(latestMessageSendAt)
+                    .type(latestMessageType)
+                    .build();
+
+            dtoList.add(dto);
+        }
+
+        // 최신 메시지 시각 내림차순 정렬 (null은 마지막)
+        dtoList.sort(Comparator
+                .comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                .reversed());
+
+        return dtoList;
+
+    }
+
+
     // ==================== 메시지 저장 관련 ====================
 
     // GCS에 이미지 업로드 수행, public URL 반환
@@ -134,7 +183,6 @@ public class ChatMessageService {
 
 
     }
-
 
     // ==================== 내부 사용 메서드 ====================
     // 들어온 MultipartFile이 이미지인지 검증하는 메서드 - 이미지가 아닐 경우 예외 발생
