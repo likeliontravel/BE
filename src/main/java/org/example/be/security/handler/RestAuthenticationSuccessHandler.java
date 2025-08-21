@@ -46,15 +46,15 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         String generalUserIdentifier = "gen" + "_" + generalUserDTO.getEmail();
 
         // Access 토큰 및 Refresh 토큰 생성
-        String accessToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효
-        String refreshToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일 유효
+        String accessToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60); // 1시간 유효(1000L * 60 * 60), 2분(1000L * 60 * 2)
+        String refreshToken = jwtUtil.createJwt(generalUserIdentifier, generalUserDTO.getRole(), 1000L * 60 * 60 * 24 * 7); // 7일(1000L * 60 * 60 * 24 * 7), 5분(1000L * 60 * 5)
 
         // Access 토큰을 쿠키에 추가
         Cookie accessTokenCookie = new Cookie("Authorization", accessToken);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
         accessTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
-        accessTokenCookie.setMaxAge(60 * 60); // 1시간 만료
+        accessTokenCookie.setMaxAge(60 * 60 * 24 * 7); // 쿠키 유효기간 7일
         response.addCookie(accessTokenCookie);
 
         // Refresh 토큰을 쿠키에 추가
@@ -62,7 +62,7 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true); // HTTPS 환경에서만 사용
         refreshTokenCookie.setPath("/"); // 모든 경로에서 쿠키 사용 가능
-        refreshTokenCookie.setMaxAge(60 * 60); // 1시간 만료
+        refreshTokenCookie.setMaxAge(60 * 60 * 24 * 7); // 쿠키 유효기간 7일
         response.addCookie(refreshTokenCookie);
 
         // Access 토큰을 헤더에 추가

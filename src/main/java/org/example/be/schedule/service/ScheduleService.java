@@ -7,19 +7,28 @@ import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
 import org.example.be.group.service.GroupService;
-import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
-import org.example.be.schedule.dto.SchedulePlaceResponseDTO;
-import org.example.be.schedule.dto.ScheduleRequestDTO;
-import org.example.be.schedule.dto.ScheduleResponseDTO;
+import org.example.be.place.accommodation.repository.AccommodationRepository;
+import org.example.be.place.entity.PlaceType;
+import org.example.be.place.region.TourRegion;
+import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.restaurant.repository.RestaurantRepository;
+import org.example.be.place.theme.PlaceCategory;
+import org.example.be.place.theme.PlaceCategoryRepository;
+import org.example.be.place.touristSpot.entity.TouristSpot;
+import org.example.be.place.touristSpot.repository.TouristSpotRepository;
+import org.example.be.schedule.dto.*;
 import org.example.be.schedule.entity.Schedule;
 import org.example.be.schedule.entity.SchedulePlace;
+import org.example.be.schedule.repository.SchedulePlaceRepository;
 import org.example.be.schedule.repository.ScheduleRepository;
 import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.entity.UnifiedUser;
+import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +36,15 @@ public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
     private final GroupRepository groupRepository;
-    private final PlaceValidationService placeValidationService;  // 새로 주입
+    private final PlaceValidationService placeValidationService;
     private final GroupService groupService;
+    private final SchedulePlaceRepository schedulePlaceRepository;
+    private final TouristSpotRepository touristSpotRepository;
+    private final AccommodationRepository accommodationRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final TourRegionRepository tourRegionRepository;
+    private final PlaceCategoryRepository placeCategoryRepository;
+    private final UnifiedUserRepository unifiedUserRepository;
 
     // 일정 생성
     @Transactional
@@ -106,6 +122,71 @@ public class ScheduleService {
                 .build();
     }
 
+    // 일정 요약 목록 조회
+    // 요청자의 가입된 그룹을 찾아 해당 그룹의 존재 일정 정보를 그룹별로 묶어 반환
+    // 만약 그룹은 존재하나 일정이 없는 경우 scheduleFirstRegion값으로 "아직 일정이 생성되지 않았습니다" 전달 및 나머지값 null 반환
+    @Transactional(readOnly = true)
+    public List<ScheduleSummaryDTO> getScheduleList() {
+        String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+        UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
+                .orElseThrow(() -> new NoSuchElementException("해당 유저가 존재하지 않습니다."));
+
+        List<Group> groups = groupRepository.findByMembersContaining(user);
+        if (groups.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<ScheduleSummaryDTO> scheduleSummaryList = new ArrayList<>();
+
+        for (Group group : groups) {
+            Optional<Schedule> scheduleOpt = scheduleRepository.findByGroup(group);
+
+            // 스케줄이 없으면 안내문구만 반환
+            if (scheduleOpt.isEmpty()) {
+                scheduleSummaryList.add(
+                        ScheduleSummaryDTO.builder()
+                                .groupName(group.getGroupName())
+                                .scheduleFirstRegion("아직 일정이 생성되지 않았습니다.")
+                                .scheduleFirstTheme(null)
+                                .startSchedule(null)
+                                .endSchedule(null)
+                                .build()
+                );
+                continue;
+            }
+
+            Schedule schedule = scheduleOpt.get();
+            List<SchedulePlace> places = schedulePlaceRepository.findBySchedule(schedule);
+
+            // 1) region: 타입 무관, 가장 이른 visitStart
+            SchedulePlace firstAnyPlace = places.stream()
+                    .min(Comparator.comparing(SchedulePlace::getVisitStart))
+                    .orElse(null);
+            String firstRegionName = resolveRegion(firstAnyPlace); // TouristSpot/Restaurant/Accommodation 모두 처리
+
+            // 2) theme: TouristSpot 중 가장 이른 visitStart가 있을 때만, 없으면 "기타"
+            SchedulePlace firstTouristSpotPlace = places.stream()
+                    .filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
+                    .min(Comparator.comparing(SchedulePlace::getVisitStart))
+                    .orElse(null);
+            String firstTheme = resolveThemeFromTouristSpot(firstTouristSpotPlace);
+
+            scheduleSummaryList.add(
+                    ScheduleSummaryDTO.builder()
+                            .groupName(group.getGroupName())
+                            .scheduleFirstRegion(firstRegionName)
+                            .scheduleFirstTheme(firstTheme)
+                            .startSchedule(schedule.getStartSchedule())
+                            .endSchedule(schedule.getEndSchedule())
+                            .build()
+            );
+        }
+
+        return scheduleSummaryList;
+    }
+
+
+
     // 일정 수정
     @Transactional
     public ScheduleResponseDTO updateSchedule(Long scheduleId, ScheduleRequestDTO requestDTO) {
@@ -174,6 +255,8 @@ public class ScheduleService {
         }
     }
 
+
+    // ----------------------------- 내부 헬퍼 메서드 ---------------------------
     // 조회에 사용할 응답DTO 매퍼 ( SchedulePlace )
     private SchedulePlaceResponseDTO toResponseDTO(SchedulePlace place) {
         return SchedulePlaceResponseDTO.builder()
@@ -186,5 +269,63 @@ public class ScheduleService {
                 .orderInDay(place.getOrderInDay())
                 .build();
     }
+
+    /**
+     * placeType에 맞게 레포지토리에서 장소를 찾아 areaCode/siGunGuCode로 region을 구한다.
+     * 장소를 찾지 못하면 null 반환.
+     */
+    private String resolveRegion(SchedulePlace place) {
+        if (place == null) {
+            return null;
+        }
+
+        switch (place.getPlaceType()) {
+            case TouristSpot: {
+                TouristSpot ts = touristSpotRepository.findByContentId(place.getContentId()).orElse(null);
+                if (ts == null) return null;
+                return tourRegionRepository
+                        .findByAreaCodeAndSiGunGuCode(ts.getAreaCode(), ts.getSiGunGuCode())
+                        .map(TourRegion::getRegion)
+                        .orElse(null);
+            }
+            case Restaurant: {
+                org.example.be.place.restaurant.entity.Restaurant r =
+                        restaurantRepository.findByContentId(place.getContentId()).orElse(null);
+                if (r == null) return null;
+                return tourRegionRepository
+                        .findByAreaCodeAndSiGunGuCode(r.getAreaCode(), r.getSiGunGuCode())
+                        .map(TourRegion::getRegion)
+                        .orElse(null);
+            }
+            case Accommodation: {
+                org.example.be.place.accommodation.entity.Accommodation a =
+                        accommodationRepository.findByContentId(place.getContentId()).orElse(null);
+                if (a == null) return null;
+                return tourRegionRepository
+                        .findByAreaCodeAndSiGunGuCode(a.getAreaCode(), a.getSiGunGuCode())
+                        .map(TourRegion::getRegion)
+                        .orElse(null);
+            }
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * TouristSpot이 있을 때만 theme을 추출. 없으면 "기타".
+     */
+    private String resolveThemeFromTouristSpot(SchedulePlace touristSpotPlace) {
+        if (touristSpotPlace == null) {
+            return "기타";
+        }
+        TouristSpot ts = touristSpotRepository.findByContentId(touristSpotPlace.getContentId()).orElse(null);
+        if (ts == null) {
+            return "기타";
+        }
+        return placeCategoryRepository.findByCat3(ts.getCat3())
+                .map(PlaceCategory::getTheme)
+                .orElse("기타");
+    }
+
 
 }

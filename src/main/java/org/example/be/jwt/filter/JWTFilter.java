@@ -34,7 +34,11 @@ public class JWTFilter extends OncePerRequestFilter {
 
         // 일반회원가입과 로그인 요청, 웹소켓 연결은 JWT 필터 적용 제외
         if (requestURI.equals("/general-user/signup") || requestURI.equals("/login")
-                || requestURI.startsWith("/ws") || requestURI.startsWith("/mail") || requestURI.startsWith("/tourism/fetch/") || requestURI.startsWith("/places") || requestURI.startsWith("/schedule/get")) {
+                || requestURI.startsWith("/ws")
+                || requestURI.startsWith("/mail")
+                || requestURI.startsWith("/tourism/fetch/")
+                || requestURI.startsWith("/places")
+                || requestURI.startsWith("/schedule/get/")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -44,62 +48,126 @@ public class JWTFilter extends OncePerRequestFilter {
         String refreshToken = extractTokenFromHeaderAndCookie(request, "Refresh-Token", "refreshToken");
 
         // AccessToken이 없으면 인증 실패 처리
-        if (accessToken == null || !jwtUtil.isValid(accessToken)) {
+        if (accessToken == null) {
             System.out.println("AccessToken 없음");
             sendUnauthorizedResponse(response, "Access Token이 필요합니다.");
             return;
         }
 
-        // userIdentifier 꺼내기
-        String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
-        if (userIdentifier == null || userIdentifier.isEmpty()) {
-            System.out.println("JWT에서 userIdentifier 추출 실패");
-            sendUnauthorizedResponse(response, "JWT에서 userIdentifier 추출 실패");
-            return;
-        }
-
-        // 블랙리스트에 등록된 토큰인지 확인
-        if (jwtBlackListService.isBlacklistedByUserIdentifier(userIdentifier, accessToken, refreshToken)) {
-            System.out.println("블랙리스트에 등록된 토큰");
-            sendUnauthorizedResponse(response, "토큰이 블랙리스트에 등록되어 있습니다.");
-            return;
-        }
-
-        // AccessToken 만료 시 검증
-        if (jwtUtil.isExpired(accessToken)) {
-            System.out.println("AccessToken 만료됨");
-
-            // RefreshToken이 존재하며 유효하고 만료되지 않은 경우 AccessToken 재발급
-            if (refreshToken != null && jwtUtil.isValid(refreshToken) && !jwtUtil.isExpired(refreshToken)) {
-                System.out.println("Refresh토큰이 유효하여 AccessToken을 재발급합니다.");
-                String role = jwtUtil.getRole(refreshToken);
-                String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60);   // 1시간
-
-                response.addCookie(createCookie("Authorization", newAccessToken));
-                response.setHeader("Authorization", "Bearer " + newAccessToken);
-                accessToken = newAccessToken;
-            } else {
-                System.out.println("Refresh Token도 만료됨. 재로그인 필요.");
-                sendUnauthorizedResponse(response, "Access Token이 만료되었으며 Refresh Token이 유효하지 않습니다.");
-                return;
-            }
-        }
+        String userIdentifier = null;
 
         try {
+            if (jwtUtil.isValid(accessToken)) {
+                if (jwtUtil.isExpired(accessToken)) {
+                    System.out.println("AccessToken 만료됨 - RefreshToken 검증 시작");
+
+                    if (refreshToken != null && jwtUtil.isValid(refreshToken) && !jwtUtil.isExpired(refreshToken)) {
+                        userIdentifier = jwtUtil.getUserIdentifier(refreshToken);
+                        String role = jwtUtil.getRole(refreshToken);
+
+                        String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 60);    // 새 AccessToken 유효기간 2분
+                        response.addCookie(createCookie("Authorization", newAccessToken));
+                        response.setHeader("Authorization", "Bearer " + newAccessToken);
+                        accessToken = newAccessToken;
+
+                        System.out.println("RefreshToken 유효 - AccessToken 재발급 완료");
+                    } else {
+                        System.out.println("RefreshToken 만료됨. 재로그인 필요");
+                        sendUnauthorizedResponse(response, "재로그인이 필요합니다.");
+                        return;
+                    }
+                }
+                // 만료되지 않았다면 AccessToken을 그대로 사용
+                userIdentifier = jwtUtil.getUserIdentifier(accessToken);
+            } else {
+                System.out.println("AccessToken이 유효하지 않음");
+                sendUnauthorizedResponse(response, "유효하지 않은 AccessToken");
+                return;
+            }
+
+            if (userIdentifier == null || userIdentifier.isEmpty()) {
+                System.out.println("JWT에서 userIdentifier 추출 실패");
+                sendUnauthorizedResponse(response, "유효하지 않은 AccessToken");
+                return;
+            }
+
+            if (jwtBlackListService.isBlacklistedByUserIdentifier(userIdentifier, accessToken, refreshToken)) {
+                System.out.println("Blacklisted Token: " + accessToken);
+                sendUnauthorizedResponse(response, "재로그인이 필요합니다.");
+                return;
+            }
+
+            // 인증객체 등록
             Authentication authentication = jwtProvider.getUserDetails(userIdentifier);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            System.out.println("인증 성공 : " + userIdentifier);
-        } catch (Exception e) {
-            System.out.println("JWT 검증 실패: " + e.getMessage());
-            sendUnauthorizedResponse(response, "유효하지 않은 JWT 토큰");
-            return;
-        }
+            System.out.println("인증 성공: " + userIdentifier);
+            System.out.println("[JWTFilter 마지막] SecurityContextHolder 인증 객체: " + SecurityContextHolder.getContext().getAuthentication());
 
-        System.out.println("[JWTFilter 마지막] SecurityContextHolder 인증 객체: " +
-                SecurityContextHolder.getContext().getAuthentication());
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+            System.out.println("JWT 검증 실패 : " + e.getMessage());
+            sendUnauthorizedResponse(response, "JWT 인증 실패 - 서버 내부 에러");
+        }
     }
+//================================ 로직 순서 변경 =================================
+//        // AccessToken이 있으나 유효하지 않은 경우 실패 처리
+//        if (!jwtUtil.isValid(accessToken)) {
+//            System.out.println("AccessToken 형식이 유효하지 않음");
+//            sendUnauthorizedResponse(response, "유효하지 않은 AccessToken");
+//            return;
+//        }
+//
+//        // userIdentifier 꺼내기
+//        String userIdentifier = jwtUtil.getUserIdentifier(accessToken);
+//        if (userIdentifier == null || userIdentifier.isEmpty()) {
+//            System.out.println("JWT에서 userIdentifier 추출 실패");
+//            sendUnauthorizedResponse(response, "JWT에서 userIdentifier 추출 실패");
+//            return;
+//        }
+//
+//        // 블랙리스트에 등록된 토큰인지 확인
+//        if (jwtBlackListService.isBlacklistedByUserIdentifier(userIdentifier, accessToken, refreshToken)) {
+//            System.out.println("블랙리스트에 등록된 토큰");
+//            sendUnauthorizedResponse(response, "토큰이 블랙리스트에 등록되어 있습니다.");
+//            return;
+//        }
+//
+//        // AccessToken 만료 시 검증
+//        if (jwtUtil.isExpired(accessToken)) {
+//            System.out.println("AccessToken 만료됨");
+//
+//            // RefreshToken이 존재하며 유효하고 만료되지 않은 경우 AccessToken 재발급
+//            if (refreshToken != null && jwtUtil.isValid(refreshToken) && !jwtUtil.isExpired(refreshToken)) {
+//                System.out.println("Refresh토큰이 유효하여 AccessToken을 재발급합니다.");
+//                String role = jwtUtil.getRole(refreshToken);
+//                String newAccessToken = jwtUtil.createJwt(userIdentifier, role, 1000L * 60 * 2);   // 1시간(1000L * 60 * 60), 2분(1000L * 60 * 2)
+//
+//                response.addCookie(createCookie("Authorization", newAccessToken));
+//                response.setHeader("Authorization", "Bearer " + newAccessToken);
+//                accessToken = newAccessToken;
+//            } else {
+//                System.out.println("Refresh Token도 만료됨. 재로그인 필요.");
+//                sendUnauthorizedResponse(response, "Access Token이 만료되었으며 Refresh Token이 유효하지 않습니다.");
+//                return;
+//            }
+//        }
+//
+//        try {
+//            Authentication authentication = jwtProvider.getUserDetails(userIdentifier);
+//            SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//            System.out.println("인증 성공 : " + userIdentifier);
+//        } catch (Exception e) {
+//            System.out.println("JWT 검증 실패: " + e.getMessage());
+//            sendUnauthorizedResponse(response, "유효하지 않은 JWT 토큰");
+//            return;
+//        }
+//
+//        System.out.println("[JWTFilter 마지막] SecurityContextHolder 인증 객체: " +
+//                SecurityContextHolder.getContext().getAuthentication());
+//        filterChain.doFilter(request, response);
+//    }
 
 
     // 헤더에서 먼저 토큰 탐색, 발견되지 않으면 쿠키에서 탐색
@@ -143,7 +211,16 @@ public class JWTFilter extends OncePerRequestFilter {
 
     // 인증 실패 응답 보내기
     private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        CommonResponse<String> errorResponse = CommonResponse.error(401, message);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonResponse = objectMapper.writeValueAsString(errorResponse);
+
+        response.getWriter().write(jsonResponse);
     }
 
 }

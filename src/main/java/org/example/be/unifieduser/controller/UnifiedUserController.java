@@ -55,9 +55,9 @@ public class UnifiedUserController {
 
     // 유저 정보 조회
     // !주의 : 요청자 본인의 정보 조회가 이루어지는 게 아님. 조회하고자 하는 유저 userIdentifier 입력으로 정보 조회.
-    @GetMapping("/getProfile/{userIdentifier}")
-    public ResponseEntity<CommonResponse<UnifiedUserDTO>> getUserProfile(@PathVariable String userIdentifier) {
-        UnifiedUserDTO userDTO = unifiedUserService.getUserProfile(userIdentifier);
+    @GetMapping("/getProfile")
+    public ResponseEntity<CommonResponse<UnifiedUserDTO>> getUserProfile() {
+        UnifiedUserDTO userDTO = unifiedUserService.getUserProfile();
 
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(userDTO, "프로필 조회 성공"));
     }

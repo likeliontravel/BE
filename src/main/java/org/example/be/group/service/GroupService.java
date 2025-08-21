@@ -48,6 +48,15 @@ public class GroupService {
     public GroupResponseDTO createGroup(GroupCreationRequestDTO request) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
+        String groupName = request.getGroupName();
+        // 그룹 이름에 공백, 특수문자 등 검증
+        if (!groupName.matches("^[a-zA-Z0-9가-힣_-]+$")) {
+            throw new IllegalArgumentException("그룹 이름에는 공백이나 특수문자를 포함할 수 없습니다. (한글, 영문, 숫자, -, _만 허용)");
+        }
+        groupRepository.findByGroupName(groupName).ifPresent(group -> {
+            throw new IllegalArgumentException("이미 존재하는 그룹 이름입니다: "+ groupName);
+        });
+
         UnifiedUser creator = unifiedUserRepository.findByUserIdentifier(userIdentifier)
                 .orElseThrow(() -> new UserAuthenticationNotFoundException("해당 사용자를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
 
