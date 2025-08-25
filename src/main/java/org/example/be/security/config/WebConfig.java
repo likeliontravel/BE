@@ -28,13 +28,13 @@ public class WebConfig implements WebMvcConfigurer {
 
         corsRegistry.addMapping("/**")
                 .exposedHeaders("Set-Cookie")
-                .allowedOrigins("https://localhost:3000")
+                .allowedOrigins("https://localhost:3000", "https://toleave.shop")
                 .allowedHeaders("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true);
 
         corsRegistry.addMapping("/ws/**")
-                .allowedOrigins("https://localhost:3000")
+                .allowedOrigins("https://localhost:3000", "https://toleave.shop")
                 .allowedMethods("GET", "POST", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
