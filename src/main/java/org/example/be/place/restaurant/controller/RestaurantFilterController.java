@@ -27,12 +27,12 @@ public class RestaurantFilterController {
     // 식당 필터링 API
     @GetMapping("/restaurants")
     public ResponseEntity<CommonResponse<List<RestaurantResponseDTO>>> getFilteredRestaurants(
-            @RequestParam(required = false) List<String> regions,
-            @RequestParam(required = false) List<String> themes,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "30") @Min(1) int size,
-            @RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
+            @RequestParam(name = "regions", required = false) List<String> regions,
+            @RequestParam(name = "themes", required = false) List<String> themes,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "30") @Min(1) int size,
+            @RequestParam(name = "sortType", defaultValue = "TITLE_ASC") PlaceSortType sortType
     ){
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
         List<RestaurantResponseDTO> result = restaurantFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);

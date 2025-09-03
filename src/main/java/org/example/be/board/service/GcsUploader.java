@@ -23,7 +23,7 @@ public class GcsUploader {
 
     // 생성자에서 Storage 객체를 생성하면서 인증을 명시적으로 설정
     public GcsUploader() throws IOException {
-        this.storage = StorageOptions.newBuilder().setCredentials(GoogleCredentials.fromStream(new FileInputStream("/Users/yeboong99/Desktop/main_latest/src/main/resources/toleave-b9a7b3a17267.json"))).build().getService();
+        this.storage = StorageOptions.newBuilder().setCredentials(GoogleCredentials.fromStream(new FileInputStream("C:/Users/jwj91/OneDrive/바탕 화면/BE/src/main/resources/toleave-b9a7b3a17267.json"))).build().getService();
     }
 
     @Transactional
