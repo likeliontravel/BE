@@ -26,6 +26,18 @@ public class TouristSpotFilterService {
 
     public List<TouristSpotDTO> getFilteredTouristSpots(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
 
+        // 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
+        if (regions != null && regions.isEmpty()) {
+            regions = null;
+        }
+        if (themes != null && themes.isEmpty()) {
+            themes = null;
+        }
+        if (keyword != null && keyword.isBlank()) {
+            keyword = null;
+        }
+
+        // region 파라미터 검증
         if (regions != null) {
             for (String region : regions) {
                 if (!tourRegionService.existsByRegion(region)) {
@@ -34,6 +46,7 @@ public class TouristSpotFilterService {
             }
         }
 
+        // theme 파라미터 검증
         if (themes != null) {
             for (String theme : themes) {
                 if (!placeCategoryService.existsByTheme(theme)) {
@@ -43,10 +56,6 @@ public class TouristSpotFilterService {
         }
 
         List<TouristSpot> filtered = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
-
-        if (filtered.isEmpty()) {
-            throw new NoSuchElementException("요청하진 조건에 해당하는 관광지가 존재하지 않습니다.");
-        }
 
         return filtered.stream()
                 .map(this::convertToDTO)

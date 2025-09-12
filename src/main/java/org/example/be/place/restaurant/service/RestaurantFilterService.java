@@ -2,11 +2,14 @@ package org.example.be.place.restaurant.service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.example.be.exception.custom.BadParameterException;
+import org.example.be.place.region.TourRegionService;
 import org.example.be.place.restaurant.dto.RestaurantResponseDTO;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.restaurant.entity.Restaurant;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategoryRepository;
+import org.example.be.place.theme.PlaceCategoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.example.be.place.region.TourRegion;
@@ -23,14 +26,42 @@ public class RestaurantFilterService {
     private final TourRegionRepository tourRegionRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
     private final RestaurantRepository restaurantRepository;
+    private final TourRegionService tourRegionService;
+    private final PlaceCategoryService placeCategoryService;
 
     // 식당 필터링
     public List<RestaurantResponseDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
+        // 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
+        if (regions != null && regions.isEmpty()) {
+            regions = null;
+        }
+        if (themes != null && themes.isEmpty()) {
+            themes = null;
+        }
+        if (keyword != null && keyword.isBlank()) {
+            keyword = null;
+        }
+
+        // region 파라미터 검증
+        if (regions != null) {
+            for (String region : regions) {
+                if (!tourRegionService.existsByRegion(region)) {
+                    throw new BadParameterException("잘못된 지역(region)값이 포함되어 있습니다." + region);
+                }
+            }
+        }
+
+        // theme 파라미터 검증
+        if (themes != null) {
+            for (String theme : themes) {
+                if (!placeCategoryService.existsByTheme(theme)) {
+                    throw new BadParameterException("잘못된 테마(theme)값이 포함되어 있습니다." + theme);
+                }
+            }
+        }
+
         List<Restaurant> restaurants = restaurantRepository.findByFilters(regions, themes, keyword, pageable);
 
-        if (restaurants.isEmpty()) {
-            throw new NoSuchElementException("요청하신 조건에 해당하는 식당이 존재하지 않습니다.");
-        }
 
         return restaurants.stream()
                 .map(this::toRestaurantResponseDTO)
