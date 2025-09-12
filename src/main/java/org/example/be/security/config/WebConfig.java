@@ -1,13 +1,18 @@
 package org.example.be.security.config;
 
 import org.example.be.resolver.DecodedPathVariableResolver;
+import org.example.be.security.filter.TrailingSlashNormalizerFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.util.List;
 
@@ -47,6 +52,16 @@ public class WebConfig implements WebMvcConfigurer {
         bean.setOrder(0); // 가장 먼저 실행되도록 설정
         return bean;
     }
+
+    // uri 맨 뒤 /를 없애주는 필터를 보안필터보다 무조건 앞으로 오도록 배치
+    // filter.TrailingSlashNormalizerFilter 클래스에서 빈으로 설정함. 지금 이 부분 삭제 예정
+//    @Bean
+//    public FilterRegistrationBean<TrailingSlashNormalizerFilter> trailingSlashNormalizerFilter(TrailingSlashNormalizerFilter filter) {
+//        FilterRegistrationBean<TrailingSlashNormalizerFilter> reg = new FilterRegistrationBean<>(filter);
+//        reg.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+//        reg.addUrlPatterns("/*");
+//        return reg;
+//    }
 
 
 }

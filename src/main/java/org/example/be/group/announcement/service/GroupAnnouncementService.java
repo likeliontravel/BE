@@ -15,6 +15,8 @@ import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -36,10 +38,13 @@ public class GroupAnnouncementService {
         // 저장할 정보 가져오기
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
-        Group group = groupRepository.findByGroupName(dto.getGroupName())
-                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + dto.getGroupName()));
+        String rawGroupName = dto.getGroupName();
+        String groupName = needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
-        if (!groupService.isContains(dto.getGroupName(), userIdentifier)) {
+        Group group = groupRepository.findByGroupName(groupName)
+                .orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+
+        if (!groupService.isContains(groupName, userIdentifier)) {
             throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
         }
 
@@ -101,7 +106,8 @@ public class GroupAnnouncementService {
     @Transactional
     public void deleteGroupAnnouncement(GroupAnnouncementDeleteRequestDTO request) {
         String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-        String groupName = request.getGroupName();
+        String rawGroupName = request.getGroupName();
+        String groupName = needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
         GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.getId())
                 .orElseThrow(() -> new NoSuchElementException("삭제하려는 공지사항을 찾을 수 없습니다. id: " + request.getId()));
@@ -118,6 +124,11 @@ public class GroupAnnouncementService {
 
         // 공지 삭제
         groupAnnouncementRepository.delete(groupAnnouncement);
+    }
+
+    // 문자열이 URL 인코딩 상태인지 검사. 디코딩이 필요한 경우 true 반환
+    private boolean needsDecoding(String s) {
+        return s != null && s.contains("%");
     }
 
     // ResponseDTO로 파싱

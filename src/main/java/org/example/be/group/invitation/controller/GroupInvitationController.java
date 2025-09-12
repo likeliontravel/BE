@@ -24,7 +24,7 @@ public class GroupInvitationController {
 
     // 초대 링크 조회하기
     @GetMapping("/{groupName}/invitation")
-    public ResponseEntity<CommonResponse<InvitationResponseDTO>> getInvitation(@DecodedPathVariable String groupName) {
+    public ResponseEntity<CommonResponse<InvitationResponseDTO>> getInvitation(@DecodedPathVariable("groupName") String groupName) {
             GroupInvitation invitation = invitationService.getValidOrExpireInvitation(groupName);
 
             InvitationResponseDTO dto = new InvitationResponseDTO();
@@ -37,7 +37,7 @@ public class GroupInvitationController {
 
     // 강제로 새로운 초대 링크 발급 ( 기존 링크 무효화 )
     @PostMapping("/{groupName}/invitation/generateNew")
-    public ResponseEntity<CommonResponse<InvitationResponseDTO>> generateNewInvitation(@DecodedPathVariable String groupName) {
+    public ResponseEntity<CommonResponse<InvitationResponseDTO>> generateNewInvitation(@DecodedPathVariable("groupName") String groupName) {
             GroupInvitation invitation = invitationService.forceGenerateNewInvitation(groupName);
 
             InvitationResponseDTO dto = new InvitationResponseDTO();

@@ -129,6 +129,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CommonResponse.error(401, e.getMessage()));
     }
 
+    // BadParameterException - 클라이언트의 요청 파라미터에 이상이 있는 경우
+    @ExceptionHandler(BadParameterException.class)
+    @ResponseBody
+    public ResponseEntity<CommonResponse<Void>> handleBadParameterException(BadParameterException e) {
+        log.error("[파라미터 값이 유효하지 않음] {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(400, e.getMessage()));
+    }
+
+
     // 유효성 검사 실패 시 잡아서 처리
     @ExceptionHandler({BindException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<CommonResponse<Void>> handleValidationException(Exception ex) {

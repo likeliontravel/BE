@@ -36,7 +36,7 @@ public class GroupAnnouncementController {
 
     // 해당 그룹 모든 공지 조회 ( 그룹 공지사항 전체 조회 )
     @GetMapping("/getAllAnnouncement")
-    public ResponseEntity<CommonResponse<List<GroupAnnouncementResponseDTO>>> getAllGroupAnnouncementsByGroupName(@RequestParam String groupName) {
+    public ResponseEntity<CommonResponse<List<GroupAnnouncementResponseDTO>>> getAllGroupAnnouncementsByGroupName(@RequestParam("groupName") String groupName) {
         List<GroupAnnouncementResponseDTO> responseDTOList = groupAnnouncementService.getAllGroupAnnouncements(groupName);
         return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(responseDTOList, "그룹 공지 전체 조회 성공"));
     }
