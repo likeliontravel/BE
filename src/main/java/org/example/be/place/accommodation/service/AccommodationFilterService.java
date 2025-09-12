@@ -2,11 +2,14 @@ package org.example.be.place.accommodation.service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.example.be.exception.custom.BadParameterException;
 import org.example.be.place.accommodation.dto.AccommodationResponseDTO;
 import org.example.be.place.accommodation.entity.Accommodation;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
+import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryRepository;
+import org.example.be.place.theme.PlaceCategoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.example.be.place.region.TourRegion;
@@ -23,14 +26,42 @@ public class AccommodationFilterService {
     private final AccommodationRepository accommodationRepository;
     private final TourRegionRepository tourRegionRepository;
     private final PlaceCategoryRepository placeCategoryRepository;
+    private final TourRegionService tourRegionService;
+    private final PlaceCategoryService placeCategoryService;
 
     // 숙소 필터링
     public List<AccommodationResponseDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
-        List<Accommodation> accommodations = accommodationRepository.findByFilters(regions, themes, keyword, pageable);
 
-        if (accommodations.isEmpty()) {
-            throw new NoSuchElementException("요청하신 조건에 해당하는 숙소가 존재하지 않습니다.");
+        // 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
+        if (regions != null && regions.isEmpty()) {
+            regions = null;
         }
+        if (themes != null && themes.isEmpty()) {
+            themes = null;
+        }
+        if (keyword != null && keyword.isBlank()) {
+            keyword = null;
+        }
+
+        // region 파라미터 검증
+        if (regions != null) {
+            for (String region : regions) {
+                if (!tourRegionService.existsByRegion(region)) {
+                    throw new BadParameterException("잘못된 지역(region)값이 포함되어 있습니다." + region);
+                }
+            }
+        }
+
+        // theme 파라미터 검증
+        if (themes != null) {
+            for (String theme : themes) {
+                if (!placeCategoryService.existsByTheme(theme)) {
+                    throw new BadParameterException("잘못된 테마(theme)값이 포함되어 있습니다." + theme);
+                }
+            }
+        }
+
+        List<Accommodation> accommodations = accommodationRepository.findByFilters(regions, themes, keyword, pageable);
 
         return accommodations.stream()
                 .map(this::toAccommodationResponseDTO)
