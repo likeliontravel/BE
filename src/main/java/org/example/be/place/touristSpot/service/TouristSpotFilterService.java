@@ -2,6 +2,10 @@ package org.example.be.place.touristSpot.service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.example.be.exception.custom.BadParameterException;
+import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.region.TourRegionService;
+import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.place.touristSpot.dto.TouristSpotDTO;
 import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
@@ -17,8 +21,27 @@ import java.util.stream.Collectors;
 public class TouristSpotFilterService {
 
     private final TouristSpotRepository touristSpotRepository;
+    private final TourRegionService tourRegionService;
+    private final PlaceCategoryService placeCategoryService;
 
     public List<TouristSpotDTO> getFilteredTouristSpots(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
+
+        if (regions != null) {
+            for (String region : regions) {
+                if (!tourRegionService.existsByRegion(region)) {
+                    throw new BadParameterException("잘못된 지역(region)값이 포함되어 있습니다." + region);
+                }
+            }
+        }
+
+        if (themes != null) {
+            for (String theme : themes) {
+                if (!placeCategoryService.existsByTheme(theme)) {
+                    throw new BadParameterException("잘못된 테마(theme)값이 포함되어 있습니다." + theme);
+                }
+            }
+        }
+
         List<TouristSpot> filtered = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
 
         if (filtered.isEmpty()) {
