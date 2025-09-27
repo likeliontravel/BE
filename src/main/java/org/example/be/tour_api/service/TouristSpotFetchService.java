@@ -2,6 +2,10 @@ package org.example.be.tour_api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.be.place.region.TourRegion;
+import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.theme.PlaceCategory;
+import org.example.be.place.theme.PlaceCategoryRepository;
 import org.example.be.place.touristSpot.dto.TouristSpotDTO;
 import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +28,9 @@ public class TouristSpotFetchService {
     private final TouristSpotRepository touristSpotRepository;
     private final TourApiClient tourApiClient;
     private final TourApiParser tourApiParser;
+    // 변경된 스키마에 따라 저장 시점에 연관관계를 완결내도록 조정하면서 추가
+    private final TourRegionRepository tourRegionRepository;
+    private final PlaceCategoryRepository placeCategoryRepository;
 
     @Value("${service-key}")
     private String serviceKey;
@@ -81,28 +89,47 @@ public class TouristSpotFetchService {
     // contentId로 조회 시 없는 경우 ( 기존에 없던 장소일 경우 ) 새로 저장
     private void saveIfNotExist(Map<String, Object> item) {
         String contentId = String.valueOf(item.get("contentid"));
-        if (!touristSpotRepository.existsByContentId(contentId)) {
-            TouristSpot touristSpot = TouristSpot.builder()
-                    .contentId(contentId)
-                    .title((String) item.get("title"))
-                    .addr1((String) item.get("addr1"))
-                    .addr2((String) item.get("addr2"))
-                    .areaCode((String) item.get("areacode"))
-                    .siGunGuCode((String) item.get("sigungucode"))
-                    .cat1((String) item.get("cat1"))
-                    .cat2((String) item.get("cat2"))
-                    .cat3((String) item.get("cat3"))
-                    .imageUrl((String) item.get("firstimage"))
-                    .thumbnailImageUrl((String) item.get("firstimage2"))
-                    .mapX(toDouble(item.get("mapx")))
-                    .mapY(toDouble(item.get("mapy")))
-                    .mLevel(toInteger(item.get("mlevel")))
-                    .tel((String) item.get("tel"))
-                    .modifiedTime((String) item.get("modifiedtime"))
-                    .createdTime((String) item.get("createdtime"))
-                    .build();
-            touristSpotRepository.save(touristSpot);
-        }
+
+        // 이미 존재하는 장소인지 검증 (없는 경우만 저장)
+        if (touristSpotRepository.existsByContentId(contentId)) return;
+
+        String areaCode = String.valueOf(item.get("areaCode"));
+        Object rawSigungu = item.get("sigungucode");
+        String siGunGuCode = rawSigungu != null && !String.valueOf(rawSigungu).isBlank() ? String.valueOf(rawSigungu) : "99";
+
+        String cat3 = (String) item.get("cat3");
+
+        TourRegion tourRegion = tourRegionRepository
+                .findByAreaCodeAndSiGunGuCode(areaCode, siGunGuCode)
+                .orElseThrow(() -> new IllegalArgumentException("TourRegion 매칭 실패: " + areaCode + " " + siGunGuCode));
+
+        PlaceCategory placeCategory = placeCategoryRepository
+                .findByCat3(cat3)
+                .orElseThrow(() -> new IllegalArgumentException("PlaceCategory 매칭 실패: " + cat3));
+
+        TouristSpot touristSpot = TouristSpot.builder()
+                .contentId(contentId)
+                .title((String) item.get("title"))
+                .addr1((String) item.get("addr1"))
+                .addr2((String) item.get("addr2"))
+                .areaCode(areaCode)
+                .siGunGuCode(siGunGuCode)
+                .cat1((String) item.get("cat1"))
+                .cat2((String) item.get("cat2"))
+                .cat3(cat3)
+                .imageUrl((String) item.get("firstimage"))
+                .thumbnailImageUrl((String) item.get("firstimage2"))
+                .mapX(toDouble(item.get("mapx")))
+                .mapY(toDouble(item.get("mapy")))
+                .mLevel(toInteger(item.get("mlevel")))
+                .tel((String) item.get("tel"))
+                .modifiedTime((String) item.get("modifiedtime"))
+                .createdTime((String) item.get("createdtime"))
+                .tourRegion(tourRegion)
+                .placeCategory(placeCategory)
+                .build();
+
+        touristSpotRepository.save(touristSpot);
     }
 
     // TouristSpot -> DTO 변환
