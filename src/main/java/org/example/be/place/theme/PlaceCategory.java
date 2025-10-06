@@ -13,7 +13,10 @@ import lombok.*;
 public class PlaceCategory {
 
     @Id
-    @Column(name = "cat3")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "cat3", unique = true, nullable = false)
     private String cat3;    // 소분류 코드를 PK로 사용. ** Long Id 아님! **
 
     @Column(name = "contentTypeId")
