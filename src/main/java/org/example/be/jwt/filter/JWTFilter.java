@@ -32,6 +32,9 @@ public class JWTFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         System.out.println("JWTFilter - 요청 URL : " + request.getRequestURI());
 
+        String requestHttpMethod = request.getMethod();
+        System.out.println("JWTFilter - 요청 HTTP Method + URI : [" + requestHttpMethod + "] " + requestURI);
+
         // 일반회원가입과 로그인 요청, 웹소켓 연결은 JWT 필터 적용 제외
         if (requestURI.equals("/general-user/signup") || requestURI.equals("/login")
                 || requestURI.startsWith("/ws")
@@ -43,6 +46,8 @@ public class JWTFilter extends OncePerRequestFilter {
                 || requestURI.startsWith("/board/all")
                 || requestURI.startsWith("/board/byTheme")
                 || requestURI.startsWith("/board/byRegion")
+                || ("GET".equals(requestHttpMethod) && requestURI.startsWith("/board/"))
+                || ("GET".equals(requestHttpMethod) && requestURI.startsWith("/comment/"))
         ) {
             filterChain.doFilter(request, response);
             return;
