@@ -38,7 +38,12 @@ public class JWTFilter extends OncePerRequestFilter {
                 || requestURI.startsWith("/mail")
                 || requestURI.startsWith("/tourism/fetch/")
                 || requestURI.startsWith("/places")
-                || requestURI.startsWith("/schedule/get/")) {
+                || requestURI.startsWith("/schedule/get/")
+                || requestURI.startsWith("/board/search")
+                || requestURI.startsWith("/board/all")
+                || requestURI.startsWith("/board/byTheme")
+                || requestURI.startsWith("/board/byRegion")
+        ) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -52,6 +57,11 @@ public class JWTFilter extends OncePerRequestFilter {
             System.out.println("AccessToken 없음");
             sendUnauthorizedResponse(response, "Access Token이 필요합니다.");
             return;
+        }
+
+        // 임시 추가 - 액세스토큰 정상 진입 여부 확인
+        if (accessToken != null) {
+            System.out.println("들어온 액세스 토큰 : " + accessToken);
         }
 
         String userIdentifier = null;
