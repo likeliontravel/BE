@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.example.be.exception.custom.BadParameterException;
 import org.example.be.place.region.TourRegionService;
+import org.example.be.place.restaurant.dto.RestaurantDTO;
 import org.example.be.place.restaurant.dto.RestaurantResponseDTO;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.restaurant.entity.Restaurant;
@@ -30,7 +31,7 @@ public class RestaurantFilterService {
     private final PlaceCategoryService placeCategoryService;
 
     // 식당 필터링
-    public List<RestaurantResponseDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
+    public List<RestaurantDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword, Pageable pageable) {
         // 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
         if (regions != null && regions.isEmpty()) {
             regions = null;
@@ -60,35 +61,64 @@ public class RestaurantFilterService {
             }
         }
 
-        List<Restaurant> restaurants = restaurantRepository.findByFilters(regions, themes, keyword, pageable);
+        List<Restaurant> restaurants = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
 
 
         return restaurants.stream()
-                .map(this::toRestaurantResponseDTO)
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // Restaurant -> ResponseDTO 변환
-    private RestaurantResponseDTO toRestaurantResponseDTO(Restaurant restaurant) {
-        String region = tourRegionRepository
-                .findByAreaCodeAndSiGunGuCode(restaurant.getAreaCode(), restaurant.getSiGunGuCode())
-                .map(TourRegion::getRegion)
-                .orElse("기타");
+    // DTO로 변환
+    private RestaurantDTO convertToDTO(Restaurant restaurant) {
 
-        String theme = placeCategoryRepository
-                .findByCat3(restaurant.getCat3())
-                .map(PlaceCategory::getTheme)
-                .orElse("기타");
+        String region = (restaurant.getTourRegion() != null) ? restaurant.getTourRegion().getRegion() : "기타";
+        String theme = (restaurant.getPlaceCategory() != null) ? restaurant.getPlaceCategory().getTheme() : "기타";
 
-        return RestaurantResponseDTO.builder()
+        return RestaurantDTO.builder()
                 .contentId(restaurant.getContentId())
                 .title(restaurant.getTitle())
-                .imageUrl(restaurant.getThumbnailImageUrl())  // 300 X 200 정형화된 firstimage2 이미지
-                .region(region)
+                .addr1(restaurant.getAddr1())
+                .addr2(restaurant.getAddr2())
+                .areaCode(restaurant.getAreaCode())
+                .siGunGuCode(restaurant.getSiGunGuCode())
+                .cat1(restaurant.getCat1())
+                .cat2(restaurant.getCat2())
+                .cat3(restaurant.getCat3())
+                .imageUrl(restaurant.getImageUrl())
+                .thumbnailImageUrl(restaurant.getThumbnailImageUrl())
+                .mapX(restaurant.getMapX())
+                .mapY(restaurant.getMapY())
+                .mLevel(restaurant.getMLevel())
+                .tel(restaurant.getTel())
+                .createdTime(restaurant.getCreatedTime())
+                .modifiedTime(restaurant.getModifiedTime())
                 .theme(theme)
-                .address(restaurant.getAddr1() + (restaurant.getAddr2() != null ? restaurant.getAddr2() : ""))
+                .region(region)
                 .build();
     }
+
+//    // Restaurant -> ResponseDTO 변환
+//    private RestaurantResponseDTO toRestaurantResponseDTO(Restaurant restaurant) {
+//        String region = tourRegionRepository
+//                .findByAreaCodeAndSiGunGuCode(restaurant.getAreaCode(), restaurant.getSiGunGuCode())
+//                .map(TourRegion::getRegion)
+//                .orElse("기타");
+//
+//        String theme = placeCategoryRepository
+//                .findByCat3(restaurant.getCat3())
+//                .map(PlaceCategory::getTheme)
+//                .orElse("기타");
+//
+//        return RestaurantResponseDTO.builder()
+//                .contentId(restaurant.getContentId())
+//                .title(restaurant.getTitle())
+//                .imageUrl(restaurant.getThumbnailImageUrl())  // 300 X 200 정형화된 firstimage2 이미지
+//                .region(region)
+//                .theme(theme)
+//                .address(restaurant.getAddr1() + (restaurant.getAddr2() != null ? restaurant.getAddr2() : ""))
+//                .build();
+//    }
 
 }
 

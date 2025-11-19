@@ -2,6 +2,7 @@ package org.example.be.place.restaurant.controller;
 
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.example.be.place.restaurant.dto.RestaurantDTO;
 import org.example.be.place.restaurant.service.RestaurantFilterService;
 import org.example.be.place.restaurant.dto.RestaurantResponseDTO;
 import org.example.be.place.entity.PlaceSortType;
@@ -26,7 +27,7 @@ public class RestaurantFilterController {
 
     // 식당 필터링 API
     @GetMapping("/restaurants")
-    public ResponseEntity<CommonResponse<List<RestaurantResponseDTO>>> getFilteredRestaurants(
+    public ResponseEntity<CommonResponse<List<RestaurantDTO>>> getFilteredRestaurants(
             @RequestParam(name = "regions", required = false) List<String> regions,
             @RequestParam(name = "themes", required = false) List<String> themes,
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -35,7 +36,7 @@ public class RestaurantFilterController {
             @RequestParam(name = "sortType", defaultValue = "TITLE_ASC") PlaceSortType sortType
     ){
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
-        List<RestaurantResponseDTO> result = restaurantFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);
+        List<RestaurantDTO> result = restaurantFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);
         return ResponseEntity.ok(CommonResponse.success(result, "식당 필터링 조회 성공"));
     }
 

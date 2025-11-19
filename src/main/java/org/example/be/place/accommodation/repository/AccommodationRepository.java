@@ -12,41 +12,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AccommodationRepository extends JpaRepository<Accommodation, Long> {
+public interface AccommodationRepository extends JpaRepository<Accommodation, Long>, AccommodationRepositoryCustom {
     // contentId 중복 체크용
     boolean existsByContentId(String contentId);
 
     // 일정 생성 할때 숙소의 contentId를 기준으로 가져옴
     Optional<Accommodation> findByContentId(String contentId);
 
-
-    // 지역 또는 테마 또는 키워드로 필터링
-    @Query("""
-                SELECT a FROM Accommodation a
-                WHERE (:regions IS NULL OR CONCAT(a.areaCode, a.siGunGuCode) IN (
-                    SELECT CONCAT(tr.areaCode, tr.siGunGuCode)
-                    FROM TourRegion tr
-                    WHERE tr.region IN :regions
-                        )
-                    )
-                    AND (:themes IS NULL OR a.cat3 IN (
-                        SELECT pc.cat3
-                        FROM PlaceCategory pc
-                        WHERE pc.contentTypeId = '32' AND pc.theme IN :themes
-                    ))
-                    AND (
-                        (:keyword IS NULL) OR
-                        LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                        LOWER(a.addr1) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                        LOWER(a.addr2) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                    )
-            """)
-    List<Accommodation> findByFilters(
-            @Param("regions") List<String> regions,
-            @Param("themes") List<String> themes,
-            @Param("keyword") String keyword,
-            Pageable pageable
-    );
+    // 필터링 조회 메서드는 부모 인터페이스인 AccommodationRepositoryCustom의 구현체를 따라간다
 
 }
 

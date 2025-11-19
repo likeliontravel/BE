@@ -26,4 +26,6 @@ public class RestaurantDTO {
     private String tel;
     private String modifiedTime;
     private String createdTime;
+    private String theme;
+    private String region;
 }

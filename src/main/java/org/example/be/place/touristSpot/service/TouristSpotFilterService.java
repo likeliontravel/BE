@@ -63,6 +63,10 @@ public class TouristSpotFilterService {
     }
 
     private TouristSpotDTO convertToDTO(TouristSpot spot) {
+
+        String region = (spot.getTourRegion() != null) ? spot.getTourRegion().getRegion() : "기타";
+        String theme = (spot.getPlaceCategory() != null) ? spot.getPlaceCategory().getTheme() : "기타";
+
         return TouristSpotDTO.builder()
                 .contentId(spot.getContentId())
                 .title(spot.getTitle())
@@ -81,6 +85,8 @@ public class TouristSpotFilterService {
                 .tel(spot.getTel())
                 .createdTime(spot.getCreatedTime())
                 .modifiedTime(spot.getModifiedTime())
+                .theme(theme)
+                .region(region)
                 .build();
     }
 }

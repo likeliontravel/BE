@@ -2,6 +2,7 @@ package org.example.be.place.accommodation.controller;
 
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.example.be.place.accommodation.dto.AccommodationDTO;
 import org.example.be.place.accommodation.dto.AccommodationResponseDTO;
 import org.example.be.place.accommodation.service.AccommodationFilterService;
 import org.example.be.place.entity.PlaceSortType;
@@ -39,7 +40,7 @@ public class AccommodationFilterController {
      * page, size, sort는 기본값 정해져있음(nullable)
      */
     @GetMapping("/accommodations")
-    public ResponseEntity<CommonResponse<List<AccommodationResponseDTO>>> getFilteredAccommodations(
+    public ResponseEntity<CommonResponse<List<AccommodationDTO>>> getFilteredAccommodations(
             @RequestParam(required = false) List<String> regions,
             @RequestParam(required = false) List<String> themes,
             @RequestParam(required = false) String keyword,
@@ -48,7 +49,7 @@ public class AccommodationFilterController {
             @RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
     ) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
-        List<AccommodationResponseDTO> result = accommodationFilterService.getFilteredAccommodations(regions, themes, keyword, pageable);
+        List<AccommodationDTO> result = accommodationFilterService.getFilteredAccommodations(regions, themes, keyword, pageable);
         return ResponseEntity.ok(CommonResponse.success(result, "숙소 필터링 조회 성공"));
     }
 
