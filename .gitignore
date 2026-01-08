@@ -37,5 +37,9 @@ out/
 .vscode/
 .DS_Store
 
-### 인증 파일 ###
+### 인증 파일 무시 ###
 src/main/resources/toleave-b9a7b3a17267.json
+/toleave-b9a7b3a17267.json
+
+## local TSL/SSL key ##
+*.p12

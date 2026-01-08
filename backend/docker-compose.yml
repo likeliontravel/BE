@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_DATABASE: toleave
+      MYSQL_ROOT_PASSWORD: 19990524
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - toleave-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: toleave-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - toleave-network
+    environment:
+      MAIL_PASSWORD: ${MAIL_PASSWORD} # .env파일로 비밀번호 분리
+
+  nginx:
+    image: nginx:latest
+    container_name: toleave-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt   # 인증서 저장소
+      - ./nginx/certbot/www:/var/www/certbot    # 인증서 발급용 웹루트
+    depends_on:
+      - app
+    networks:
+      - toleave-network
+
+volumes:
+  mysql-data:
+
+networks:
+  toleave-network:
