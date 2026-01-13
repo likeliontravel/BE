@@ -11,8 +11,8 @@ assignees: ""
 -
 
 ## 🧩 예상 브랜치명
-> (예시1) feat/profile-edit-Yoepee\
-> (예시2) fix/application-sort-Yoepee
+> (예시1) feat/profile-edit-Juchan\
+> (예시2) fix/application-sort-Juchan
 -
 
 ## 📎 참고 링크 (선택)
