@@ -1,0 +1,246 @@
+name: be-ci
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/be-ci.yml"
+  push:
+    branches: ["dev", "feat/**"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/be-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: be-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    env:
+      CI: true
+      SPRING_PROFILES_ACTIVE: test
+      # ✅ JOOQ 생성용 환경변수
+      SPRING__DATASOURCE__USERNAME: root
+      SPRING__DATASOURCE__PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SPRING__DATASOURCE__URL: jdbc:mariadb://localhost:3306/chwimeet
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Setup Java (Gradle JVM = 24)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "24"
+          cache: gradle
+
+      - name: Provision Java 25 for toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.DOT_ENV_CI }}" > .env
+          echo "✅ .env file created"
+
+      # ========================================
+      # 🚀 최적화: JOOQ 생성 결과 캐싱
+      # ========================================
+      - name: Cache JOOQ generated sources
+        id: cache-jooq
+        uses: actions/cache@v4
+        with:
+          path: backend/src/generated
+          key: jooq-${{ hashFiles('backend/src/main/resources/db/migration/*.sql', 'backend/build.gradle.kts') }}
+          restore-keys: |
+            jooq-
+
+      # Docker Compose로 MariaDB & Redis 시작
+      - name: Start MariaDB and Redis
+        run: |
+          echo "🚀 Starting MariaDB and Redis..."
+          docker compose up -d mariadb redis
+          echo "⏳ Waiting for services to be ready..."
+          sleep 10
+
+      - name: Verify containers are running
+        run: |
+          if ! docker ps | grep -q chwimeet-mariadb; then
+            echo "❌ MariaDB container is not running!"
+            docker compose logs mariadb
+            exit 1
+          fi
+          if ! docker ps | grep -q chwimeet-redis; then
+            echo "❌ Redis container is not running!"
+            docker compose logs redis
+            exit 1
+          fi
+          echo "✅ Both containers are running"
+
+      - name: Wait for MariaDB
+        run: |
+          echo "⏳ Waiting for MariaDB to accept connections..."
+          
+          MAX_TRIES=30
+          COUNTER=0
+          
+          until docker exec chwimeet-mariadb mariadb-admin ping -h localhost -uroot -p${{ secrets.DB_PASSWORD }} --silent 2>/dev/null; do
+            COUNTER=$((COUNTER + 1))
+          
+            if [ $COUNTER -ge $MAX_TRIES ]; then
+              echo "❌ MariaDB failed to start after ${MAX_TRIES} attempts"
+              docker compose logs mariadb
+              exit 1
+            fi
+          
+            echo "Waiting for MariaDB... (${COUNTER}/${MAX_TRIES})"
+            sleep 2
+          done
+          
+          echo "✅ MariaDB is ready!"
+
+      - name: Wait for Redis
+        run: |
+          echo "⏳ Waiting for Redis to accept connections..."
+          
+          MAX_TRIES=30
+          COUNTER=0
+          
+          until docker exec chwimeet-redis redis-cli -a ${{ secrets.REDIS_PASSWORD }} ping 2>/dev/null | grep -q PONG; do
+            COUNTER=$((COUNTER + 1))
+          
+            if [ $COUNTER -ge $MAX_TRIES ]; then
+              echo "❌ Redis failed to start after ${MAX_TRIES} attempts"
+              docker compose logs redis
+              exit 1
+            fi
+          
+            echo "Waiting for Redis... (${COUNTER}/${MAX_TRIES})"
+            sleep 2
+          done
+          
+          echo "✅ Redis is ready!"
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Print versions
+        run: |
+          ./gradlew --version
+          java -version
+
+      # ========================================
+      # 🚀 최적화: Flyway 마이그레이션이 변경된 경우만 JOOQ 재생성
+      # ========================================
+      - name: Generate JOOQ sources
+        if: steps.cache-jooq.outputs.cache-hit != 'true'
+        env:
+          SPRING__DATASOURCE__USERNAME: root
+          SPRING__DATASOURCE__PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SPRING__DATASOURCE__URL: jdbc:mariadb://localhost:3306/chwimeet
+        run: |
+          echo "=== Starting JOOQ Generation ==="
+          echo "Checking environment variables (masked):"
+          echo "SPRING__DATASOURCE__USERNAME=$SPRING__DATASOURCE__USERNAME"
+          echo "SPRING__DATASOURCE__URL=$SPRING__DATASOURCE__URL"
+          echo ""
+          echo "⚙️  JOOQ plugin will automatically run Flyway migration"
+          
+          # Run with stacktrace for better error messages
+          ./gradlew generateJooqClasses --no-daemon --stacktrace
+          
+          if [ -d "src/generated/com/back/jooq/tables" ]; then
+            echo "✅ JOOQ generated successfully"
+            ls -la src/generated/com/back/jooq/tables/
+          else
+            echo "❌ JOOQ generation failed"
+            exit 1
+          fi
+          
+          echo "=== Verifying tables in database ==="
+          docker exec chwimeet-mariadb mariadb -uroot -p${{ secrets.DB_PASSWORD }} -e "USE chwimeet; SHOW TABLES;"
+
+      - name: Skip JOOQ generation (using cache)
+        if: steps.cache-jooq.outputs.cache-hit == 'true'
+        run: |
+          echo "⚡ JOOQ generation skipped (using cached sources)"
+          if [ -d "src/generated/com/back/jooq/tables" ]; then
+            ls -la src/generated/com/back/jooq/tables/
+          else
+            echo "⚠️  Cache exists but files missing - will regenerate"
+            exit 1
+          fi
+
+      # ========================================
+      # 🚀 최적화: 테스트 병렬 실행
+      # ========================================
+      - name: Run tests (JUnit5) with coverage
+        run: |
+          ./gradlew test jacocoTestReport \
+            -x generateJooqClasses \
+            --parallel \
+            --max-workers=4 \
+            --build-cache \
+            --info \
+            --stacktrace \
+            --no-daemon
+
+      - name: Assemble (no tests)
+        run: ./gradlew assemble -x test -x jacocoTestReport -x generateJooqClasses --build-cache --no-daemon
+
+      # 테스트 결과 업로드
+      - name: Upload test results (JUnit XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-results
+          path: backend/build/test-results/test
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Upload test report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report-html
+          path: backend/build/reports/tests/test
+          if-no-files-found: ignore
+
+      - name: Upload coverage report (JaCoCo HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/build/reports/jacoco/test/html
+          if-no-files-found: ignore
+          retention-days: 3
+
+      # Docker Compose 정리
+      - name: Stop Docker services
+        if: always()
+        run: docker compose down -v
