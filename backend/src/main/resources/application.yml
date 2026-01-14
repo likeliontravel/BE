@@ -7,7 +7,6 @@ spring:
   profiles:
     active: local
 
-  ## Error Handling ##
   error:
     whitelabel:
       enabled: false
@@ -15,7 +14,6 @@ spring:
     include-stacktrace: never
     include-binding-errors: never
 
-  ## JPA ?? ##
   jpa:
     hibernate:
       ddl-auto: update
@@ -23,24 +21,20 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
 
-  ## Encoding ##
   servlet:
     encoding:
       charset: UTF-8
       enabled: true
       force: true
 
-    ## File Upload ##
     multipart:
       enabled: true
       max-file-size: 50MB
       max-request-size: 50MB
 
-  ## JWT ##
   jwt:
     secret: vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb
 
-  ## OAuth2 (?? ???) ##
   security:
     oauth2:
       client:
@@ -88,7 +82,6 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  ## Mail (????? env ??) ##
   mail:
     default-encoding: utf-8
     host: smtp.gmail.com
@@ -107,7 +100,6 @@ spring:
         mime:
           charset: UTF-8
 
-## Logging ##
 logging:
   level:
     org.springframework.security: DEBUG
