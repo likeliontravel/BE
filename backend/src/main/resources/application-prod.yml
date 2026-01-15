@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:mysql://mysql-db:3306/toleave?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    username: root
+    password: 19990524
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  cloud:
+    gcp:
+      project-id: toleave
+      credentials:
+        location: file:/app/toleave-b9a7b3a17267.json
