@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: toleave-be
+  config:
+    import: optional:file:.env[.properties]
   profiles:
     active: local
 
@@ -26,14 +28,37 @@ spring:
       charset: UTF-8
       enabled: true
       force: true
-
     multipart:
       enabled: true
       max-file-size: 50MB
       max-request-size: 50MB
 
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jwt:
-    secret: vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbb
+    secret: ${JWT_SECRET}
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+            required: true
+          auth: true
+          debug: true
+        mime:
+          charset: UTF-8
 
   security:
     oauth2:
@@ -41,27 +66,30 @@ spring:
         registration:
           google:
             client-name: google
-            client-id: 904615726252-kvb4iu09oof4gvdarbvedugs222bljl5.apps.googleusercontent.com
-            client-secret: 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
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: https://api.toleave.shop/login/oauth2/code/google
             authorization-grant-type: authorization_code
             scope: profile, email
+            provider: google
 
           naver:
             client-name: naver
-            client-id: RpQGjU3bIuvqEUc_A7u6
-            client-secret: luShyb7Fkq
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
             redirect-uri: https://api.toleave.shop/login/oauth2/code/naver
             authorization-grant-type: authorization_code
             scope: name, email
+            provider: naver
 
           kakao:
             client-name: kakao
-            client-id: c1ac44c0da315eb0544af535ad068de6
-            client-secret: dIt10l3mJacpRtNBpbO11SfdIJ694Wui
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             redirect-uri: https://api.toleave.shop/login/oauth2/code/kakao
             authorization-grant-type: authorization_code
             scope: profile_nickname, account_email, name, profile_image
+            provider: kakao
 
         provider:
           google:
@@ -82,38 +110,18 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  mail:
-    default-encoding: utf-8
-    host: smtp.gmail.com
-    port: 587
-    username: myhomehouse0813@gmail.com
-    password: ${MAIL_PASSWORD}
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          starttls:
-            enable: true
-            required: true
-          auth: true
-          debug: true
-        mime:
-          charset: UTF-8
-
 logging:
   level:
     org.springframework.security: DEBUG
     org.example.be: DEBUG
 
-## GCS Bucket ##
 gcs:
   bucket:
-    toleave: toleave-image-upload
-    profile: toleave_user_profile_image
-    chat: toleave_chat_image
+    toleave: ${GCS_BUCKET_TOLEAVE}
+    profile: ${GCS_BUCKET_PROFILE}
+    chat: ${GCS_BUCKET_CHAT}
 
-## Tour API ##
 api:
-  url: http://apis.data.go.kr/B551011/KorService2
+  url: ${API_URL}
 
-service-key: VpBLiaZSE%2F%2Fk7HQfyz%2BIRQZoVqZeIVr1vxlSmLEwL7EQ37NEwcojGe7zse2WpOTHV2NIIt5hfT%2Ft86K5iDJHng%3D%3D
+service-key: ${SERVICE_KEY}
