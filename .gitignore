@@ -43,3 +43,8 @@ src/main/resources/toleave-b9a7b3a17267.json
 
 ## local TSL/SSL key ##
 *.p12
+
+## Environment Variables & Secrets ##
+.env
+.env.prod
+!.env.default
