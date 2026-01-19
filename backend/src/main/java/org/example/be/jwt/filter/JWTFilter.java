@@ -41,12 +41,19 @@ public class JWTFilter extends OncePerRequestFilter {
 			|| requestURI.startsWith("/mail")
 			|| requestURI.startsWith("/tourism/fetch/")
 			|| requestURI.startsWith("/tourism/refresh/")
+			|| requestURI.startsWith("/oauth2/")
+			|| requestURI.startsWith("/login/oauth2/")
+			|| requestURI.startsWith("/ws")
+			|| requestURI.startsWith("/mail")
+			|| requestURI.startsWith("/tourism/fetch/")
 			|| requestURI.startsWith("/places")
 			|| requestURI.startsWith("/schedule/get/")
 			|| requestURI.startsWith("/board/search")
 			|| requestURI.startsWith("/board/all")
 			|| requestURI.startsWith("/board/byTheme")
 			|| requestURI.startsWith("/board/byRegion")
+			|| requestURI.startsWith("/favicon.ico")
+			|| requestURI.startsWith("/.well-known/")
 			|| ("GET".equals(requestHttpMethod) && requestURI.startsWith("/board/"))
 			|| ("GET".equals(requestHttpMethod) && requestURI.startsWith("/comment/"))
 		) {
@@ -239,5 +246,4 @@ public class JWTFilter extends OncePerRequestFilter {
 
 		response.getWriter().write(jsonResponse);
 	}
-
 }
