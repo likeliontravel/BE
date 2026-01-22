@@ -50,6 +50,7 @@ public class TourApiClient {
 			.queryParam("MobileOS", "ETC")
 			.queryParam("MobileApp", "Test")
 			.queryParam("_type", "json")
+			.queryParam("numOfRows", 100)
 			.queryParam("serviceKey", serviceKey)
 			.build(true)
 			.toUriString();
@@ -75,6 +76,7 @@ public class TourApiClient {
 			.queryParam("_type", "json")
 			.queryParam("serviceKey", serviceKey)
 			.queryParam("areaCode", areaCode)
+			.queryParam("numOfRows", 100)
 			.build(true)
 			.toUriString();
 
