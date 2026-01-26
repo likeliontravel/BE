@@ -87,6 +87,7 @@ public class SecurityConfig {
 				.requestMatchers("/general-user/signup").permitAll()
 				.requestMatchers("/login").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
+				.requestMatchers("/login/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/mail/**").permitAll()
