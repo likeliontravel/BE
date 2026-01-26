@@ -1,5 +1,7 @@
 package org.example.be.member.service;
 
+import java.util.Optional;
+
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
@@ -24,5 +26,23 @@ public class MemberService {
 		Member member = Member.createForJoin(reqBody.email(), reqBody.name(), password, null);
 		return memberRepository.save(member);
 
+	}
+
+	public Member authenticateAndGetMember(String email, String password) {
+		Member member = findByEmail(email)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+
+		checkPassword(member, password);
+		return member;
+	}
+
+	public Optional<Member> findByEmail(String email) {
+		return memberRepository.findByEmail(email);
+	}
+
+	public void checkPassword(Member member, String password) {
+		if (!passwordEncoder.matches(password, member.getPassword())) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
+		}
 	}
 }
