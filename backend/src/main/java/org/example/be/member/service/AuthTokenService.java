@@ -28,8 +28,7 @@ public class AuthTokenService {
 			"id", member.getId(),
 			"email", member.getEmail(),
 			"name", member.getName(),
-			"provider", member.getOauthProvider().toString(),
-			"role", member.getRole()
+			"provider", member.getOauthProvider()
 		);
 
 		return JwtUt.toString(jwtSecretKey, accessTokenExpireSeconds, claims);

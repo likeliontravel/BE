@@ -23,7 +23,7 @@ public class MemberService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다.");
 		}
 		String password = passwordEncoder.encode(reqBody.password());
-		Member member = Member.createForJoin(reqBody.email(), reqBody.name(), password, null);
+		Member member = Member.createForJoin(reqBody.email(), reqBody.name(), password);
 		return memberRepository.save(member);
 
 	}
