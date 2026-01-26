@@ -41,6 +41,8 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
+  accessToken:
+    expire-seconds: 1000
 
   mail:
     host: ${MAIL_HOST}

@@ -2,6 +2,7 @@ package org.example.be.member.controller;
 
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
+import org.example.be.member.dto.MemberLoginReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.MemberService;
 import org.example.be.response.CommonResponse;
@@ -27,6 +28,11 @@ public class MemberController {
 		Member member = memberService.join(reqBody);
 		MemberDto memberDto = MemberDto.from(member);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(memberDto, "회원가입 성공"));
+	}
+
+	@PostMapping("/login")
+	public ResponseEntity<CommonResponse<MemberDto>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
+
 	}
 
 }
