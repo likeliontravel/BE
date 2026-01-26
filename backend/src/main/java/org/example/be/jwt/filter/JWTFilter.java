@@ -42,6 +42,7 @@ public class JWTFilter extends OncePerRequestFilter {
 			|| requestURI.startsWith("/tourism/fetch/")
 			|| requestURI.startsWith("/tourism/refresh/")
 			|| requestURI.startsWith("/oauth2/")
+			|| requestURI.startsWith("/members")
 			|| requestURI.startsWith("/login/oauth2/")
 			|| requestURI.startsWith("/ws")
 			|| requestURI.startsWith("/mail")
