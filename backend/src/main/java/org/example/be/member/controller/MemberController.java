@@ -25,7 +25,8 @@ public class MemberController {
 	public ResponseEntity<CommonResponse<MemberDto>> join(@Valid @RequestBody MemberJoinReqBody reqBody) {
 
 		Member member = memberService.join(reqBody);
-		MemberDto memberDto = memberService.toMemberDto(member);
+		MemberDto memberDto = MemberDto.from(member);
+		
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(memberDto, "회원가입 성공"));
 	}
 
