@@ -4,8 +4,10 @@ import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
 import org.example.be.member.entity.Member;
+import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
 import org.example.be.response.CommonResponse;
+import org.example.be.web.CookieHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberController {
 	private final MemberService memberService;
+	private final AuthTokenService authTokenService;
+	private final CookieHelper cookieHelper;
 
 	@PostMapping
 	public ResponseEntity<CommonResponse<MemberDto>> join(@Valid @RequestBody MemberJoinReqBody reqBody) {
@@ -32,6 +36,17 @@ public class MemberController {
 
 	@PostMapping("/login")
 	public ResponseEntity<CommonResponse<MemberDto>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
+		Member member = memberService.authenticateAndGetMember(reqBody.email(), reqBody.password());
+		issueTokensAndSetCookies(member);
+
+		MemberDto memberDto = MemberDto.from(member);
+		return ResponseEntity.ok(CommonResponse.success(memberDto, "로그인 성공"));
+	}
+
+	private void issueTokensAndSetCookies(Member member) {
+		String accessToken = authTokenService.genAccessToken(member);
+
+		cookieHelper.setCookie("accessToken", accessToken);
 
 	}
 
