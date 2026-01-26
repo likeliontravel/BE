@@ -85,6 +85,7 @@ public class SecurityConfig {
 
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/general-user/signup").permitAll()
+				.requestMatchers(HttpMethod.POST, "/members").permitAll()
 				.requestMatchers("/login").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/login/oauth2/**").permitAll()

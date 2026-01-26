@@ -27,10 +27,10 @@ public class Base {
 
 	@CreatedDate
 	@Column(name = "created_at")
-	private LocalDateTime createdAt;
+	private LocalDateTime createdTime;
 
 	@LastModifiedDate
-	@Column(name = "modified_at")
-	private LocalDateTime modifiedAt;
+	@Column(name = "updated_at")
+	private LocalDateTime updatedTime;
 
 }

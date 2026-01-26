@@ -1,14 +1,13 @@
 package org.example.be.member.dto;
 
 import org.example.be.member.entity.Member;
-import org.example.be.member.type.MemberRole;
 
 public record MemberDto(
 	Long id,
 	String email,
 	String name,
 	String profileImageUrl,
-	MemberRole role,
+	String role,
 	boolean policyAgreed,
 	boolean subscribed,
 	String oauthProvider
@@ -16,13 +15,15 @@ public record MemberDto(
 	public static MemberDto from(Member member) {
 		return new MemberDto(
 			member.getId(),
-			member.get(),
+			member.getEmail(),
 			member.getName(),
 			member.getProfileImageUrl(),
-			member.getRole(),
-			member.isPolicyAgreed(),
-			member.isSubscribed(),
-			member.getProvider()
+			member.getRole().name(),
+			Boolean.TRUE.equals(member.getPolicyAgreed()),
+			Boolean.TRUE.equals(member.getSubscribed()),
+			member.getOauthProvider() != null
+				? member.getOauthProvider().name()
+				: null
 		);
 	}
 }

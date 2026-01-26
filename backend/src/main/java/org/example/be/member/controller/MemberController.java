@@ -26,7 +26,6 @@ public class MemberController {
 
 		Member member = memberService.join(reqBody);
 		MemberDto memberDto = MemberDto.from(member);
-		
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(memberDto, "회원가입 성공"));
 	}
 

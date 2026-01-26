@@ -44,4 +44,7 @@ public class Member extends Base {
 	@Enumerated(EnumType.STRING)
 	private OauthProvider oauthProvider;
 
+	public static Member createForJoin(String email, String name, String password, OauthProvider oauthProvider) {
+		return new Member(email, name, null, MemberRole.USER, password, false, false, oauthProvider);
+	}
 }
