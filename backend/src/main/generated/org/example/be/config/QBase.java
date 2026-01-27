@@ -21,6 +21,8 @@ public class QBase extends EntityPathBase<Base> {
 
     public final DateTimePath<java.time.LocalDateTime> createdTime = createDateTime("createdTime", java.time.LocalDateTime.class);
 
+    public final NumberPath<Long> id = createNumber("id", Long.class);
+
     public final DateTimePath<java.time.LocalDateTime> updatedTime = createDateTime("updatedTime", java.time.LocalDateTime.class);
 
     public QBase(String variable) {
