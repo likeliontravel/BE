@@ -1,8 +1,13 @@
 package org.example.be.member.entity;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.example.be.config.Base;
 import org.example.be.member.type.MemberRole;
 import org.example.be.member.type.OauthProvider;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,5 +53,9 @@ public class Member extends Base {
 
 	public static Member createForJoin(String email, String name, String password) {
 		return new Member(email, name, null, MemberRole.USER, password, false, false, OauthProvider.General);
+	}
+
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
 	}
 }

@@ -3,17 +3,11 @@ package org.example.be.security.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.example.be.jwt.filter.JWTFilter;
-import org.example.be.jwt.provider.JWTProvider;
-import org.example.be.jwt.service.JWTBlackListService;
-import org.example.be.jwt.util.JWTUtil;
+import org.example.be.jwt.util.JsonUt;
 import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
-import org.example.be.security.filter.RestAuthenticationFilter;
-import org.example.be.security.handler.RestAccessDeniedHandler;
-import org.example.be.security.handler.RestAuthenticationEntryPoint;
-import org.example.be.security.handler.RestAuthenticationFailureHandler;
-import org.example.be.security.handler.RestAuthenticationSuccessHandler;
+import org.example.be.response.CommonResponse;
+import org.example.be.security.filter.CustomAuthenticationFilter;
 import org.example.be.security.handler.RestLogoutHandler;
 import org.example.be.security.handler.RestLogoutSuccessHandler;
 import org.example.be.security.provider.RestAuthenticationProvider;
@@ -32,6 +26,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -40,15 +35,11 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
 	private final RestAuthenticationProvider restAuthenticationProvider;
-	private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
-	private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
 	private final RestLogoutHandler restLogoutHandler;
 	private final RestLogoutSuccessHandler restLogoutSuccessHandler;
-	private final JWTProvider jwtProvider;
-	private final JWTUtil jwtUtil;
-	private final JWTBlackListService jwtBlackListService;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CustomSuccessHandler customSuccessHandler;
+	private final CustomAuthenticationFilter customAuthenticationFilter;
 
 	@Bean
 	public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -62,8 +53,7 @@ public class SecurityConfig {
 
 	// 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http,
-		AuthenticationManager authenticationManager) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 		http
 			// csrf 기능 끄기
@@ -86,6 +76,7 @@ public class SecurityConfig {
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/general-user/signup").permitAll()
 				.requestMatchers(HttpMethod.POST, "/members").permitAll()
+				.requestMatchers(HttpMethod.POST, "/members/profile").permitAll()
 				.requestMatchers("/members/login").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/login/oauth2/**").permitAll()
@@ -103,12 +94,7 @@ public class SecurityConfig {
 				.anyRequest().authenticated()
 			)
 
-			// 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
-			.addFilterBefore(restAuthenticationFilter(authenticationManager),
-				UsernamePasswordAuthenticationFilter.class)
-			// JWT 필터 추가 RestAuthenticationFilter 이전에 추가
-			.addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
-
+			.addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 			// 로그아웃 필터 설정
 			.logout(logout -> logout
 				.logoutUrl("/logout")
@@ -117,25 +103,28 @@ public class SecurityConfig {
 				.invalidateHttpSession(true)
 				.clearAuthentication(true))
 
-			// 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
-			.exceptionHandling(exception -> exception
-				.authenticationEntryPoint(new RestAuthenticationEntryPoint())
-				.accessDeniedHandler(new RestAccessDeniedHandler())
+			.exceptionHandling(
+				exceptionHandling -> exceptionHandling
+					.authenticationEntryPoint(
+						(request, response, authException) -> {
+							response.setContentType("application/json;charset=UTF-8");
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							CommonResponse<Void> errorResponse = CommonResponse.error(401, "로그인 후 이용해주세요.");
+							response.getWriter().write(JsonUt.toString(errorResponse));
+							response.getWriter().flush();
+						}
+					)
+					.accessDeniedHandler(
+						(request, response, accessDeniedException) -> {
+							response.setContentType("application/json;charset=UTF-8");
+							response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+							CommonResponse<Void> errorResponse = CommonResponse.error(403, "권한이 없습니다.");
+							response.getWriter().write(JsonUt.toString(errorResponse));
+							response.getWriter().flush();
+						}
+					)
 			);
-
 		return http.build();
-	}
-
-	private RestAuthenticationFilter restAuthenticationFilter(AuthenticationManager authenticationManager) {
-
-		RestAuthenticationFilter restAuthenticationFilter = new RestAuthenticationFilter();
-
-		restAuthenticationFilter.setAuthenticationManager(authenticationManager);
-
-		restAuthenticationFilter.setAuthenticationFailureHandler(restAuthenticationFailureHandler);
-		restAuthenticationFilter.setAuthenticationSuccessHandler(restAuthenticationSuccessHandler);
-
-		return restAuthenticationFilter;
 	}
 
 	@Bean

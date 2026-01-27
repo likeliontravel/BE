@@ -1,8 +1,11 @@
 package org.example.be.web;
 
+import java.util.Arrays;
+
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class CookieHelper {
 	private final HttpServletRequest req;
 	private final HttpServletResponse resp;
+
+	public String getCookieValue(String name, String defaultValue) {
+		if (req.getCookies() == null)
+			return defaultValue;
+
+		return Arrays.stream(req.getCookies())
+			.filter(cookie -> name.equals(cookie.getName()))
+			.map(Cookie::getValue)
+			.findFirst()
+			.orElse(defaultValue);
+	}
 
 	public void setCookie(String name, String value) {
 		boolean delete = (value == null) || value.isBlank();
