@@ -8,9 +8,12 @@ import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
 import org.example.be.response.CommonResponse;
+import org.example.be.security.config.SecurityUser;
 import org.example.be.web.CookieHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,9 +42,10 @@ public class MemberController {
 	public ResponseEntity<CommonResponse<MemberLoginResBody>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
 		Member member = memberService.authenticateAndGetMember(reqBody.email(), reqBody.password());
 		String accessToken = issueTokensAndSetCookies(member);
+		String refreshToken = RefreshToken(member);
 
 		MemberDto memberDto = MemberDto.from(member);
-		MemberLoginResBody resBody = new MemberLoginResBody(memberDto, accessToken);
+		MemberLoginResBody resBody = new MemberLoginResBody(memberDto, accessToken, refreshToken);
 		return ResponseEntity.ok(CommonResponse.success(resBody, "로그인 성공"));
 	}
 
@@ -52,14 +56,29 @@ public class MemberController {
 		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
 	}
 
+	@GetMapping("/profile")
+	public ResponseEntity<CommonResponse<MemberDto>> profile(@AuthenticationPrincipal SecurityUser securityUser) {
+		Member member = memberService.getById(securityUser.getId());
+		MemberDto memberDto = MemberDto.from(member);
+		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
+	}
+
 	private void revokeRefreshTokenAndClearCookies() {
-		
 		cookieHelper.deleteCookie("accessToken");
+		cookieHelper.deleteCookie("refreshToken");
 	}
 
 	private String issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);
 		cookieHelper.setCookie("accessToken", accessToken);
+
 		return accessToken;
+	}
+
+	private String RefreshToken(Member member) {
+		String refreshToken = authTokenService.RefreshToken(member);
+		cookieHelper.setCookie("refreshToken", refreshToken);
+
+		return refreshToken;
 	}
 }

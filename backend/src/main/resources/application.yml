@@ -43,6 +43,8 @@ spring:
     secret: ${JWT_SECRET}
   accessToken:
     expire-seconds: 1000
+  refreshToken:
+    expire-seconds: 10000000
 
   mail:
     host: ${MAIL_HOST}
