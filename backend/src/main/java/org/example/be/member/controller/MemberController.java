@@ -45,6 +45,18 @@ public class MemberController {
 		return ResponseEntity.ok(CommonResponse.success(resBody, "로그인 성공"));
 	}
 
+	@PostMapping("/logout")
+	public ResponseEntity<CommonResponse<Void>> logout() {
+		revokeRefreshTokenAndClearCookies();
+
+		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
+	}
+
+	private void revokeRefreshTokenAndClearCookies() {
+		
+		cookieHelper.deleteCookie("accessToken");
+	}
+
 	private String issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);
 		cookieHelper.setCookie("accessToken", accessToken);
