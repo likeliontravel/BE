@@ -58,4 +58,8 @@ public class Member extends Base {
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
 	}
+
+	public void changePassword(String newEncodedPassword) {
+		this.password = newEncodedPassword;
+	}
 }

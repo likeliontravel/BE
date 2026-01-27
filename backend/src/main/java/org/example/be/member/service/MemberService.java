@@ -3,11 +3,13 @@ package org.example.be.member.service;
 import java.util.Optional;
 
 import org.example.be.member.dto.MemberJoinReqBody;
+import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
@@ -50,4 +52,19 @@ public class MemberService {
 		return memberRepository.findById(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
 	}
+
+	// 비밀번호 변경 로직
+	@Transactional
+	public void updatePassword(PasswordUpdateReqBody reqBody) {
+
+		Member member = memberRepository.findByEmail(reqBody.email())
+			.orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 없습니다."));
+
+		// 새 비밀번호 암호화 및 업데이트
+		String newEncodedPassword = passwordEncoder.encode(reqBody.password());
+		member.changePassword(newEncodedPassword);
+
+		memberRepository.save(member);
+	}
+
 }

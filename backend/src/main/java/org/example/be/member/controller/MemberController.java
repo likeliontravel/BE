@@ -4,6 +4,7 @@ import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
 import org.example.be.member.dto.MemberLoginResBody;
+import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,6 +63,14 @@ public class MemberController {
 		Member member = memberService.getById(securityUser.getId());
 		MemberDto memberDto = MemberDto.from(member);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
+	}
+
+	// 비밀번호 변경
+	@PutMapping("/passwordUpdate")
+	public ResponseEntity<CommonResponse<String>> updatePassword(
+		@RequestBody PasswordUpdateReqBody passwordUpdateReqBody) {
+		memberService.updatePassword(passwordUpdateReqBody);
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
 	}
 
 	private void revokeRefreshTokenAndClearCookies() {
