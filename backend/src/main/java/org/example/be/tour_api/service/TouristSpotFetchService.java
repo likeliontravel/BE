@@ -3,6 +3,7 @@ package org.example.be.tour_api.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.place.region.TourRegion;
@@ -98,7 +99,7 @@ public class TouristSpotFetchService {
 		if (touristSpotRepository.existsByContentId(contentId))
 			return;
 
-		String areaCode = String.valueOf(item.get("areaCode"));
+		String areaCode = String.valueOf(item.get("areacode"));
 		Object rawSigungu = item.get("sigungucode");
 		String siGunGuCode =
 			rawSigungu != null && !String.valueOf(rawSigungu).isBlank() ? String.valueOf(rawSigungu) : "99";
@@ -184,4 +185,64 @@ public class TouristSpotFetchService {
 			return null;
 		}
 	}
+
+	// 응답받은 json에서 sigungucode값만 안전하게 추출. 만약 빈 값이나 null이면 99(기타) 반환
+	private String getSiGunGuCode(Map<String, Object> item) {
+		Object raw = item.get("sigungucode");
+		return (raw != null && !String.valueOf(raw).isBlank())
+			? String.valueOf(raw)
+			: "99";
+	}
+
+	/**
+	 * json에서 TourRegion 매칭
+	 * - 1차 : 정확한 areaCode + siGunGuCode 매칭
+	 * - 2차 : 같은 areaCode의  "기타" (siGunGuCode=99) 매칭
+	 *
+	 * @param item TourAPI에서 파싱된 여행지 데이터
+	 * @return 매칭된 TourRegion 엔티티
+	 * @throws IllegalStateException 매칭 실패 시
+	 */
+	private TourRegion resolveTourRegion(Map<String, Object> item) {
+		String areaCode = String.valueOf(item.get("areacode"));
+		String siGunGuCode = getSiGunGuCode(item);
+
+		// 1차 : 정확한 매칭 시도
+		Optional<TourRegion> exact = tourRegionRepository.findByAreaCodeAndSiGunGuCode(areaCode, siGunGuCode);
+		if (exact.isPresent()) {
+			return exact.get();
+		}
+
+		// 2차 : 같은 areaCode의 "기타"로 분류 결정
+		log.warn("[TourRegion Fallback] areaCode={}, siGunGuCode={} -> 같은 지역 기타 분류 발생", areaCode, siGunGuCode);
+		return tourRegionRepository.findByAreaCodeAndSiGunGuCode(areaCode, "99")
+			.orElseThrow(() -> new IllegalStateException("TourRegion 매칭 실패 - areaCode: " + areaCode));
+	}
+
+	/**
+	 * json에서 PlaceCategory 매칭
+	 * - 1차 : cat3코드로 정확한 매칭
+	 * - 2차 : theme="기타"인 카테고리로 fallback
+	 *
+	 * @param item TourAPI에서 파싱된 여행지 데이터
+	 * @return 매칭된 PlaceCategory 엔티티
+	 * @throws IllegalStateException 매칭 실패 시
+	 */
+	private PlaceCategory resolvePlaceCategory(Map<String, Object> item) {
+		String cat3 = String.valueOf(item.get("cat3"));
+
+		// 1차 : cat3로 정확한 매칭
+		if (cat3 != null && !cat3.isBlank() && !"null".equals(cat3)) {
+			Optional<PlaceCategory> exact = placeCategoryRepository.findByCat3(cat3);
+			if (exact.isPresent()) {
+				return exact.get();
+			}
+		}
+
+		// 2차 : theme="기타"로 fallback
+		log.warn("[PlaceCategory Fallback] cat3={} -> 기타", cat3);
+		return placeCategoryRepository.findFirstByTheme("기타")
+			.orElseThrow(() -> new IllegalStateException("PlaceCategory 매칭 실패 - 기타 테마 없음"));
+	}
+
 }
