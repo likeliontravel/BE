@@ -1,7 +1,10 @@
 package org.example.be.tour_api.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.theme.PlaceCategory;
@@ -14,160 +17,171 @@ import org.example.be.tour_api.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TouristSpotFetchService {
 
-    private final TouristSpotRepository touristSpotRepository;
-    private final TourApiClient tourApiClient;
-    private final TourApiParser tourApiParser;
-    // 변경된 스키마에 따라 저장 시점에 연관관계를 완결내도록 조정하면서 추가
-    private final TourRegionRepository tourRegionRepository;
-    private final PlaceCategoryRepository placeCategoryRepository;
+	private final TouristSpotRepository touristSpotRepository;
+	private final TourApiClient tourApiClient;
+	private final TourApiParser tourApiParser;
+	// 변경된 스키마에 따라 저장 시점에 연관관계를 완결내도록 조정하면서 추가
+	private final TourRegionRepository tourRegionRepository;
+	private final PlaceCategoryRepository placeCategoryRepository;
 
-    @Value("${service-key}")
-    private String serviceKey;
+	@Value("${service-key}")
+	private String serviceKey;
 
-    public List<TouristSpotDTO> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
-        if (pageNo <= 0) {
-            return getAllData(areaCode, state, contentTypeId, numOfRows);
-        } else {
-            return getPageData(areaCode, state, contentTypeId, numOfRows, pageNo);
-        }
-    }
+	public List<TouristSpotDTO> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows,
+		int pageNo) throws Exception {
+		if (pageNo <= 0) {
+			return getAllData(areaCode, state, contentTypeId, numOfRows);
+		} else {
+			return getPageData(areaCode, state, contentTypeId, numOfRows, pageNo);
+		}
+	}
 
-    // 페이지 입력 시 fetch
-    private List<TouristSpotDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows, int pageNo) throws Exception {
-        String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-        log.debug("[TourAPI JSON 응답] {}", json);
-        List<Map<String, Object>> items = tourApiParser.parseItems(json);
-        log.debug("[Debug] parsed items size: " + items.size());
+	// 페이지 입력 시 fetch
+	private List<TouristSpotDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
+		int pageNo) throws Exception {
+		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+		log.debug("[TourAPI JSON 응답] {}", json);
+		List<Map<String, Object>> items = tourApiParser.parseItems(json);
+		log.debug("[Debug] parsed items size: " + items.size());
 
-        return items.stream()
-                .filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
-                .peek(this::saveIfNotExist)
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
+		return items.stream()
+			.filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
+			.peek(this::saveIfNotExist)
+			.map(this::toDTO)
+			.collect(Collectors.toList());
+	}
 
-    // 페이지 미입력시 전체 데이터 fetch
-    private List<TouristSpotDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws Exception {
-        int pageNo = 1;
-        List<TouristSpotDTO> allItems = new ArrayList<>();
+	// 페이지 미입력시 전체 데이터 fetch
+	private List<TouristSpotDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
+		Exception {
+		int pageNo = 1;
+		List<TouristSpotDTO> allItems = new ArrayList<>();
 
-        while (true) {
-            String json =tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-            System.out.println("[Debug] Raw Json from tour api: \n" + json);
-            log.debug("[Debug] Raw Json from tour api: \n {}", json);
-            List<Map<String, Object>> items = tourApiParser.parseItems(json);
-            log.debug("[Debug] parsed items size: {} ", items.size());
+		while (true) {
+			String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+			System.out.println("[Debug] Raw Json from tour api: \n" + json);
+			log.debug("[Debug] Raw Json from tour api: \n {}", json);
+			List<Map<String, Object>> items = tourApiParser.parseItems(json);
+			log.debug("[Debug] parsed items size: {} ", items.size());
 
-            List<Map<String, Object>> filtered = items.stream()
-                    .filter(item -> {
-                        log.debug("addr1: {}", item.get("addr1"));
-                        return item.get("addr1") != null && item.get("addr1").toString().contains(state);
-                    })
-                    .collect(Collectors.toList());
+			List<Map<String, Object>> filtered = items.stream()
+				.filter(item -> {
+					log.debug("addr1: {}", item.get("addr1"));
+					return item.get("addr1") != null && item.get("addr1").toString().contains(state);
+				})
+				.collect(Collectors.toList());
 
-            if (filtered.isEmpty()) break;
+			if (filtered.isEmpty())
+				break;
 
-            filtered.forEach(this::saveIfNotExist);
-            allItems.addAll(filtered.stream().map(this::toDTO).toList());
-            pageNo++;
-        }
+			filtered.forEach(this::saveIfNotExist);
+			allItems.addAll(filtered.stream().map(this::toDTO).toList());
+			pageNo++;
+		}
 
-        return allItems;
-    }
+		return allItems;
+	}
 
-    // contentId로 조회 시 없는 경우 ( 기존에 없던 장소일 경우 ) 새로 저장
-    private void saveIfNotExist(Map<String, Object> item) {
-        String contentId = String.valueOf(item.get("contentid"));
+	// contentId로 조회 시 없는 경우 ( 기존에 없던 장소일 경우 ) 새로 저장
+	private void saveIfNotExist(Map<String, Object> item) {
+		String contentId = String.valueOf(item.get("contentid"));
 
-        // 이미 존재하는 장소인지 검증 (없는 경우만 저장)
-        if (touristSpotRepository.existsByContentId(contentId)) return;
+		// 이미 존재하는 장소인지 검증 (없는 경우만 저장)
+		if (touristSpotRepository.existsByContentId(contentId))
+			return;
 
-        String areaCode = String.valueOf(item.get("areaCode"));
-        Object rawSigungu = item.get("sigungucode");
-        String siGunGuCode = rawSigungu != null && !String.valueOf(rawSigungu).isBlank() ? String.valueOf(rawSigungu) : "99";
+		String areaCode = String.valueOf(item.get("areaCode"));
+		Object rawSigungu = item.get("sigungucode");
+		String siGunGuCode =
+			rawSigungu != null && !String.valueOf(rawSigungu).isBlank() ? String.valueOf(rawSigungu) : "99";
 
-        String cat3 = (String) item.get("cat3");
+		String cat3 = (String)item.get("cat3");
 
-        TourRegion tourRegion = tourRegionRepository
-                .findByAreaCodeAndSiGunGuCode(areaCode, siGunGuCode)
-                .orElseThrow(() -> new IllegalArgumentException("TourRegion 매칭 실패: " + areaCode + " " + siGunGuCode));
+		log.warn(
+			"[RegionMatch] contentId={}, title={}, areaCode={}, sigunguCode={}",
+			item.get("contentid"),
+			item.get("title"),
+			item.get("areacode"),
+			item.get("sigungucode")
+		);
 
-        PlaceCategory placeCategory = placeCategoryRepository
-                .findByCat3(cat3)
-                .orElseThrow(() -> new IllegalArgumentException("PlaceCategory 매칭 실패: " + cat3));
+		TourRegion tourRegion = tourRegionRepository
+			.findByAreaCodeAndSiGunGuCode(areaCode, siGunGuCode)
+			.orElseThrow(() -> new IllegalArgumentException("TourRegion 매칭 실패: " + areaCode + " " + siGunGuCode));
 
-        TouristSpot touristSpot = TouristSpot.builder()
-                .contentId(contentId)
-                .title((String) item.get("title"))
-                .addr1((String) item.get("addr1"))
-                .addr2((String) item.get("addr2"))
-                .areaCode(areaCode)
-                .siGunGuCode(siGunGuCode)
-                .cat1((String) item.get("cat1"))
-                .cat2((String) item.get("cat2"))
-                .cat3(cat3)
-                .imageUrl((String) item.get("firstimage"))
-                .thumbnailImageUrl((String) item.get("firstimage2"))
-                .mapX(toDouble(item.get("mapx")))
-                .mapY(toDouble(item.get("mapy")))
-                .mLevel(toInteger(item.get("mlevel")))
-                .tel((String) item.get("tel"))
-                .modifiedTime((String) item.get("modifiedtime"))
-                .createdTime((String) item.get("createdtime"))
-                .tourRegion(tourRegion)
-                .placeCategory(placeCategory)
-                .build();
+		PlaceCategory placeCategory = placeCategoryRepository
+			.findByCat3(cat3)
+			.orElseThrow(() -> new IllegalArgumentException("PlaceCategory 매칭 실패: " + cat3));
 
-        touristSpotRepository.save(touristSpot);
-    }
+		TouristSpot touristSpot = TouristSpot.builder()
+			.contentId(contentId)
+			.title((String)item.get("title"))
+			.addr1((String)item.get("addr1"))
+			.addr2((String)item.get("addr2"))
+			.areaCode(areaCode)
+			.siGunGuCode(siGunGuCode)
+			.cat1((String)item.get("cat1"))
+			.cat2((String)item.get("cat2"))
+			.cat3(cat3)
+			.imageUrl((String)item.get("firstimage"))
+			.thumbnailImageUrl((String)item.get("firstimage2"))
+			.mapX(toDouble(item.get("mapx")))
+			.mapY(toDouble(item.get("mapy")))
+			.mLevel(toInteger(item.get("mlevel")))
+			.tel((String)item.get("tel"))
+			.modifiedTime((String)item.get("modifiedtime"))
+			.createdTime((String)item.get("createdtime"))
+			.tourRegion(tourRegion)
+			.placeCategory(placeCategory)
+			.build();
 
-    // TouristSpot -> DTO 변환
-    private TouristSpotDTO toDTO(Map<String, Object> item) {
-        return TouristSpotDTO.builder()
-                .contentId((String) item.get("contentid"))
-                .title((String) item.get("title"))
-                .addr1((String) item.get("addr1"))
-                .addr2((String) item.get("addr2"))
-                .areaCode((String) item.get("areacode"))
-                .siGunGuCode((String) item.get("sigungucode"))
-                .cat1((String) item.get("cat1"))
-                .cat2((String) item.get("cat2"))
-                .cat3((String) item.get("cat3"))
-                .imageUrl((String) item.get("firstimage"))
-                .thumbnailImageUrl((String) item.get("firstimage2"))
-                .mapX(toDouble(item.get("mapx")))
-                .mapY(toDouble(item.get("mapy")))
-                .mLevel(toInteger(item.get("mlevel")))
-                .tel((String) item.get("tel"))
-                .modifiedTime((String) item.get("modifiedtime"))
-                .createdTime((String) item.get("createdtime"))
-                .build();
-    }
+		touristSpotRepository.save(touristSpot);
+	}
 
-    private Double toDouble(Object obj) {
-        try {
-            return obj != null ? Double.parseDouble(obj.toString()) : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+	// TouristSpot -> DTO 변환
+	private TouristSpotDTO toDTO(Map<String, Object> item) {
+		return TouristSpotDTO.builder()
+			.contentId((String)item.get("contentid"))
+			.title((String)item.get("title"))
+			.addr1((String)item.get("addr1"))
+			.addr2((String)item.get("addr2"))
+			.areaCode((String)item.get("areacode"))
+			.siGunGuCode((String)item.get("sigungucode"))
+			.cat1((String)item.get("cat1"))
+			.cat2((String)item.get("cat2"))
+			.cat3((String)item.get("cat3"))
+			.imageUrl((String)item.get("firstimage"))
+			.thumbnailImageUrl((String)item.get("firstimage2"))
+			.mapX(toDouble(item.get("mapx")))
+			.mapY(toDouble(item.get("mapy")))
+			.mLevel(toInteger(item.get("mlevel")))
+			.tel((String)item.get("tel"))
+			.modifiedTime((String)item.get("modifiedtime"))
+			.createdTime((String)item.get("createdtime"))
+			.build();
+	}
 
-    private Integer toInteger(Object obj) {
-        try{
-            return obj != null ? Integer.parseInt(obj.toString()) : null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+	private Double toDouble(Object obj) {
+		try {
+			return obj != null ? Double.parseDouble(obj.toString()) : null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private Integer toInteger(Object obj) {
+		try {
+			return obj != null ? Integer.parseInt(obj.toString()) : null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }
