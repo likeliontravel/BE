@@ -43,7 +43,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 				return;
 			}
 
-			// 1) Access Token 검사 (헤더 → 쿠키)
+			// Access Token 검사 (헤더 → 쿠키)
 			String accessToken = resolveAccessToken();
 			if (!accessToken.isBlank()) {
 				Map<String, Object> claims = authTokenService.payload(accessToken);
@@ -58,7 +58,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 				}
 			}
 
-			// ✅ 3) 토큰이 없으면 익명 인증 설정 (permitAll 경로를 위해)
+			// ✅ 토큰이 없으면 익명 인증 설정 (permitAll 경로를 위해)
 			if (SecurityContextHolder.getContext().getAuthentication() == null) {
 				AnonymousAuthenticationToken anonymousAuth = new AnonymousAuthenticationToken(
 					"anonymous",

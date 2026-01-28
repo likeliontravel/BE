@@ -33,7 +33,6 @@ public class MemberService {
 	public Member authenticateAndGetMember(String email, String password) {
 		Member member = findByEmail(email)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
-
 		checkPassword(member, password);
 		return member;
 	}
