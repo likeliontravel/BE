@@ -1,15 +1,15 @@
 package org.example.be.security.config;
 
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.example.be.jwt.filter.JWTFilter;
-import org.example.be.jwt.provider.JWTProvider;
-import org.example.be.jwt.service.JWTBlackListService;
-import org.example.be.jwt.util.JWTUtil;
+import java.util.Arrays;
+import java.util.List;
+
+import org.example.be.jwt.util.JsonUt;
 import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
-import org.example.be.security.filter.RestAuthenticationFilter;
-import org.example.be.security.handler.*;
+import org.example.be.response.CommonResponse;
+import org.example.be.security.filter.CustomAuthenticationFilter;
+import org.example.be.security.handler.RestLogoutHandler;
+import org.example.be.security.handler.RestLogoutSuccessHandler;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,119 +26,120 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final RestAuthenticationProvider restAuthenticationProvider;
-    private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
-    private final RestAuthenticationSuccessHandler restAuthenticationSuccessHandler;
-    private final RestLogoutHandler restLogoutHandler;
-    private final RestLogoutSuccessHandler restLogoutSuccessHandler;
-    private final JWTProvider jwtProvider;
-    private final JWTUtil jwtUtil;
-    private final JWTBlackListService jwtBlackListService;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final CustomSuccessHandler customSuccessHandler;
+	private final RestAuthenticationProvider restAuthenticationProvider;
+	private final RestLogoutHandler restLogoutHandler;
+	private final RestLogoutSuccessHandler restLogoutSuccessHandler;
+	private final CustomOAuth2UserService customOAuth2UserService;
+	private final CustomSuccessHandler customSuccessHandler;
+	private final CustomAuthenticationFilter customAuthenticationFilter;
 
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+	@Bean
+	public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
 
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.authenticationProvider(restAuthenticationProvider);
+		AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
+			AuthenticationManagerBuilder.class);
+		authenticationManagerBuilder.authenticationProvider(restAuthenticationProvider);
 
-        return authenticationManagerBuilder.build();
-    }
+		return authenticationManagerBuilder.build();
+	}
 
-    // 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+	// 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                // csrf 기능 끄기
-                .csrf(AbstractHttpConfigurer::disable)
-                // form login 끄기
-                .formLogin(AbstractHttpConfigurer::disable)
-                // httpBasic 끄기
-                .httpBasic(AbstractHttpConfigurer::disable)
-                // cors 설정
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 세션 사용 x stateless 상태 서버
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+		http
+			// csrf 기능 끄기
+			.csrf(AbstractHttpConfigurer::disable)
+			// form login 끄기
+			.formLogin(AbstractHttpConfigurer::disable)
+			// httpBasic 끄기
+			.httpBasic(AbstractHttpConfigurer::disable)
+			// cors 설정
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			// 세션 사용 x stateless 상태 서버
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // oauth2 설정
-                .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                                .userService(customOAuth2UserService))
-                        .successHandler(customSuccessHandler))
+			// oauth2 설정
+			.oauth2Login((oauth2) -> oauth2
+				.userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+					.userService(customOAuth2UserService))
+				.successHandler(customSuccessHandler))
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/general-user/signup").permitAll()
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("/oauth2/**").permitAll()
-                        .requestMatchers("/mail/**").permitAll()
-                        .requestMatchers("/board/**").permitAll()
-                        .requestMatchers("/comment/**").permitAll()
-                        .requestMatchers("/tourism/**").permitAll()
-                        .requestMatchers("/places/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/schedule/get/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/schedule/getList").authenticated()
-                        .anyRequest().authenticated()
-                )
+			.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/general-user/signup").permitAll()
+				.requestMatchers(HttpMethod.POST, "/members").permitAll()
+				.requestMatchers("/members/login").permitAll()
+				.requestMatchers("/oauth2/**").permitAll()
+				.requestMatchers("/login/oauth2/**").permitAll()
+				.requestMatchers("/favicon.ico").permitAll()
+				.requestMatchers("/.well-known/**").permitAll()
+				.requestMatchers("/mail/**").permitAll()
+				.requestMatchers("/board/**").permitAll()
+				.requestMatchers("/comment/**").permitAll()
+				.requestMatchers("/tourism/**").permitAll()
+				.requestMatchers("/places/**").permitAll()
+				.requestMatchers("/ws/**").permitAll()
+				.requestMatchers("/error").permitAll()
+				.requestMatchers(HttpMethod.GET, "/schedule/get/**").permitAll()
+				.requestMatchers(HttpMethod.GET, "/schedule/getList").authenticated()
+				.anyRequest().authenticated()
+			)
 
-                // 필터 추가하기 UsernamePasswordAuthenticationFilter 이전 위치에 restAuthenticationFilter 위치 하도록 함
-                .addFilterBefore(restAuthenticationFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
-                // JWT 필터 추가 RestAuthenticationFilter 이전에 추가
-                .addFilterBefore(new JWTFilter(jwtUtil, jwtProvider, jwtBlackListService), RestAuthenticationFilter.class)
+			.addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+			// 로그아웃 필터 설정
+			.logout(logout -> logout
+				.logoutUrl("/logout")
+				.addLogoutHandler(restLogoutHandler)
+				.logoutSuccessHandler(restLogoutSuccessHandler)
+				.invalidateHttpSession(true)
+				.clearAuthentication(true))
 
-                // 로그아웃 필터 설정
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .addLogoutHandler(restLogoutHandler)
-                        .logoutSuccessHandler(restLogoutSuccessHandler)
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true))
+			.exceptionHandling(
+				exceptionHandling -> exceptionHandling
+					.authenticationEntryPoint(
+						(request, response, authException) -> {
+							response.setContentType("application/json;charset=UTF-8");
+							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+							CommonResponse<Void> errorResponse = CommonResponse.error(401, "로그인 후 이용해주세요.");
+							response.getWriter().write(JsonUt.toString(errorResponse));
+							response.getWriter().flush();
+						}
+					)
+					.accessDeniedHandler(
+						(request, response, accessDeniedException) -> {
+							response.setContentType("application/json;charset=UTF-8");
+							response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+							CommonResponse<Void> errorResponse = CommonResponse.error(403, "권한이 없습니다.");
+							response.getWriter().write(JsonUt.toString(errorResponse));
+							response.getWriter().flush();
+						}
+					)
+			);
+		return http.build();
+	}
 
-                // 접근 금지 핸들러랑 권한 없는 엔트리 포인트 작성 및 사용 완료
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new RestAuthenticationEntryPoint())
-                        .accessDeniedHandler(new RestAccessDeniedHandler())
-                );
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
 
-        return http.build();
-    }
+		CorsConfiguration configuration = new CorsConfiguration();
 
-    private RestAuthenticationFilter restAuthenticationFilter(AuthenticationManager authenticationManager) {
+		configuration.setAllowedOrigins(
+			List.of("https://localhost:3000", "https://localhost:5500", "https://toleave.shop")); // 허용할 Origin
+		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
+		configuration.setAllowCredentials(true); // 쿠키 허용
+		configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
 
-        RestAuthenticationFilter restAuthenticationFilter = new RestAuthenticationFilter();
-
-        restAuthenticationFilter.setAuthenticationManager(authenticationManager);
-
-        restAuthenticationFilter.setAuthenticationFailureHandler(restAuthenticationFailureHandler);
-        restAuthenticationFilter.setAuthenticationSuccessHandler(restAuthenticationSuccessHandler);
-
-        return restAuthenticationFilter;
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(List.of("https://localhost:3000", "https://localhost:5500", "https://toleave.shop")); // 허용할 Origin
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
-        configuration.setAllowCredentials(true); // 쿠키 허용
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
-    }
+		return source;
+	}
 }
