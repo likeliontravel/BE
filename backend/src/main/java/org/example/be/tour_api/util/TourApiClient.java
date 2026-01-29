@@ -1,6 +1,9 @@
 package org.example.be.tour_api.util;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
@@ -11,6 +14,42 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class TourApiClient {
 
 	private final RestTemplate restTemplate = new RestTemplate();
+	private final TourApiParser tourApiParser;
+
+	public TourApiClient(TourApiParser tourApiParser) {
+		this.tourApiParser = tourApiParser;
+	}
+
+	/**
+	 * 하나의 areaCode에 대해 모든 페이지를 순회하며 데이터 수집
+	 * @param areaCode 지역코드
+	 * @param contentTypeId 관광 타입
+	 * @param numOfRows 페이지당 조회 건수
+	 * @param serviceKey 서비스 인증 키
+	 * @return 해당 areaCode의 전체 파싱된 데이터 목록
+	 * @throws Exception
+	 */
+	public List<Map<String, Object>> fetchAllPagesForArea(
+		int areaCode, int contentTypeId, int numOfRows, String serviceKey
+	) throws Exception {
+
+		List<Map<String, Object>> allItems = new ArrayList<>();
+		int pageNo = 1;
+
+		while (true) {
+			String json = fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
+			List<Map<String, Object>> items = tourApiParser.parseItems(json);
+
+			if (items.isEmpty())
+				break;
+			allItems.addAll(items);
+			if (items.size() < numOfRows)
+				break;
+			pageNo++;
+		}
+
+		return allItems;
+	}
 
 	// 지역별 관광정보 요청
 	public String fetchTourData(int areaCode, int contentTypeId, int numOfRows, int pageNo, String serviceKey) throws

@@ -5,6 +5,8 @@ import java.util.List;
 import org.example.be.place.accommodation.dto.AccommodationDTO;
 import org.example.be.place.restaurant.dto.RestaurantDTO;
 import org.example.be.place.touristSpot.dto.TouristSpotDTO;
+import org.example.be.response.CommonResponse;
+import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.service.AccommodationFetchService;
 import org.example.be.tour_api.service.RestaurantFetchService;
 import org.example.be.tour_api.service.TouristSpotFetchService;
@@ -82,6 +84,16 @@ public class TourismController {
 		}
 		List<RestaurantDTO> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
 		return ResponseEntity.ok(result);
+	}
+
+	// 현재 관광지 정보 일괄 저장 / 업데이트
+	@GetMapping("/fetch/touristSpot/all")
+	public ResponseEntity<CommonResponse<FetchResult>> fetchAllTouristSpots(
+		@RequestParam(defaultValue = "12") int contentTypeId,
+		@RequestParam(defaultValue = "9999") int numOfRows
+	) {
+		FetchResult result = touristSpotFetchService.fetchAllTourData(contentTypeId, numOfRows);
+		return ResponseEntity.ok(CommonResponse.success(result, "TouristSpot 전체 저장 성공"));
 	}
 }
 
