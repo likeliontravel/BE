@@ -23,6 +23,12 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
 
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
   servlet:
     encoding:
       charset: UTF-8
