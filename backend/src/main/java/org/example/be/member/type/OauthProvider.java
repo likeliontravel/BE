@@ -1,7 +1,7 @@
 package org.example.be.member.type;
 
 public enum OauthProvider {
-	GENERAL,
+	General,
 	KAKAO,
 	GOOGLE,
 	NAVER

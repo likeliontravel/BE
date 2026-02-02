@@ -44,7 +44,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			}
 
 			// Access Token 검사 (헤더 → 쿠키)
-			String accessToken = resolveAccessToken();
+			String accessToken = resolveToken(request);
 			if (!accessToken.isBlank()) {
 				Map<String, Object> claims = authTokenService.payload(accessToken);
 				if (claims != null) {
@@ -86,7 +86,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	private String resolveAccessToken() {
+	// 포스트맨에서 Authorization 헤더에 Bearer 토큰을 넣어 테스트할 수 있는 메서드
+	private String resolveToken(HttpServletRequest request) {
+		String bearerToken = request.getHeader("Authorization");
+		if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+			return bearerToken.substring(7);
+		}
+
 		return cookieHelper.getCookieValue("accessToken", "");
 	}
 

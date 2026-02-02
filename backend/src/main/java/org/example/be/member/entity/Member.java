@@ -52,7 +52,7 @@ public class Member extends Base {
 	private OauthProvider oauthProvider;
 
 	public static Member createForJoin(String email, String name, String password) {
-		return new Member(email, name, null, MemberRole.USER, password, false, false, OauthProvider.GENERAL);
+		return new Member(email, name, null, MemberRole.USER, password, false, false, OauthProvider.General);
 	}
 
 	public static Member createForOAuth(String name, String email, String profileImgUrl, OauthProvider oauthProvider) {
