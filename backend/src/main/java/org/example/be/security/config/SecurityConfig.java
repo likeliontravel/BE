@@ -19,7 +19,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -54,31 +54,12 @@ public class SecurityConfig {
 	// 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
 		http
-			// csrf 기능 끄기
-			.csrf(AbstractHttpConfigurer::disable)
-			// form login 끄기
-			.formLogin(AbstractHttpConfigurer::disable)
-			// httpBasic 끄기
-			.httpBasic(AbstractHttpConfigurer::disable)
-			// cors 설정
-			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-			// 세션 사용 x stateless 상태 서버
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-			// oauth2 설정
-			.oauth2Login((oauth2) -> oauth2
-				.userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-					.userService(customOAuth2UserService))
-				.successHandler(customSuccessHandler))
-
 			.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/").permitAll()
 				.requestMatchers("/general-user/signup").permitAll()
 				.requestMatchers(HttpMethod.POST, "/members").permitAll()
 				.requestMatchers("/members/login").permitAll()
-				.requestMatchers("/oauth2/**").permitAll()
-				.requestMatchers("/login/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/mail/**").permitAll()
@@ -92,8 +73,26 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, "/schedule/getList").authenticated()
 				.anyRequest().authenticated()
 			)
+			// csrf 기능 끄기
+			.csrf(AbstractHttpConfigurer::disable)
+			// form login 끄기
+			.formLogin(AbstractHttpConfigurer::disable)
+			// httpBasic 끄기
+			.httpBasic(AbstractHttpConfigurer::disable)
+			// cors 설정
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			// 세션 사용 x stateless 상태 서버
+			.sessionManagement(AbstractHttpConfigurer::disable)
+			
+			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
 			.addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+			// oauth2 설정
+			.oauth2Login((oauth2) -> oauth2
+				.userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+					.userService(customOAuth2UserService))
+				.successHandler(customSuccessHandler))
+
 			// 로그아웃 필터 설정
 			.logout(logout -> logout
 				.logoutUrl("/logout")

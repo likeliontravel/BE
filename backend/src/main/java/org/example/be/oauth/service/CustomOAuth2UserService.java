@@ -34,7 +34,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 		OAuth2Response userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
 
-		Member member = memberRepository.findByProviderAndEmail(provider, userInfo.getEmail()).orElse(null);
+		Member member = memberRepository.findByEmail(userInfo.getEmail()).orElse(null);
 
 		if (member == null) {
 			joinMember(userInfo, provider);
