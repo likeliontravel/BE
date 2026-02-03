@@ -10,6 +10,7 @@ import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.oauth.dto.KakaoResponse;
+import org.example.be.oauth.dto.NaverResponse;
 import org.example.be.oauth.dto.OAuth2Response;
 import org.example.be.web.CookieHelper;
 import org.springframework.security.core.Authentication;
@@ -84,7 +85,10 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 	private OAuth2Response getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
 		if ("KAKAO".equalsIgnoreCase(providerTypeCode)) {
 			return new KakaoResponse(attributes);
+		} else if ("NAVER".equalsIgnoreCase(providerTypeCode)) {
+			return new NaverResponse(attributes);
 		}
+
 		throw new OAuth2AuthenticationException("지원하지 않는 로그인 방식입니다: " + providerTypeCode);
 	}
 
