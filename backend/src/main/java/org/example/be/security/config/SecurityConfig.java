@@ -60,6 +60,7 @@ public class SecurityConfig {
 				.requestMatchers("/general-user/signup").permitAll()
 				.requestMatchers(HttpMethod.POST, "/members").permitAll()
 				.requestMatchers("/members/login").permitAll()
+				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
 				.requestMatchers("/mail/**").permitAll()
@@ -83,7 +84,7 @@ public class SecurityConfig {
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			// 세션 사용 x stateless 상태 서버
 			.sessionManagement(AbstractHttpConfigurer::disable)
-			
+
 			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 
 			.addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
