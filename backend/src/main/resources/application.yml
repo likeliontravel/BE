@@ -74,7 +74,7 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: ${GOOGLE_REDIRECT_URI}
             authorization-grant-type: authorization_code
-            scope: profile, email
+            scope: name, profile, email
             provider: google
 
           naver:
