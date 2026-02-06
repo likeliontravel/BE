@@ -89,7 +89,7 @@ public class TourApiClient {
 			.queryParam("MobileOS", "ETC")
 			.queryParam("MobileApp", "Test")
 			.queryParam("_type", "json")
-			.queryParam("numOfRows", 100)
+			.queryParam("numOfRows", 9999)
 			.queryParam("serviceKey", serviceKey)
 			.build(true)
 			.toUriString();
@@ -115,8 +115,43 @@ public class TourApiClient {
 			.queryParam("_type", "json")
 			.queryParam("serviceKey", serviceKey)
 			.queryParam("areaCode", areaCode)
-			.queryParam("numOfRows", 100)
+			.queryParam("numOfRows", 9999)
 			.build(true)
+			.toUriString();
+
+		URI uri = new URI(url);
+
+		try {
+			return restTemplate.getForObject(uri, String.class);
+		} catch (RestClientResponseException e) {
+			System.out.println("[TourAPI Error] status=" + e.getRawStatusCode()
+				+ " body=" + e.getResponseBodyAsString());
+			throw e;
+		}
+
+	}
+
+	// 카테고리 코드 조회 - categoryCode2 API
+	// cat1, cat2가 null이면 상위 레벨 목록 조회
+	public String fetchCategoryCodes(String contentTypeId, String cat1, String cat2, String serviceKey) throws
+		Exception {
+		UriComponentsBuilder builder = UriComponentsBuilder
+			.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/categoryCode2")
+			.queryParam("MobileOS", "ETC")
+			.queryParam("MobileApp", "Test")
+			.queryParam("_type", "json")
+			.queryParam("contentTypeId", contentTypeId)
+			.queryParam("numOfRows", 9999)
+			.queryParam("serviceKey", serviceKey);
+
+		if (cat1 != null) {
+			builder.queryParam("cat1", cat1);
+		}
+		if (cat2 != null) {
+			builder.queryParam("cat2", cat2);
+		}
+
+		String url = builder.build(true)
 			.toUriString();
 
 		URI uri = new URI(url);

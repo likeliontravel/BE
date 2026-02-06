@@ -2,18 +2,28 @@ package org.example.be.tour_api.batch;
 
 import java.util.Map;
 
+import org.example.be.place.accommodation.entity.Accommodation;
+import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.restaurant.entity.Restaurant;
+import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategoryRepository;
 import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
+import org.example.be.tour_api.batch.processor.AccommodationItemProcessor;
 import org.example.be.tour_api.batch.processor.PlaceProcessorHelper;
+import org.example.be.tour_api.batch.processor.RestaurantItemProcessor;
 import org.example.be.tour_api.batch.processor.TouristSpotItemProcessor;
 import org.example.be.tour_api.batch.reader.TourApiItemReader;
+import org.example.be.tour_api.batch.writer.AccommodationItemWriter;
+import org.example.be.tour_api.batch.writer.RestaurantItemWriter;
 import org.example.be.tour_api.batch.writer.TouristSpotItemWriter;
+import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.service.RefreshRegionService;
 import org.example.be.tour_api.util.TourApiClient;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -34,8 +44,10 @@ public class BatchConfig {
 	private final RefreshRegionService refreshRegionService;
 	private final TourApiClient tourApiClient;
 	private final TourRegionRepository tourRegionRepository;
-	private final TouristSpotRepository touristSpotRepository;
 	private final PlaceCategoryRepository placeCategoryRepository;
+	private final TouristSpotRepository touristSpotRepository;
+	private final RestaurantRepository restaurantRepository;
+	private final AccommodationRepository accommodationRepository;
 
 	@Value("${service-key}")
 	private String serviceKey;
@@ -50,10 +62,18 @@ public class BatchConfig {
 	 * 4. accommodationFetchStep - Accommodation 저장/업데이트 (chunk)
 	 */
 	@Bean
-	public Job tourDataRefreshJob(JobRepository jobRepository, Step refreshRegionStep, Step touristSpotFetchStep) {
+	public Job tourDataRefreshJob(
+		JobRepository jobRepository,
+		Step refreshRegionStep,
+		Step touristSpotFetchStep,
+		Step restaurantFetchStep,
+		Step accommodationFetchStep
+	) {
 		return new JobBuilder("tourDataRefreshJob", jobRepository)
 			.start(refreshRegionStep)
 			.next(touristSpotFetchStep)
+			.next(restaurantFetchStep)
+			.next(accommodationFetchStep)
 			.build();
 	}
 
@@ -69,7 +89,14 @@ public class BatchConfig {
 		return new StepBuilder("refreshRegionStep", jobRepository)
 			.tasklet((contribution, chunkContext) -> {
 				log.info("[Batch Step 1] TourRegion 갱신 시작");
-				refreshRegionService.refreshRegions();
+				FetchResult result = refreshRegionService.refreshRegions();
+
+				StepExecution stepExecution = chunkContext.getStepContext().getStepExecution();
+				stepExecution.getExecutionContext().putInt("savedCount", result.saved());
+				stepExecution.getExecutionContext().putInt("updatedCount", result.updated());
+				stepExecution.getExecutionContext().putInt("skippedCount", result.skipped());
+				stepExecution.getExecutionContext().putInt("failedCount", result.failed());
+
 				log.info("[Batch Step 1] TourRegion 갱신 완료");
 				return RepeatStatus.FINISHED;
 			}, transactionManager)
@@ -77,7 +104,7 @@ public class BatchConfig {
 	}
 
 	/**
-	 * Step 2: TouristSpot 저장/업데이트 (Chunk)
+	 * Step 2: TouristSpot 저장/업데이트 (Chunk 방식)
 	 *
 	 * - Reader: TourApi에서 데이터 수집
 	 * - Processor: TouristSpot 엔티티로 변환 + 변경 감지
@@ -138,5 +165,117 @@ public class BatchConfig {
 	@Bean
 	public TouristSpotItemWriter touristSpotItemWriter() {
 		return new TouristSpotItemWriter(touristSpotRepository);
+	}
+
+	/**
+	 * Step 3: Restaurant 저장 / 업데이트 (Chunk 방식)
+	 *
+	 * - Reader: TourAPI에서 contentTypeId=39 데이터 수집
+	 * - Processor: Restaurant 엔티티로 변환 + 변경 감지
+	 * - Writer: DB 저장
+	 * - Chunk size: 100
+	 */
+	@Bean
+	public Step restaurantFetchStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+		PlaceProcessorHelper processorHelper) {
+		return new StepBuilder("restaurantFetchStep", jobRepository)
+			.<Map<String, Object>, Restaurant>chunk(100, transactionManager)
+			.reader(restaurantItemReader())
+			.processor(restaurantItemProcessor(processorHelper))
+			.writer(restaurantItemWriter())
+			.faultTolerant()
+			.skip(Exception.class)
+			.skipLimit(Integer.MAX_VALUE)
+			.build();
+	}
+
+	/**
+	 * Restaurant Reader
+	 * contentTypeId = 39 (식당)
+	 */
+	@Bean
+	public TourApiItemReader restaurantItemReader() {
+		return new TourApiItemReader(
+			tourApiClient,
+			tourRegionRepository,
+			serviceKey,
+			39,
+			9999
+		);
+	}
+
+	/**
+	 * Restaurant Processor
+	 */
+	@Bean
+	public RestaurantItemProcessor restaurantItemProcessor(PlaceProcessorHelper processorHelper) {
+		return new RestaurantItemProcessor(
+			restaurantRepository,
+			processorHelper
+		);
+	}
+
+	/**
+	 * Restaurant Writer
+	 */
+	@Bean
+	public RestaurantItemWriter restaurantItemWriter() {
+		return new RestaurantItemWriter(restaurantRepository);
+	}
+
+	/**
+	 * Step 4: Accommodation 저장 / 업데이트 (Chunk방식)
+	 *
+	 * - Reader: TourAPI에서 contentTypeId=32 데이터 수집
+	 * - Processor: Accommodation 엔티티로 변환 + 변경 감지
+	 * - Writer: DB 저장
+	 * - Chunk Size: 100
+	 */
+	@Bean
+	public Step accommodationFetchStep(JobRepository jobRepository, PlatformTransactionManager transactionManager,
+		PlaceProcessorHelper processorHelper) {
+		return new StepBuilder("accommodationFetchStep", jobRepository)
+			.<Map<String, Object>, Accommodation>chunk(100, transactionManager)
+			.reader(accommodationItemReader())
+			.processor(accommodationItemProcessor(processorHelper))
+			.writer(accommodationItemWriter())
+			.faultTolerant()
+			.skip(Exception.class)
+			.skipLimit(Integer.MAX_VALUE)
+			.build();
+	}
+
+	/**
+	 * Accommodation Reader
+	 * contentTypeId = 32 (숙소)
+	 */
+	@Bean
+	public TourApiItemReader accommodationItemReader() {
+		return new TourApiItemReader(
+			tourApiClient,
+			tourRegionRepository,
+			serviceKey,
+			32,
+			9999
+		);
+	}
+
+	/**
+	 * Accommodation Processor
+	 */
+	@Bean
+	public AccommodationItemProcessor accommodationItemProcessor(PlaceProcessorHelper processorHelper) {
+		return new AccommodationItemProcessor(
+			accommodationRepository,
+			processorHelper
+		);
+	}
+
+	/**
+	 * Accommodation Writer
+	 */
+	@Bean
+	public AccommodationItemWriter accommodationItemWriter() {
+		return new AccommodationItemWriter(accommodationRepository);
 	}
 }

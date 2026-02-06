@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.example.be.place.region.TourRegion;
+import org.example.be.place.restaurant.entity.Restaurant;
+import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategory;
-import org.example.be.place.touristSpot.entity.TouristSpot;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
@@ -16,24 +16,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * TouristSpot 배치 처리를 위한 ItemProcessor
+ * Restaurant 배치 처리를 위한 ItemProcessor
  *
- * 역할 :
- * - TourAPI 응답 데이터(Map)를 TouristSpot 엔티티로 변환
+ * 역할:
+ * - TourAPI 응답 데이터(Map)를 Restaurant 엔티티로 변환
  * - TourRegion, PlaceCategory 연결 (2단계 fallback 로직)
  * - 기존 데이터 존재 시 변경 감지 (modifiedTime 기준)
  *
- * 반환값 :
- * - TouristSpot 엔티티: 신규 저장 또는 업데이트 대상 -> writer가 저장
+ * 반환값:
+ * - Restaurant 엔티티: 신규 저장 또는 업데이트 대상 -> writer가 저장
  * - null: 변경 없음(SKIPPED) -> Spring Batch filterCount에 기록
  */
-
 @Slf4j
 @RequiredArgsConstructor
-public class TouristSpotItemProcessor implements ItemProcessor<Map<String, Object>, TouristSpot>,
-	StepExecutionListener {
+public class RestaurantItemProcessor implements ItemProcessor<Map<String, Object>, Restaurant>, StepExecutionListener {
 
-	private final TouristSpotRepository touristSpotRepository;
+	private final RestaurantRepository restaurantRepository;
 	private final PlaceProcessorHelper processorHelper;
 
 	// 로깅용 신규저장, 업데이트 카운트
@@ -54,7 +52,7 @@ public class TouristSpotItemProcessor implements ItemProcessor<Map<String, Objec
 	}
 
 	@Override
-	public TouristSpot process(Map<String, Object> item) throws Exception {
+	public Restaurant process(Map<String, Object> item) throws Exception {
 		String contentId = String.valueOf(item.get("contentid"));
 
 		// TourRegion, PlaceCategory 매칭 (fallback 포함)
@@ -62,36 +60,35 @@ public class TouristSpotItemProcessor implements ItemProcessor<Map<String, Objec
 		PlaceCategory placeCategory = processorHelper.resolvePlaceCategory(item);
 
 		// 기존 데이터 존재 여부 확인
-		Optional<TouristSpot> existing = touristSpotRepository.findByContentId(contentId);
+		Optional<Restaurant> existing = restaurantRepository.findByContentId(contentId);
 
 		if (existing.isPresent()) {
-			// 기존 데이터 있음 -> 변경 여부 확인
-			TouristSpot spot = existing.get();
-			boolean changed = processorHelper.updateCommonFields(spot, item);
+			Restaurant restaurant = existing.get();
+			boolean changed = processorHelper.updateCommonFields(restaurant, item);
 			if (changed) {
-				spot.setTourRegion(tourRegion);
-				spot.setPlaceCategory(placeCategory);
+				restaurant.setTourRegion(tourRegion);
+				restaurant.setPlaceCategory(placeCategory);
 				updatedCount++;
-				log.debug("[Proccessor] UPDATED TouristSpot - contentId={}", contentId);
-				return spot;
+				log.debug("[Processor] UPDATED Restaurant - contentId={}", contentId);
+				return restaurant;
 			} else {
-				log.trace("[Processor] SKIPPED TouristSpot - contentId={}", contentId);
+				log.debug("[Processor] SKIPPED Restaurant - contentId={}", contentId);
 				return null;
 			}
 		} else {
 			// 신규 데이터 -> 새 엔티티 생성
-			TouristSpot newSpot = createNew(item, tourRegion, placeCategory);
+			Restaurant newRestaurant = createNew(item, tourRegion, placeCategory);
 			savedCount++;
-			log.debug("[Processor] SAVED TouristSpot - contentId={}", contentId);
-			return newSpot;
+			log.trace("[Processor] SAVED Restaurant - contentId={}", contentId);
+			return newRestaurant;
 		}
 	}
 
 	/**
-	 * 신규 TouristSpot 엔티티 생성
+	 * 신규 Restaurant 엔티티 생성
 	 */
-	private TouristSpot createNew(Map<String, Object> item, TourRegion tourRegion, PlaceCategory placeCategory) {
-		return TouristSpot.builder()
+	private Restaurant createNew(Map<String, Object> item, TourRegion tourRegion, PlaceCategory placeCategory) {
+		return Restaurant.builder()
 			.contentId(String.valueOf(item.get("contentid")))
 			.title(String.valueOf(item.get("title")))
 			.addr1(String.valueOf(item.get("addr1")))
@@ -113,5 +110,4 @@ public class TouristSpotItemProcessor implements ItemProcessor<Map<String, Objec
 			.placeCategory(placeCategory)
 			.build();
 	}
-
 }
