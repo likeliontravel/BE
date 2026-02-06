@@ -9,6 +9,7 @@ import org.example.be.group.service.GroupService;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.member.service.AuthTokenService;
+import org.example.be.oauth.dto.GoogleResponse;
 import org.example.be.oauth.dto.KakaoResponse;
 import org.example.be.oauth.dto.NaverResponse;
 import org.example.be.oauth.dto.OAuth2Response;
@@ -87,6 +88,8 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 			return new KakaoResponse(attributes);
 		} else if ("NAVER".equalsIgnoreCase(providerTypeCode)) {
 			return new NaverResponse(attributes);
+		} else if ("GOOGLE".equalsIgnoreCase(providerTypeCode)) {
+			return new GoogleResponse(attributes);
 		}
 
 		throw new OAuth2AuthenticationException("지원하지 않는 로그인 방식입니다: " + providerTypeCode);
