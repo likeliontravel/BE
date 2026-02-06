@@ -1,128 +1,63 @@
 package org.example.be.oauth.service;
 
-import lombok.RequiredArgsConstructor;
-import org.example.be.oauth.dto.*;
-import org.example.be.oauth.entity.SocialUser;
-import org.example.be.oauth.repository.SocialUserRepository;
-import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserDTO;
-import org.example.be.unifieduser.entity.UnifiedUser;
-import org.example.be.unifieduser.repository.UnifiedUserRepository;
-import org.example.be.unifieduser.service.UnifiedUserService;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Map;
+
+import org.example.be.member.entity.Member;
+import org.example.be.member.repository.MemberRepository;
+import org.example.be.member.type.OauthProvider;
+import org.example.be.oauth.dto.GoogleResponse;
+import org.example.be.oauth.dto.KakaoResponse;
+import org.example.be.oauth.dto.NaverResponse;
+import org.example.be.oauth.dto.OAuth2Response;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Service // 이 클래스는 Spring의 서비스 빈으로 등록되어 DI(의존성 주입) 받는다.
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+	private final MemberRepository memberRepository;
+	private final PasswordEncoder passwordEncoder;
 
-    private final SocialUserRepository socialUserRepository;
-    private final UnifiedUserRepository unifiedUserRepository;
-    private final UnifiedUserService unifiedUserService;
+	@Override
+	public OAuth2User loadUser(OAuth2UserRequest userRequest)
+		throws OAuth2AuthenticationException {
 
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        System.out.println("OAuth2 사용자 정보 로드 완료: " + attributes);
+		OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();    // provider
+		String providerTypeCode = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
 
-        OAuth2Response response = createOAuth2Response(oAuth2User.getAttributes(), registrationId);
-        OAuth2User customOAuth2User = processOAuth2User(response, attributes);
+		OauthProvider provider = OauthProvider.valueOf(providerTypeCode);
 
-        setAuthenticationContext(customOAuth2User);
-        return customOAuth2User;
-    }
+		OAuth2Response userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
 
-    // 각 Provider에 맞는 ResponseDTO 생성
-    private OAuth2Response createOAuth2Response(Map<String, Object> attributes, String provider) {
-        switch (provider) {
-            case "google":
-                return new GoogleResponse(attributes);
-            case "kakao":
-                return new KakaoResponse(attributes);
-            case "naver":
-                return new NaverResponse(attributes);
-            default:
-                throw new IllegalArgumentException("지원되지 않는 provider입니다. : " + provider);
-        }
-    }
+		Member member = memberRepository.findByEmailAndOauthProvider(userInfo.getEmail(), provider).orElse(null);
 
-    // SocialUser테이블에 저장
-    private OAuth2User processOAuth2User(OAuth2Response response, Map<String, Object> attributes) {
-        String email = response.getEmail();
-        String name = response.getName();
-        String provider = response.getProvider();
-        String providerId = response.getProviderId();
-        String userIdentifier = provider + "_" + email;
-        String profileImageUrl = response.getProfileImage();
+		if (member == null) {
+			joinMember(userInfo, provider);
+		}
 
-        System.out.println("생성된 userIdentifier: " + userIdentifier);
+		return oAuth2User;
+	}
 
-        // 소셜 유저 조회 (ProviderId 기반)
-        Optional<SocialUser> existingSocialUser = socialUserRepository.findByProviderId(providerId);
-        Optional<UnifiedUser> existingUnifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier);
+	private OAuth2Response getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
+		if ("KAKAO".equalsIgnoreCase(providerTypeCode)) {
+			return new KakaoResponse(attributes);
+		} else if ("NAVER".equalsIgnoreCase(providerTypeCode)) {
+			return new NaverResponse(attributes);
+		} else if ("GOOGLE".equalsIgnoreCase(providerTypeCode)) {
+			return new GoogleResponse(attributes);
+		}
+		throw new OAuth2AuthenticationException("지원하지 않는 로그인 방식입니다: " + providerTypeCode);
+	}
 
-        SocialUser socialUser;
-
-        if (existingSocialUser.isEmpty()) {
-            socialUser = new SocialUser();
-            socialUser.setEmail(email);
-            socialUser.setName(name);
-            socialUser.setProvider(provider);
-            socialUser.setProviderId(providerId);
-            socialUser.setRole("ROLE_USER");
-            socialUser.setUserIdentifier(userIdentifier);
-            socialUser.setProfileImageUrl(profileImageUrl);
-
-            socialUserRepository.save(socialUser);
-
-            // UnifiedUser가 없으면 생성
-            if (existingUnifiedUser.isEmpty()) {
-                UnifiedUser unifiedUser = unifiedUserService.createUnifiedUser(
-                        new UnifiedUserCreationRequestDTO(provider, email, name, "ROLE_USER")
-                );
-                unifiedUser.setProfileImageUrl(profileImageUrl);
-                unifiedUserRepository.save(unifiedUser);
-            }
-        } else {
-            socialUser = existingSocialUser.get();
-        }
-
-        return new CustomOAuth2User(socialUser, attributes);
-    }
-
-    // SecurityContext에 OAuth2 인증 정보 설정
-    private void setAuthenticationContext(OAuth2User customOAuth2User) {
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authenticationToken);
-        SecurityContextHolder.setContext(context);
-
-        System.out.println("SecurityContext에 OAuth2 사용자 정보 저장 완료");
-    }
-
-    // 엔티티 -> DTO 변환
-    private SocialUserDTO mapToDTO(SocialUser entity) {
-        SocialUserDTO dto = new SocialUserDTO();
-        dto.setId(entity.getId());
-        dto.setEmail(entity.getEmail());
-        dto.setName(entity.getName());
-        dto.setProvider(entity.getProvider());
-        dto.setUserIdentifier(entity.getUserIdentifier());
-        dto.setRole(entity.getRole());
-        return dto;
-    }
+	private void joinMember(OAuth2Response userInfo, OauthProvider provider) {
+		memberRepository.save(
+			Member.createForOAuth(userInfo.getName(), userInfo.getEmail(), userInfo.getProfileImage(), provider));
+	}
 }

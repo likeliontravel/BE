@@ -55,6 +55,10 @@ public class Member extends Base {
 		return new Member(email, name, null, MemberRole.USER, password, false, false, OauthProvider.General);
 	}
 
+	public static Member createForOAuth(String name, String email, String profileImgUrl, OauthProvider oauthProvider) {
+		return new Member(email, name, profileImgUrl, MemberRole.USER, "", false, false, oauthProvider);
+	}
+
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
 	}
