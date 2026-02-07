@@ -55,7 +55,7 @@ public class TourDataScheduler {
 	 *   - executionContext는 Step 안에서 자유롭게 데이터를 저장/조회할 수 있는 Map형태의 저장소
 	 *   - Processor에서 afterStep()으로 저장한 savedCount/updatedCount가 여기에 들어감
 	 */
-	@Scheduled(cron = "0 52 23 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 6 * * *", zone = "Asia/Seoul")
 	public void refreshTourData() {
 		log.info("========== [Scheduler] TourData Refresh start ==========");
 		long startTime = System.currentTimeMillis();
