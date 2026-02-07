@@ -19,6 +19,7 @@ import org.example.be.tour_api.batch.writer.AccommodationItemWriter;
 import org.example.be.tour_api.batch.writer.RestaurantItemWriter;
 import org.example.be.tour_api.batch.writer.TouristSpotItemWriter;
 import org.example.be.tour_api.dto.FetchResult;
+import org.example.be.tour_api.service.RefreshCategoryService;
 import org.example.be.tour_api.service.RefreshRegionService;
 import org.example.be.tour_api.util.TourApiClient;
 import org.springframework.batch.core.Job;
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BatchConfig {
 
 	private final RefreshRegionService refreshRegionService;
+	private final RefreshCategoryService refreshCategoryService;
 	private final TourApiClient tourApiClient;
 	private final TourRegionRepository tourRegionRepository;
 	private final PlaceCategoryRepository placeCategoryRepository;
@@ -57,20 +59,23 @@ public class BatchConfig {
 	 *
 	 * Step 순서 :
 	 * 1. refreshRegionStep - TourRegion 갱신
-	 * 2. touristSpotFetchStep - TouristSpot 저장/업데이트 (chunk)
-	 * 3. restaurantFetchStep - Restaurant 저장/업데이트 (chunk)
-	 * 4. accommodationFetchStep - Accommodation 저장/업데이트 (chunk)
+	 * 2. refreshCategoryStep - PlaceCategory 갱신
+	 * 3. touristSpotFetchStep - TouristSpot 저장/업데이트 (chunk)
+	 * 4. restaurantFetchStep - Restaurant 저장/업데이트 (chunk)
+	 * 5. accommodationFetchStep - Accommodation 저장/업데이트 (chunk)
 	 */
 	@Bean
 	public Job tourDataRefreshJob(
 		JobRepository jobRepository,
 		Step refreshRegionStep,
+		Step refreshCategoryStep,
 		Step touristSpotFetchStep,
 		Step restaurantFetchStep,
 		Step accommodationFetchStep
 	) {
 		return new JobBuilder("tourDataRefreshJob", jobRepository)
 			.start(refreshRegionStep)
+			.next(refreshCategoryStep)
 			.next(touristSpotFetchStep)
 			.next(restaurantFetchStep)
 			.next(accommodationFetchStep)
@@ -104,7 +109,33 @@ public class BatchConfig {
 	}
 
 	/**
-	 * Step 2: TouristSpot 저장/업데이트 (Chunk 방식)
+	 * Step 2. PlaceCategory 갱신 (Tasklet 방식)
+	 *
+	 * TourAPI catgoryCode2를 3단계(cat1 -> cat2 -> cat3) 순회하여
+	 * PlaceCategory 테이블을 최신화한다.
+	 * Place 데이터 처리 전에 실행되어야 PlaceProcessorHelper의 카테고리 매핑이 정상 동작
+	 */
+	@Bean
+	public Step refreshCategoryStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+		return new StepBuilder("refreshCategoryStep", jobRepository)
+			.tasklet((contribution, chunkContext) -> {
+				log.info("[Batch Step 2] PlaceCategory 갱신 시작");
+				FetchResult result = refreshCategoryService.refreshCategories();
+
+				StepExecution stepExecution = chunkContext.getStepContext().getStepExecution();
+				stepExecution.getExecutionContext().putInt("savedCount", result.saved());
+				stepExecution.getExecutionContext().putInt("updatedCount", result.updated());
+				stepExecution.getExecutionContext().putInt("skippedCount", result.skipped());
+				stepExecution.getExecutionContext().putInt("failedCount", result.failed());
+
+				log.info("[Batch Step 2] PlaceCategory 갱신 완료");
+				return RepeatStatus.FINISHED;
+			}, transactionManager)
+			.build();
+	}
+
+	/**
+	 * Step 3: TouristSpot 저장/업데이트 (Chunk 방식)
 	 *
 	 * - Reader: TourApi에서 데이터 수집
 	 * - Processor: TouristSpot 엔티티로 변환 + 변경 감지
@@ -135,7 +166,7 @@ public class BatchConfig {
 
 	/**
 	 * TouristSpot Reader
-	 * contentTypeId=12 (관광지)
+	 * contentTypeId= 12(관광지), 14(문화시설), 28(레포츠), 38(쇼핑)
 	 */
 	@Bean
 	public TourApiItemReader touristSpotItemReader() {
@@ -143,7 +174,7 @@ public class BatchConfig {
 			tourApiClient,
 			tourRegionRepository,
 			serviceKey,
-			12,
+			new int[] {12, 14, 28, 38},
 			9999
 		);
 	}
@@ -168,7 +199,7 @@ public class BatchConfig {
 	}
 
 	/**
-	 * Step 3: Restaurant 저장 / 업데이트 (Chunk 방식)
+	 * Step 4: Restaurant 저장 / 업데이트 (Chunk 방식)
 	 *
 	 * - Reader: TourAPI에서 contentTypeId=39 데이터 수집
 	 * - Processor: Restaurant 엔티티로 변환 + 변경 감지
@@ -199,7 +230,7 @@ public class BatchConfig {
 			tourApiClient,
 			tourRegionRepository,
 			serviceKey,
-			39,
+			new int[] {39},
 			9999
 		);
 	}
@@ -224,7 +255,7 @@ public class BatchConfig {
 	}
 
 	/**
-	 * Step 4: Accommodation 저장 / 업데이트 (Chunk방식)
+	 * Step 5: Accommodation 저장 / 업데이트 (Chunk방식)
 	 *
 	 * - Reader: TourAPI에서 contentTypeId=32 데이터 수집
 	 * - Processor: Accommodation 엔티티로 변환 + 변경 감지
@@ -255,7 +286,7 @@ public class BatchConfig {
 			tourApiClient,
 			tourRegionRepository,
 			serviceKey,
-			32,
+			new int[] {32},
 			9999
 		);
 	}

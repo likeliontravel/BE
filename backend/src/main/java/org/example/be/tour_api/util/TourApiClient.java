@@ -68,8 +68,9 @@ public class TourApiClient {
 			.build(true)
 			.toUriString();
 
-		System.out.println("[Debug] Decoded serviceKey: " + serviceKey);
-		System.out.println("[Debug] Final URL: " + url);
+		// TourAPI 요청 URL 로깅
+		// System.out.println("[Debug] Decoded serviceKey: " + serviceKey);
+		// System.out.println("[Debug] Final URL: " + url);
 		URI uri = new URI(url);
 
 		try {

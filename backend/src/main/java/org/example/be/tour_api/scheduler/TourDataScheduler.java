@@ -26,33 +26,36 @@ public class TourDataScheduler {
 	/**
 	 * 매일 오전 6시에 Tour 데이터 갱신
 	 * 1) TourRegion 테이블 갱신 (지역 코드 최신화)
-	 * 2) TouristSpot 데이터 갱신 (여행지 정보 최신화)
-	 * 3) Restaurant 데이터 갱신 (식당 정보 최신화)
-	 * 4) Accommodation 데이터 갱신 (숙소 정보 최신화)
+	 * 2) PlaceCategory 테이블 갱신 (카테고리 코드 최신화)
+	 * 3) TouristSpot 데이터 갱신 (여행지 정보 최신화) - contentTypeId: 12, 14, 28, 38
+	 * 4) Restaurant 데이터 갱신 (식당 정보 최신화) - contentTypeId: 39
+	 * 5) Accommodation 데이터 갱신 (숙소 정보 최신화) - contentTypeId: 32
 	 *
 	 * 실행 이력은 Spring Batch 메타데이터 테이블에 자동 기록됨
 	 *
-	 * 1단계 실패 시 2단계 실행하지 않음
-	 * - TourRegion이 최신이 아니면 TouristSpot 매칭이 실패하기 때문
+	 * 1~2단계 실패 시 3~5단계 실행하지 않음
+	 * - TourRegion, PlaceCategory가 최신이 아니면 장소 데이터 매칭이 실패하기 때문
 	 *
 	 * JobExecution, StepExecution 내부 구조
-	 * JobExecution (Job 1회 실행의 전체 기록)
-	 *   ├── status: COMPLETED / FAILED
-	 *   ├── startTime, endTime
-	 *   ├── jobParameters: { "runTime": "2026-02-06T06:00:00" }
-	 *   ├── executionContext: Job 레벨 공유 데이터
-	 *   └── stepExecutions: Collection<StepExecution>  ← 각 Step별 실행 기록
-	 *       ├── StepExecution[0] (refreshRegionStep)
-	 *       │   ├── status, startTime, endTime
-	 *       │   ├── readCount, writeCount, filterCount, skipCount
-	 *       │   └── executionContext: { "savedCount": 251, "updatedCount": 0, ... }
-	 *       ├── StepExecution[1] (touristSpotFetchStep)
-	 *       │   └── ...
-	 *       └── ...
+	 *  JobExecution (Job 1회 실행의 전체 기록)
+	 *    ├── status: COMPLETED / FAILED
+	 *    ├── startTime, endTime
+	 *    ├── jobParameters: { "runTime": "2026-02-06T06:00:00" }
+	 *    ├── executionContext: Job 레벨 공유 데이터
+	 *    └── stepExecutions: Collection<StepExecution>  ← 각 Step별 실행 기록
+	 *        ├── StepExecution[0] (refreshRegionStep)
+	 *        │   ├── status, startTime, endTime
+	 *        │   ├── readCount, writeCount, filterCount, skipCount
+	 *        │   └── executionContext: { "savedCount": 251, "updatedCount": 0, ... }
+	 *        ├── StepExecution[1] (refreshCategoryStep)
+	 *        │   └── ...
+	 *        ├── StepExecution[2] (touristSpotFetchStep)
+	 *        │   └── ...
+	 *        └── ...
 	 *   - executionContext는 Step 안에서 자유롭게 데이터를 저장/조회할 수 있는 Map형태의 저장소
 	 *   - Processor에서 afterStep()으로 저장한 savedCount/updatedCount가 여기에 들어감
 	 */
-	@Scheduled(cron = "0 0 6 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 52 23 * * *", zone = "Asia/Seoul")
 	public void refreshTourData() {
 		log.info("========== [Scheduler] TourData Refresh start ==========");
 		long startTime = System.currentTimeMillis();
@@ -79,7 +82,7 @@ public class TourDataScheduler {
 				int readCount;    // chunk step에서 Reader가 읽어온 총 아이템 개수 (TourAPI에서 받아온 데이터 수), tasklet step에서는 readCount개념이 없어 직접 saved + updated + skipped + failed 계산.
 
 				if (ctx.containsKey("skippedCount")) {
-					//Tasklet Step (refreshRegionStep) - 모든 카운트가 ExecutionContext에 저장됨
+					// Tasklet Step (refreshRegionStep, refreshCategoryStep) - 모든 카운트가 ExecutionContext에 저장됨
 					skipped = ctx.getInt("skippedCount");
 					failed = ctx.getInt("failedCount");
 					readCount = saved + updated + skipped + failed;

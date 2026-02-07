@@ -1,6 +1,7 @@
 package org.example.be.tour_api.batch.reader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,8 @@ import lombok.extern.slf4j.Slf4j;
  * - update(): 매 chunk 완료 시 진행 위치를 ExecutionContext에 저장 ( 재시작 시 시점을 알기 위해 )
  * - close(): Step 종료 시 메모리 정리 -> GC가 수거할 수 있도록
  *
- * contentTypeId를 생성자를 통해 받아 TouristSpot(12), Restaurant(39), Accommodation(32)에 재사용 할 수 있도록 함 - BatchConfig에서 @StepScope 빈으로 생성됨
+ * contentTypeId를 생성자를 통해 받아 각 contentTypeId에 따라 한 Step에 재사용 할 수 있도록 함 - BatchConfig에서 @StepScope 빈으로 생성됨
+ * ex) TouristSpot: 12, 14, 28, 38 / Restaurant: 39 / Accommodation: 32
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class TourApiItemReader implements ItemStreamReader<Map<String, Object>> 
 	private final TourApiClient tourApiClient;
 	private final TourRegionRepository tourRegionRepository;
 	private final String serviceKey;
-	private final int contentTypeId;
+	private final int[] contentTypeIds;
 	private final int numOfRows;
 
 	private List<Map<String, Object>> items;
@@ -49,33 +51,35 @@ public class TourApiItemReader implements ItemStreamReader<Map<String, Object>> 
 	 */
 	@Override
 	public void open(ExecutionContext executionContext) throws ItemStreamException {
-		log.info("[TourApiItemReader] 데이터 수집 시작 (contentTypeId: {})", contentTypeId);
+		log.info("[TourApiItemReader] 데이터 수집 시작 (contentTypeId: {})", Arrays.toString(contentTypeIds));
 		List<String> areaCodes = tourRegionRepository.findDistinctAreaCode();
 		items = new ArrayList<>();
 
 		int totalAreas = areaCodes.size();
 		int currentArea = 0;
-		int failedAreaCount = 0; // 실패한 areaCode 개수 추적
+		int failedCount = 0;
 
 		for (String areaCode : areaCodes) {
 			currentArea++;
-			try {
-				int code = Integer.parseInt(areaCode);
-				List<Map<String, Object>> pageItems =
-					tourApiClient.fetchAllPagesForArea(code, contentTypeId, numOfRows, serviceKey);
-				items.addAll(pageItems);
-				log.info("[TourApiItemReader] areaCode({}/{}) 수집 완료 ({}건)", currentArea, totalAreas, pageItems.size());
-			} catch (Exception e) {
-				failedAreaCount++;
-				log.error("[TourApiItemReader] areaCode={} 수집 실패 - 건너뜀", areaCode);
-				log.error("[TourApiItemReader] 실패 원인 : {}", e.getMessage());
-				// 예외 던지지 않고 다음 areaCode 진행
+			for (int contentTypeId : contentTypeIds) {
+				try {
+					int code = Integer.parseInt(areaCode);
+					List<Map<String, Object>> pageItems =
+						tourApiClient.fetchAllPagesForArea(code, contentTypeId, numOfRows, serviceKey);
+					items.addAll(pageItems);
+					log.info("[TourApiItemReader] areaCode({}/{}) contentTypeId={} 수집 완료 ({}건)",
+						currentArea, totalAreas, contentTypeId, pageItems.size());
+				} catch (Exception e) {
+					failedCount++;
+					log.error("[TourApiItemReader] areaCode={} contentTypeId={} 수집 실패 - 건너뜀",
+						areaCode, contentTypeId);
+					log.error("[TourApiItemReader] 실패 원인 : {}", e.getMessage());
+				}
 			}
 		}
 
-		if (failedAreaCount > 0) {
-			log.warn("[TourApiItemReader] ⚠️ 총 {}개 areaCode 수집 실패 (성공: {}/{})", failedAreaCount,
-				totalAreas - failedAreaCount, totalAreas);
+		if (failedCount > 0) {
+			log.warn("[TourApiItemReader] ⚠️ 총 {}건 수집 실패", failedCount);
 		}
 
 		// 재시작 시 이전 진행 위치 복원
