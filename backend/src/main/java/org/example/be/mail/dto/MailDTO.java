@@ -1,13 +1,16 @@
 package org.example.be.mail.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
-@Getter
-@Setter
-public class MailDTO {
+public record MailDTO(
+	@NotBlank
+	@Email
+	String email,
 
-    private String email;
-
-    private String code;
+	@NotBlank
+	@Pattern(regexp = "\\d{6}")
+	String code
+) {
 }
