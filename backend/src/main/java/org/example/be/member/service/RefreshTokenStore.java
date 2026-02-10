@@ -30,4 +30,9 @@ public class RefreshTokenStore {
 	public @Nullable String findRefreshPayload(String oldJti) {
 		return stringRedisTemplate.opsForValue().get(KeyRefresh(oldJti));
 	}
+
+	public void deleteRefresh(String oldJti, long userId) {
+		stringRedisTemplate.delete(KeyRefresh(oldJti));
+		stringRedisTemplate.opsForSet().remove(KeyUser(userId), oldJti);
+	}
 }

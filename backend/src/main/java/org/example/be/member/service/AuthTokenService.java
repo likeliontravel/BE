@@ -9,7 +9,9 @@ import org.example.be.jwt.util.JsonUt;
 import org.example.be.jwt.util.JwtUt;
 import org.example.be.member.entity.Member;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -56,5 +58,18 @@ public class AuthTokenService {
 
 	public String rotateRefresh(String oldJti) {
 		String payload = refreshTokenStore.findRefreshPayload(oldJti);
+		if (payload == null)
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
+		long userId = ((Number)JsonUt.parse(payload, Map.class).get("userId")).longValue();
+		refreshTokenStore.deleteRefresh(oldJti, userId);
+
+		String newJti = JwtUt.newOpaqueToken(64);
+		Instant exp = Instant.now(clock).plusSeconds(refreshTokenExpireSeconds);
+		String newPayloadJson = JsonUt.toString(Map.of(
+			"userId", userId,
+			"exp", exp.getEpochSecond()
+		));
+		refreshTokenStore.saveRefresh(newJti, userId, Duration.ofSeconds(refreshTokenExpireSeconds), newPayloadJson);
+		return newJti;
 	}
 }
