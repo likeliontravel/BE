@@ -33,9 +33,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain) throws
-		ServletException,
-		IOException {
+		FilterChain filterChain) throws ServletException, IOException {
 		try {
 			// Preflight(OPTIONS)은 그대로 통과
 			if (HttpMethod.OPTIONS.matches(request.getMethod())) {
@@ -48,12 +46,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			if (!accessToken.isBlank()) {
 				Map<String, Object> claims = authTokenService.payload(accessToken);
 				if (claims != null) {
-					Long memberId = Long.valueOf(String.valueOf(claims.get("id")));
-					Member member = memberService.getById(memberId);
-					if (member != null) {
-						setAuthenticationFromUser(member);
-						filterChain.doFilter(request, response);
-					}
+					setAuthenticationFromClaims(claims);
+					filterChain.doFilter(request, response);
 					return;
 				}
 			}
@@ -97,6 +91,21 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			// 서비스 레벨 예외는 상태코드만 세팅하고 종료
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		}
+	}
+
+	private void setAuthenticationFromClaims(Map<String, Object> claims) {
+		long memberId = ((Number)claims.get("id")).longValue();
+		String email = (String)claims.get("email");
+		String name = (String)claims.get("name");
+		String role = (String)claims.get("role");
+
+		SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+		SecurityUser principal = new SecurityUser(
+			memberId, email, "", name, List.of(authority)
+		);
+		Authentication auth = new UsernamePasswordAuthenticationToken(principal, "", principal.getAuthorities());
+		SecurityContextHolder.getContext().setAuthentication(auth);
+
 	}
 
 	/** DB(User) 객체 기반 인증 세팅 */

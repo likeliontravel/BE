@@ -3,7 +3,6 @@ package org.example.be.member.controller;
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
-import org.example.be.member.dto.MemberLoginResBody;
 import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
@@ -43,14 +42,14 @@ public class MemberController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<CommonResponse<MemberLoginResBody>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
+	public ResponseEntity<CommonResponse<MemberDto>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
 		Member member = memberService.authenticateAndGetMember(reqBody.email(), reqBody.password());
 
 		issueTokensAndSetCookies(member);
 
 		MemberDto memberDto = MemberDto.from(member);
-		MemberLoginResBody resBody = new MemberLoginResBody(memberDto);
-		return ResponseEntity.ok(CommonResponse.success(resBody, "로그인 성공"));
+
+		return ResponseEntity.ok(CommonResponse.success(memberDto, "로그인 성공"));
 	}
 
 	@PostMapping("/logout")
@@ -78,7 +77,7 @@ public class MemberController {
 	private void revokeRefreshTokenAndClearCookies() {
 		String refreshToken = cookieHelper.getCookieValue("refreshToken", null);
 
-		if (refreshToken != null || !refreshToken.isBlank()) {
+		if (refreshToken != null && !refreshToken.isBlank()) {
 			refreshTokenStore.revokeRefresh(refreshToken);
 		}
 
@@ -89,6 +88,7 @@ public class MemberController {
 	private void issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);
 		String refreshToken = authTokenService.RefreshToken(member);
+
 		cookieHelper.setCookie("accessToken", accessToken);
 		cookieHelper.setCookie("refreshToken", refreshToken);
 	}

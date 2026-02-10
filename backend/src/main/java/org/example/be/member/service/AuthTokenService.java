@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthTokenService {
@@ -34,7 +36,8 @@ public class AuthTokenService {
 			"id", member.getId(),
 			"email", member.getEmail(),
 			"name", member.getName(),
-			"provider", member.getOauthProvider()
+			"provider", member.getOauthProvider(),
+			"role", member.getRole()
 		);
 
 		return JwtUt.toString(jwtSecretKey, accessTokenExpireSeconds, claims);
@@ -52,7 +55,9 @@ public class AuthTokenService {
 			"userId", member.getId(),
 			"exp", exp.getEpochSecond()
 		));
+
 		refreshTokenStore.saveRefresh(jti, member.getId(), Duration.ofSeconds(refreshTokenExpireSeconds), payloadJson);
+
 		return jti;
 	}
 
@@ -61,7 +66,11 @@ public class AuthTokenService {
 		if (payload == null)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
 
-		long userId = ((Number)JsonUt.parse(payload, Map.class).get("userId")).longValue();
+		Map<String, Object> payloadMap = JsonUt.parse(payload, Map.class);
+		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
+		}
+		long userId = ((Number)payloadMap.get("userId")).longValue();
 		refreshTokenStore.deleteRefresh(oldJti, userId);
 
 		String newJti = JwtUt.newOpaqueToken(64);
@@ -79,6 +88,11 @@ public class AuthTokenService {
 		if (payload == null)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
 
-		return ((Number)JsonUt.parse(payload, Map.class).get("userId")).longValue();
+		Map<String, Object> payloadMap = JsonUt.parse(payload, Map.class);
+		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
+			log.error("Refresh token payload is missing userId: {}", payload);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
+		}
+		return ((Number)payloadMap.get("userId")).longValue();
 	}
 }

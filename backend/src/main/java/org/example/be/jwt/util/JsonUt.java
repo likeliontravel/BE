@@ -3,7 +3,7 @@ package org.example.be.jwt.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonUt {
-	public static ObjectMapper objectMapper;
+	public static ObjectMapper objectMapper = new ObjectMapper();
 
 	public static String toString(Object object) {
 		return toString(object, null);
