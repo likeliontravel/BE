@@ -72,4 +72,5 @@ public class AuthTokenService {
 		refreshTokenStore.saveRefresh(newJti, userId, Duration.ofSeconds(refreshTokenExpireSeconds), newPayloadJson);
 		return newJti;
 	}
+
 }

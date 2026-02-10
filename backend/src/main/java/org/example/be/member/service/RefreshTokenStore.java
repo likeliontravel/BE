@@ -4,6 +4,7 @@ import java.time.Duration;
 
 import javax.annotation.Nullable;
 
+import org.example.be.jwt.util.JwtUt;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -34,5 +35,22 @@ public class RefreshTokenStore {
 	public void deleteRefresh(String oldJti, long userId) {
 		stringRedisTemplate.delete(KeyRefresh(oldJti));
 		stringRedisTemplate.opsForSet().remove(KeyUser(userId), oldJti);
+	}
+
+	public void revokeRefresh(String refreshToken) {
+		if (refreshToken == null || refreshToken.isBlank()) {
+			return;
+		}
+
+		String jti = JwtUt.sha256(refreshToken);
+		String kRefresh = KeyRefresh(jti);
+
+		String userIdStr = stringRedisTemplate.opsForValue().get(kRefresh);
+		stringRedisTemplate.delete(kRefresh);
+
+		if (userIdStr != null) {
+			Long userId = Long.parseLong(userIdStr);
+			stringRedisTemplate.opsForSet().remove(KeyUser(userId), jti);
+		}
 	}
 }

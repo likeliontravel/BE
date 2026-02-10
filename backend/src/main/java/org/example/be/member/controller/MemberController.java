@@ -8,6 +8,7 @@ import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
+import org.example.be.member.service.RefreshTokenStore;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.config.SecurityUser;
 import org.example.be.web.CookieHelper;
@@ -31,6 +32,7 @@ public class MemberController {
 	private final MemberService memberService;
 	private final AuthTokenService authTokenService;
 	private final CookieHelper cookieHelper;
+	private final RefreshTokenStore refreshTokenStore;
 
 	@PostMapping
 	public ResponseEntity<CommonResponse<MemberDto>> join(@Valid @RequestBody MemberJoinReqBody reqBody) {
@@ -43,11 +45,11 @@ public class MemberController {
 	@PostMapping("/login")
 	public ResponseEntity<CommonResponse<MemberLoginResBody>> login(@Valid @RequestBody MemberLoginReqBody reqBody) {
 		Member member = memberService.authenticateAndGetMember(reqBody.email(), reqBody.password());
-		String accessToken = issueTokensAndSetCookies(member);
-		String refreshToken = RefreshToken(member);
+
+		issueTokensAndSetCookies(member);
 
 		MemberDto memberDto = MemberDto.from(member);
-		MemberLoginResBody resBody = new MemberLoginResBody(memberDto, accessToken, refreshToken);
+		MemberLoginResBody resBody = new MemberLoginResBody(memberDto);
 		return ResponseEntity.ok(CommonResponse.success(resBody, "로그인 성공"));
 	}
 
@@ -74,21 +76,20 @@ public class MemberController {
 	}
 
 	private void revokeRefreshTokenAndClearCookies() {
+		String refreshToken = cookieHelper.getCookieValue("refreshToken", null);
+
+		if (refreshToken != null || !refreshToken.isBlank()) {
+			refreshTokenStore.revokeRefresh(refreshToken);
+		}
+
 		cookieHelper.deleteCookie("accessToken");
 		cookieHelper.deleteCookie("refreshToken");
 	}
 
-	private String issueTokensAndSetCookies(Member member) {
+	private void issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);
-		cookieHelper.setCookie("accessToken", accessToken);
-
-		return accessToken;
-	}
-
-	private String RefreshToken(Member member) {
 		String refreshToken = authTokenService.RefreshToken(member);
+		cookieHelper.setCookie("accessToken", accessToken);
 		cookieHelper.setCookie("refreshToken", refreshToken);
-
-		return refreshToken;
 	}
 }
