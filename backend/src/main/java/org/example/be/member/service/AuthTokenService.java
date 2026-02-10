@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthTokenService {
-	private final MemberService memberService;
 	private final Clock clock = Clock.systemUTC();
 
 	@Value("${spring.jwt.secret}")
