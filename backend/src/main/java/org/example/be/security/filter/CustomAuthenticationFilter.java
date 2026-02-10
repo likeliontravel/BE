@@ -58,6 +58,29 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 				}
 			}
 
+			String getRefreshToken = cookieHelper.getCookieValue("refreshToken", "");
+			if (getRefreshToken != null && !getRefreshToken.isBlank()) {
+				try {
+					long userId = authTokenService.findRefreshOwner(getRefreshToken);
+					String newRefreshToken = authTokenService.rotateRefresh(getRefreshToken);
+					Member member = memberService.getById(userId);
+					String newAccessToken = authTokenService.genAccessToken(member);
+
+					// 응답 헤더와 쿠키에 새 토큰 세팅
+					cookieHelper.setCookie("refreshToken", newRefreshToken);
+					response.setHeader("Authorization", newAccessToken);
+
+					setAuthenticationFromUser(member);
+
+					filterChain.doFilter(request, response);
+					return;
+
+				} catch (Exception e) {
+					cookieHelper.deleteCookie("refreshToken");
+					cookieHelper.deleteCookie("accessToken");
+				}
+			}
+
 			// ✅ 토큰이 없으면 익명 인증 설정 (permitAll 경로를 위해)
 			if (SecurityContextHolder.getContext().getAuthentication() == null) {
 				AnonymousAuthenticationToken anonymousAuth = new AnonymousAuthenticationToken(

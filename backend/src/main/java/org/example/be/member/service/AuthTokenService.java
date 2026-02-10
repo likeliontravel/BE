@@ -60,6 +60,7 @@ public class AuthTokenService {
 		String payload = refreshTokenStore.findRefreshPayload(oldJti);
 		if (payload == null)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
+
 		long userId = ((Number)JsonUt.parse(payload, Map.class).get("userId")).longValue();
 		refreshTokenStore.deleteRefresh(oldJti, userId);
 
@@ -73,4 +74,11 @@ public class AuthTokenService {
 		return newJti;
 	}
 
+	public long findRefreshOwner(String jti) {
+		String payload = refreshTokenStore.findRefreshPayload(jti);
+		if (payload == null)
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
+
+		return ((Number)JsonUt.parse(payload, Map.class).get("userId")).longValue();
+	}
 }
