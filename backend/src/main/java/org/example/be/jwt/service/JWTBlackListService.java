@@ -32,6 +32,11 @@ public class JWTBlackListService {
 			stringRedisTemplate.opsForValue().set(accessTokenHash, "logout", Duration.ofSeconds(ttl));
 		}
 	}
+
+	public void isBlackList(String accessToken) {
+		String accessTokenHash = JwtUt.sha256(accessToken);
+		stringRedisTemplate.hasKey(accessTokenHash);
+	}
 }
 
 

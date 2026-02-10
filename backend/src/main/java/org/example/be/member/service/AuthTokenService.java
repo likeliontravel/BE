@@ -1,6 +1,7 @@
 package org.example.be.member.service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthTokenService {
+	private final RefreshTokenStore refreshTokenStore;
 	private final Clock clock = Clock.systemUTC();
 
 	@Value("${spring.jwt.secret}")
@@ -48,6 +50,11 @@ public class AuthTokenService {
 			"userId", member.getId(),
 			"exp", exp.getEpochSecond()
 		));
-		return jti + "." + payloadJson;
+		refreshTokenStore.saveRefresh(jti, member.getId(), Duration.ofSeconds(refreshTokenExpireSeconds), payloadJson);
+		return jti;
+	}
+
+	public String rotateRefresh(String oldJti) {
+		String payload = refreshTokenStore.findRefreshPayload(oldJti);
 	}
 }
