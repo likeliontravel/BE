@@ -42,9 +42,9 @@ spring:
   jwt:
     secret: ${JWT_SECRET}
   accessToken:
-    expire-seconds: 1000
+    expire-seconds: 900 #15분
   refreshToken:
-    expire-seconds: 10000000
+    expire-seconds: 2592000 #30일
 
   mail:
     host: ${MAIL_HOST}
