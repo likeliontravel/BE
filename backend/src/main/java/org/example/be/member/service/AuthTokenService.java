@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthTokenService {
-	private final MemberService memberService; // 권한 변경 시 authVersion 올릴 때 사용
+	private final MemberService memberService;
 	private final Clock clock = Clock.systemUTC();
 
 	@Value("${spring.jwt.secret}")
