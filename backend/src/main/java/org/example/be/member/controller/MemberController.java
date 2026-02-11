@@ -78,7 +78,6 @@ public class MemberController {
 
 	private void revokeRefreshTokenAndClearCookies() {
 		String refreshToken = cookieHelper.getCookieValue("refreshToken", null);
-		log.info("refreshToken: {}", refreshToken);
 
 		if (refreshToken != null && !refreshToken.isBlank()) {
 			refreshTokenStore.revokeRefresh(refreshToken);

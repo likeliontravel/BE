@@ -1,9 +1,11 @@
 package org.example.be.member.service;
 
 import java.time.Duration;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.example.be.jwt.util.JsonUt;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -38,18 +40,29 @@ public class RefreshTokenStore {
 		stringRedisTemplate.opsForSet().remove(KeyUser(userId), oldJti);
 	}
 
-	public void revokeRefresh(String jti) {
-		if (jti == null || jti.isBlank()) {
+	public void revokeRefresh(String refreshPlain) {
+		if (refreshPlain == null || refreshPlain.isBlank()) {
 			return;
 		}
 
+		String jti = refreshPlain;
 		String kRefresh = KeyRefresh(jti);
 
-		String userIdStr = stringRedisTemplate.opsForValue().get(kRefresh);
+		String payloadJson = stringRedisTemplate.opsForValue().get(kRefresh);
 		stringRedisTemplate.delete(kRefresh);
 
-		if (userIdStr != null) {
-			long userId = Long.parseLong(userIdStr);
+		if (payloadJson != null) {
+			Map<String, Object> payloadMap = null;
+			try {
+				payloadMap = JsonUt.parse(payloadJson, Map.class);
+			} catch (Exception e) {
+				return;
+			}
+
+			if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
+				return;
+			}
+			long userId = ((Number)payloadMap.get("userId")).longValue();
 			stringRedisTemplate.opsForSet().remove(KeyUser(userId), jti);
 		}
 	}
