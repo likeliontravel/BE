@@ -53,7 +53,7 @@ public class AuthTokenService {
 		Instant exp = Instant.now(clock).plusSeconds(refreshTokenExpireSeconds);
 		String payloadJson = JsonUt.toString(Map.of(
 			"userId", member.getId(),
-			"exp", exp.getEpochSecond()
+			"exp", exp.getEpochSecond() //JWT exp를 별도로 확인 안하고 볼 수 있게 하기 위해 넣음
 		));
 
 		refreshTokenStore.saveRefresh(jti, member.getId(), Duration.ofSeconds(refreshTokenExpireSeconds), payloadJson);
