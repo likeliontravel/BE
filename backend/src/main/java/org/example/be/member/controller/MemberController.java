@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor
@@ -76,6 +78,7 @@ public class MemberController {
 
 	private void revokeRefreshTokenAndClearCookies() {
 		String refreshToken = cookieHelper.getCookieValue("refreshToken", null);
+		log.info("refreshToken: {}", refreshToken);
 
 		if (refreshToken != null && !refreshToken.isBlank()) {
 			refreshTokenStore.revokeRefresh(refreshToken);
