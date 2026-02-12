@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.example.be.tour_api.dto.AreaDTO;
+import org.example.be.tour_api.dto.CategoryCodeDTO;
 import org.example.be.tour_api.dto.SigunguDTO;
 import org.springframework.stereotype.Component;
 
@@ -79,6 +80,24 @@ public class TourApiParser {
 					.siGunGuCode(code)
 					.siGunGuName(name)
 					.build());
+			}
+		}
+		return result;
+	}
+
+	// categoryCode2 API 응답 파싱 -> CategoryCodeDTO 리스트
+	public List<CategoryCodeDTO> parseCategories(String json) {
+
+		List<Map<String, Object>> items = parseItems(json);
+
+		List<CategoryCodeDTO> result = new ArrayList<>();
+
+		for (Map<String, Object> item : items) {
+			String code = String.valueOf(item.getOrDefault("code", ""));
+			String name = String.valueOf(item.getOrDefault("name", ""));
+
+			if (!code.isBlank()) {
+				result.add(new CategoryCodeDTO(code, name));
 			}
 		}
 		return result;

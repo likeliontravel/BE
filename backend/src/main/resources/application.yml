@@ -21,7 +21,13 @@ spring:
       ddl-auto: create
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
+    show-sql: false
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
 
   servlet:
     encoding:
@@ -118,7 +124,7 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
-    org.example.be: DEBUG
+    org.example.be: INFO
 
 gcs:
   bucket:

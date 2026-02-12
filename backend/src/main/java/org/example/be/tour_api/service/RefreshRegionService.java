@@ -8,6 +8,8 @@ import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.tour_api.dto.AreaDTO;
+import org.example.be.tour_api.dto.FetchResult;
+import org.example.be.tour_api.dto.SaveResult;
 import org.example.be.tour_api.dto.SigunguDTO;
 import org.example.be.tour_api.util.RegionClassifier;
 import org.example.be.tour_api.util.TourApiClient;
@@ -38,7 +40,7 @@ public class RefreshRegionService {
 
 	// 지역 코드 정보 갱신
 	@Transactional
-	public void refreshRegions() {
+	public FetchResult refreshRegions() {
 
 		try {
 			// 1. 모든 areaCode 조회
@@ -67,33 +69,39 @@ public class RefreshRegionService {
 					String region = regionClassifier.classify(areaName, siGunGuName);
 
 					// DB upsert 수행
-					int[] result = upsertTourRegion(
+					SaveResult result = upsertTourRegion(
 						areaCode, areaName, siGunGuCode, siGunGuName, region
 					);
-					totalSaved += result[0];
-					totalUpdated += result[1];
-					totalSkipped += result[2];
+					switch (result) {
+						case SAVED -> totalSaved++;
+						case UPDATED -> totalUpdated++;
+						case SKIPPED -> totalSkipped++;
+					}
 				}
 			}
 
 			// 3. 모든 areaCode에 대해 siGunGuCode = 99 (기타) 행 일괄 추가
 			for (AreaDTO area : areas) {
-				int[] result = upsertTourRegion(
+				SaveResult result = upsertTourRegion(
 					area.getAreaCode(),
 					area.getAreaName(),
 					"99",
 					"기타",
 					"기타"
 				);
-				totalSaved += result[0];
-				totalUpdated += result[1];
-				totalSkipped += result[2];
+				switch (result) {
+					case SAVED -> totalSaved++;
+					case UPDATED -> totalUpdated++;
+					case SKIPPED -> totalSkipped++;
+				}
 			}
 
 			log.info(
 				"[RefreshRegion] 완료 - 신규 : {}, 변경 : {}, 무변경 : {}",
 				totalSaved, totalUpdated, totalSkipped
 			);
+
+			return new FetchResult(totalSaved, totalUpdated, totalSkipped, 0);
 
 		} catch (Exception e) {
 			log.error("[RefreshRegion] 지역코드 갱신 실패", e);
@@ -105,7 +113,7 @@ public class RefreshRegionService {
 	 * TourRegion upsert ( 변경 시에만 업데이트 )
 	 * 변경된 정보는 업데이트하여 저장, saved, updated, skipped 반환
 	 */
-	private int[] upsertTourRegion(
+	private SaveResult upsertTourRegion(
 		String areaCode,
 		String areaName,
 		String siGunGuCode,
@@ -128,9 +136,9 @@ public class RefreshRegionService {
 				t.setSiGunGuName(siGunGuName);
 				t.setRegion(region);
 				// dirty checking으로 자동 업데이트
-				return new int[] {0, 1, 0};
+				return SaveResult.UPDATED;
 			} else {
-				return new int[] {0, 0, 1};
+				return SaveResult.SKIPPED;
 			}
 		} else {
 			TourRegion tourRegion = TourRegion.builder()
@@ -141,7 +149,7 @@ public class RefreshRegionService {
 				.region(region)
 				.build();
 			tourRegionRepository.save(tourRegion);
-			return new int[] {1, 0, 0};
+			return SaveResult.SAVED;
 		}
 	}
 }

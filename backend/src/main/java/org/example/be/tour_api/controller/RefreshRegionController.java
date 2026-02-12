@@ -1,6 +1,7 @@
 package org.example.be.tour_api.controller;
 
 import org.example.be.response.CommonResponse;
+import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.service.RefreshRegionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,8 +27,8 @@ public class RefreshRegionController {
 	 * 3. 새로운 정보 및 변화된 정보 저장
 	 */
 	@GetMapping("/region")
-	public ResponseEntity<CommonResponse<Void>> refreshRegion() {
-		refreshRegionService.refreshRegions();
-		return ResponseEntity.ok(CommonResponse.success(null, "지역 매핑 테이블 갱신 성공"));
+	public ResponseEntity<CommonResponse<FetchResult>> refreshRegion() {
+		FetchResult result = refreshRegionService.refreshRegions();
+		return ResponseEntity.ok(CommonResponse.success(result, "지역 매핑 테이블 갱신 성공"));
 	}
 }
