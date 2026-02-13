@@ -6,7 +6,7 @@ services:
     container_name: mysql-db
     environment:
       MYSQL_DATABASE: toleave
-      MYSQL_ROOT_PASSWORD: 19990524
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "3306:3306"
@@ -14,6 +14,30 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - toleave-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - toleave-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   app:
     build:
@@ -23,11 +47,26 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - toleave-network
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      MAIL_PASSWORD: ${MAIL_PASSWORD} # .env파일로 비밀번호 분리
+      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - ${GCP_CREDENTIALS_HOST_PATH}:/app/credentials/toleave-b9a7b3a17267.json:ro
+
+  frontend:
+    image: jwj9127/toleave-frontend:latest
+    container_name: toleave-frontend
+    restart: always
+    networks:
+      - toleave-network
 
   nginx:
     image: nginx:latest
@@ -41,11 +80,14 @@ services:
       - ./nginx/certbot/www:/var/www/certbot    # 인증서 발급용 웹루트
     depends_on:
       - app
+      - frontend
     networks:
       - toleave-network
+    restart: unless-stopped
 
 volumes:
   mysql-data:
+  redis-data:
 
 networks:
   toleave-network:

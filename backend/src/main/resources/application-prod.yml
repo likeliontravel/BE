@@ -5,8 +5,18 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID}
       credentials:
         location: ${GCP_CREDENTIALS_PATH}
+
+logging:
+  level:
+    org.springframework.security: WARN
+    org.example.be: INFO
