@@ -8,8 +8,6 @@ import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.filter.CustomAuthenticationFilter;
-import org.example.be.security.handler.RestLogoutHandler;
-import org.example.be.security.handler.RestLogoutSuccessHandler;
 import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,8 +33,6 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
 	private final RestAuthenticationProvider restAuthenticationProvider;
-	private final RestLogoutHandler restLogoutHandler;
-	private final RestLogoutSuccessHandler restLogoutSuccessHandler;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CustomSuccessHandler customSuccessHandler;
 	private final CustomAuthenticationFilter customAuthenticationFilter;
@@ -56,10 +52,10 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/").permitAll()
+				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers("/general-user/signup").permitAll()
 				.requestMatchers(HttpMethod.POST, "/members").permitAll()
-				.requestMatchers("/members/login").permitAll()
+				.requestMatchers(HttpMethod.POST, "/members/login").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
@@ -93,14 +89,6 @@ public class SecurityConfig {
 				.userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
 					.userService(customOAuth2UserService))
 				.successHandler(customSuccessHandler))
-
-			// 로그아웃 필터 설정
-			.logout(logout -> logout
-				.logoutUrl("/logout")
-				.addLogoutHandler(restLogoutHandler)
-				.logoutSuccessHandler(restLogoutSuccessHandler)
-				.invalidateHttpSession(true)
-				.clearAuthentication(true))
 
 			.exceptionHandling(
 				exceptionHandling -> exceptionHandling
