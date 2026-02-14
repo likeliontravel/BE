@@ -8,6 +8,9 @@ spring:
     import: optional:file:.env[.properties]
   profiles:
     active: prod
+  output:
+    ansi:
+      enabled: always
 
   error:
     whitelabel:
