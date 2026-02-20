@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  # Job1: 빌드 검증 - 빌드 실패 시 이후 Job 전체 중단
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          # 아래 두 폴더를 압축하고
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+
+          # 압축된 두 파일을 깃허브 캐시 서버에 이 이름으로 저장 (아래 두 경로에서 변경이 발생하면 해시값이 바뀌어서 의존성이 업데이트되었는지 여부를 판단할 수 있음)
+          key: ${{ runner.os }}-gradle-${{ hashFiles('backend/**/*.gradle*', 'backend/**/gradle-wrapper.properties') }}
+
+          # key로 정확히 일치하는 캐시가 없다면 -> key의 뒷부분 두 경로를 해시한 값 앞에까지만이라도 같은 부분이 없는지 부분 일치로 대체탐색하는 fallback용 목록.
+          # 여기에서까지 찾지 못하면 캐시가 없다고 판단하고(즉, 빌드 관련 파일 자체가 없다고 판단) 처음부터 다운로드
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build JAR
+        run: ./gradlew bootJar --no-daemon -x test
+        working-directory: backend
