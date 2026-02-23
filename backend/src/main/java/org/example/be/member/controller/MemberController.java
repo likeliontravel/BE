@@ -55,8 +55,12 @@ public class MemberController {
 	}
 
 	@PostMapping("/logout")
-	public ResponseEntity<CommonResponse<Void>> logout() {
-		revokeRefreshTokenAndClearCookies();
+	public ResponseEntity<CommonResponse<Void>> logout(@AuthenticationPrincipal SecurityUser user) {
+
+		refreshTokenStore.revokeAllByUserId(user.getId());
+
+		cookieHelper.deleteCookie("accessToken");
+		cookieHelper.deleteCookie("refreshToken");
 
 		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
 	}
@@ -74,17 +78,6 @@ public class MemberController {
 		@RequestBody PasswordUpdateReqBody passwordUpdateReqBody) {
 		memberService.updatePassword(passwordUpdateReqBody);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
-	}
-
-	private void revokeRefreshTokenAndClearCookies() {
-		String refreshToken = cookieHelper.getCookieValue("refreshToken", null);
-
-		if (refreshToken != null && !refreshToken.isBlank()) {
-			refreshTokenStore.revokeRefresh(refreshToken);
-		}
-
-		cookieHelper.deleteCookie("accessToken");
-		cookieHelper.deleteCookie("refreshToken");
 	}
 
 	private void issueTokensAndSetCookies(Member member) {
