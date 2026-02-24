@@ -38,5 +38,3 @@ public class JWTBlackListService {
 		stringRedisTemplate.hasKey(accessTokenHash);
 	}
 }
-
-

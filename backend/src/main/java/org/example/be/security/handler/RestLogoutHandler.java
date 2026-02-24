@@ -2,6 +2,8 @@ package org.example.be.security.handler;
 
 import org.example.be.jwt.service.JWTBlackListService;
 import org.example.be.jwt.util.JWTUtil;
+import org.example.be.member.service.AuthTokenService;
+import org.example.be.member.service.RefreshTokenStore;
 import org.example.be.oauth.dto.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,8 @@ public class RestLogoutHandler implements LogoutHandler {
 
 	private final JWTUtil jwtUtil;
 	private final JWTBlackListService jwtBlackListService;
+	private final AuthTokenService authTokenService;
+	private final RefreshTokenStore refreshTokenStore;
 
 	@SneakyThrows
 	@Override

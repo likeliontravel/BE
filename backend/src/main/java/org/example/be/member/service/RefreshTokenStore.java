@@ -2,6 +2,7 @@ package org.example.be.member.service;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -65,5 +66,18 @@ public class RefreshTokenStore {
 			long userId = ((Number)payloadMap.get("userId")).longValue();
 			stringRedisTemplate.opsForSet().remove(KeyUser(userId), jti);
 		}
+	}
+
+	public void revokeAllByUserId(long id) {
+		String userKey = KeyUser(id);
+		Set<String> jtis = stringRedisTemplate.opsForSet().members(userKey);
+
+		if (jtis != null && !jtis.isEmpty()) {
+			for (String jti : jtis) {
+				stringRedisTemplate.delete(KeyRefresh(jti));
+			}
+		}
+
+		stringRedisTemplate.delete(userKey);
 	}
 }
