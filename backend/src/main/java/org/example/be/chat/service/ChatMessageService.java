@@ -26,7 +26,6 @@ import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.security.config.SecurityUser;
-import org.example.be.security.util.SecurityUtil;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,10 +144,10 @@ public class ChatMessageService {
 	// ==================== 메시지 저장 관련 ====================
 
 	// GCS에 이미지 업로드 수행, public URL 반환
-	public String uploadAndGetPreview(MultipartFile image, String groupName) {
+	public String uploadAndGetPreview(MultipartFile image, String groupName, SecurityUser securityUser) {
 		try {
-			String senderIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 			validateImageFile(image);
+			String senderIdentifier = String.valueOf(securityUser.getId());
 			return gcsService.uploadChatImage(image, senderIdentifier, groupName);
 		} catch (IOException e) {
 			throw new GCSUploadFailedException("이미지 업로드 중 오류가 발생했습니다.", e);

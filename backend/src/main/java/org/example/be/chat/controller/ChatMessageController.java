@@ -84,9 +84,10 @@ public class ChatMessageController {
 	@PostMapping("/image/upload")
 	public ResponseEntity<CommonResponse<String>> uploadImageMessage(
 		@RequestParam String groupName,
-		@RequestParam MultipartFile image
+		@RequestParam MultipartFile image,
+		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName);
+		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, securityUser);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(publicUrl, "이미지 메시지 저장 성공"));
 	}
 
