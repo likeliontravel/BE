@@ -58,12 +58,18 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://db:3306/toleave?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      GCP_CREDENTIALS_PATH: /app/credentials/toleave-b9a7b3a17267.json
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
     volumes:
-      - ${GCP_CREDENTIALS_HOST_PATH}:/app/credentials/toleave-b9a7b3a17267.json:ro
+      - ${GCP_CREDENTIALS_PATH}:/app/credentials/toleave-b9a7b3a17267.json:ro
 
   frontend:
     image: jwj9127/toleave-frontend:latest
     container_name: toleave-frontend
+    # 아래 platform 설정은 로컬 컴포즈파일에만 있음 ( 이미지가 AMD64용으로만 빌드되어서 MAC의 ARM64를 지원하지 않아 이미지 실행이 안됨)
+    platform: linux/amd64
     restart: always
     networks:
       - toleave-network

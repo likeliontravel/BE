@@ -3,7 +3,6 @@ package org.example.be.oauth.handler;
 import java.io.IOException;
 import java.util.Map;
 
-import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
 import org.example.be.member.entity.Member;
@@ -68,10 +67,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 		if (invitationCode != null && !invitationCode.isEmpty()) {
 			try {
 				var invitation = groupInvitationService.getValidInvitation(invitationCode);
-				GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
-				dto.setGroupName(invitation.getGroup().getGroupName());
-				dto.setUserIdentifier(member.getName());
-				groupService.addMemberToGroup(dto);
+				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), member.getId());
 			} catch (Exception e) {
 				// 초대 코드가 유효하지 않아도 로그인 자체는 성공이므로, 여기서 전체 플로우를 깨지 않도록 예외 메시지 로깅만 해준다.
 				System.out.println("OAuth2 로그인 후 자동 그룹 가입 실패 : " + e.getMessage());
