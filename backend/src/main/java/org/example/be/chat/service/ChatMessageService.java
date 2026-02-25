@@ -2,8 +2,6 @@ package org.example.be.chat.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +11,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.chat.dto.ChatMessageDTO;
-import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
@@ -97,49 +94,49 @@ public class ChatMessageService {
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
-	@Transactional(readOnly = true)
-	public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage(SecurityUser securityUser) {
-		Member member = findMember(securityUser.getId());
-
-		// 요청자가 속한 그룹 목록
-		List<Group> groups = groupRepository.findByMembersContaining(member);
-		if (groups.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		// groupName -> latest ChatMessage 메핑
-		Map<String, ChatMessage> latestByGroupName = new HashMap<>();
-		for (Group group : groups) {
-			Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
-			latestByGroupName.put(group.getGroupName(), latest.orElse(null));
-		}
-
-		// DTO로 변환
-		List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
-		for (Group group : groups) {
-			ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
-			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
-			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
-			ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
-
-			ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
-				.groupName(group.getGroupName())
-				.latestMessage(latestMessageContent)
-				.sendAt(latestMessageSendAt)
-				.type(latestMessageType)
-				.build();
-
-			dtoList.add(dto);
-		}
-
-		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
-		dtoList.sort(Comparator
-			.comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
-			.reversed());
-
-		return dtoList;
-
-	}
+	// @Transactional(readOnly = true)
+	// public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage(SecurityUser securityUser) {
+	// 	Member member = findMember(securityUser.getId());
+	//
+	// 	// 요청자가 속한 그룹 목록
+	// 	List<Group> groups = groupRepository.findByMembersContaining(member);
+	// 	if (groups.isEmpty()) {
+	// 		return Collections.emptyList();
+	// 	}
+	//
+	// 	// groupName -> latest ChatMessage 메핑
+	// 	Map<String, ChatMessage> latestByGroupName = new HashMap<>();
+	// 	for (Group group : groups) {
+	// 		Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
+	// 		latestByGroupName.put(group.getGroupName(), latest.orElse(null));
+	// 	}
+	//
+	// 	// DTO로 변환
+	// 	List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
+	// 	for (Group group : groups) {
+	// 		ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
+	// 		String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
+	// 		LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
+	// 		ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
+	//
+	// 		ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
+	// 			.groupName(group.getGroupName())
+	// 			.latestMessage(latestMessageContent)
+	// 			.sendAt(latestMessageSendAt)
+	// 			.type(latestMessageType)
+	// 			.build();
+	//
+	// 		dtoList.add(dto);
+	// 	}
+	//
+	// 	// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
+	// 	dtoList.sort(Comparator
+	// 		.comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
+	// 		.reversed());
+	//
+	// 	return dtoList;
+	//
+	// }
 
 	// ==================== 메시지 저장 관련 ====================
 
