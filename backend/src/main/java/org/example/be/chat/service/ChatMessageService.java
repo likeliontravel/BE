@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.example.be.chat.dto.ChatMessageDTO;
@@ -23,11 +22,11 @@ import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.gcs.GCSService;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
+import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.security.config.SecurityUser;
 import org.example.be.security.util.SecurityUtil;
-import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -229,14 +228,13 @@ public class ChatMessageService {
 			.map(this::toDTO)
 			.collect(Collectors.toList());
 
-		Set<String> senderIdentifiers = dtoList.stream()
-			.map(ChatMessageDTO::getSenderIdentifier)
-			.collect(Collectors.toSet());
-
-		Map<String, UnifiedUsersNameAndProfileImageUrl> profiles = new HashMap<>();
-		for (String identifier : senderIdentifiers) {
-			profiles.put(identifier, unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(identifier));
-		}
+		Map<Long, MemberDto> profiles = messages.stream()
+			.map(ChatMessage::getSender)
+			.distinct()
+			.collect(Collectors.toMap(
+				Member::getId,
+				MemberDto::from
+			));
 
 		Map<String, Object> result = new HashMap<>();
 		result.put("messages", dtoList);
