@@ -18,5 +18,9 @@ spring:
 
 logging:
   level:
-    org.springframework.security: WARN
+    org.springframework.security: INFO
     org.example.be: INFO
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+
+app:
+  base-url: ${BACKEND_APP_BASE_URL}

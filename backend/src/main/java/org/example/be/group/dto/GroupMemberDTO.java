@@ -1,11 +1,8 @@
 package org.example.be.group.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class GroupMemberDTO {
-    private String name;
-    private String profileImageUrl;
+// 그룹 멤버 정보 DTO
+public record GroupMemberDTO(
+	String name,
+	String profileImageUrl
+) {
 }

@@ -5,14 +5,18 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.group.announcement.dto.GroupAnnouncementDTO;
+import org.example.be.group.announcement.dto.GroupAnnouncementSummaryDTO;
 import org.example.be.group.announcement.repository.GroupAnnouncementRepository;
-import org.example.be.group.dto.GroupCreationRequestDTO;
-import org.example.be.group.dto.GroupDetailDTO;
-import org.example.be.group.dto.GroupExitOrDeleteRequestDTO;
+import org.example.be.group.dto.GroupAddMemberResBody;
+import org.example.be.group.dto.GroupCreateReqBody;
+import org.example.be.group.dto.GroupDeleteResBody;
+import org.example.be.group.dto.GroupDetailResBody;
+import org.example.be.group.dto.GroupExitOrDeleteReqBody;
+import org.example.be.group.dto.GroupExitResBody;
 import org.example.be.group.dto.GroupMemberDTO;
-import org.example.be.group.dto.GroupModifyRequestDTO;
-import org.example.be.group.dto.GroupResponseDTO;
+import org.example.be.group.dto.GroupModifyReqBody;
+import org.example.be.group.dto.GroupModifyResBody;
+import org.example.be.group.dto.GroupResBody;
 import org.example.be.group.dto.GroupScheduleDTO;
 import org.example.be.group.dto.GroupSchedulePlaceDTO;
 import org.example.be.group.entitiy.Group;
@@ -48,12 +52,9 @@ public class GroupService {
 
 	// 그룹 생성하기
 	@Transactional
-	public GroupResponseDTO createGroup(GroupCreationRequestDTO request, Long memberId) {
-		String groupName = request.getGroupName();
-		// 그룹 이름에 공백, 특수문자 등 검증
-		if (!groupName.matches("^[a-zA-Z0-9가-힣_-]+$")) {
-			throw new IllegalArgumentException("그룹 이름에는 공백이나 특수문자를 포함할 수 없습니다. (한글, 영문, 숫자, -, _만 허용)");
-		}
+	public GroupResBody createGroup(GroupCreateReqBody request, Long memberId) {
+		String groupName = request.groupName();
+
 		groupRepository.findByGroupName(groupName).ifPresent(group -> {
 			throw new IllegalArgumentException("이미 존재하는 그룹 이름입니다: " + groupName);
 		});
@@ -61,20 +62,20 @@ public class GroupService {
 		Member creator = memberService.getById(memberId);
 
 		Group group = new Group();
-		group.setGroupName(request.getGroupName());
-		group.setDescription(request.getDescription());
+		group.setGroupName(request.groupName());
+		group.setDescription(request.description());
 		group.setCreatedBy(creator);
 		group.addMember(creator);
 
 		Group savedGroup = groupRepository.save(group);
 
-		return toResponseDTO(savedGroup);
+		return toResBody(savedGroup);
 	}
 
 	// 그룹 1개에 대하여 상세 정보 조회하기 - 연결된 일정 및 상세일정( 장소블럭 ), 그룹 멤버들 정보와 해당 프로필들 정보 모두 포함.
 	// 그룹 이름, 설명, 창설자명, 창설일 정보, 가장 최근 그룹 공지 반환
 	@Transactional(readOnly = true)
-	public GroupDetailDTO getGroupDetail(String groupName, Long memberId) {
+	public GroupDetailResBody getGroupDetail(String groupName, Long memberId) {
 		// 그룹과 함께 멤버도 같이 패치 조인 셀렉트
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
 			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
@@ -84,24 +85,23 @@ public class GroupService {
 			throw new ForbiddenResourceAccessException("그룹의 멤버만 그룹 정보를 조회할 수 있습니다.");
 		}
 
-		List<GroupMemberDTO> members = mapToMemberDTOs(group);
-		GroupAnnouncementDTO latestAnnouncement = mapToLatestAnnouncementDTO(group);
-		GroupScheduleDTO schedule = mapToScheduleDTO(group);
+		List<GroupMemberDTO> members = mapToMemberResBodyList(group);
+		GroupAnnouncementSummaryDTO latestAnnouncement = mapToLatestAnnouncementResBody(group);
+		GroupScheduleDTO schedule = mapToScheduleResBody(group);
 
-		GroupDetailDTO dto = new GroupDetailDTO();
-		dto.setGroupName(group.getGroupName());
-		dto.setDescription(group.getDescription());
-		dto.setCreatedName(group.getCreatedBy().getName());
-		dto.setMembers(members);
-		dto.setLatestAnnouncement(latestAnnouncement);
-		dto.setSchedule(schedule);
-
-		return dto;
+		return new GroupDetailResBody(
+			group.getGroupName(),
+			group.getDescription(),
+			group.getCreatedBy().getName(),
+			members,
+			latestAnnouncement,
+			schedule
+		);
 	}
 
 	// 그룹에 멤버 추가 ( 초대 코드를 통한 가입 )
 	@Transactional
-	public void addMemberToGroup(String groupName, Long memberId) {
+	public GroupAddMemberResBody addMemberToGroup(String groupName, Long memberId) {
 		Group group = getGroupByName(groupName);
 
 		Member user = memberService.getById(memberId);
@@ -112,13 +112,15 @@ public class GroupService {
 
 		group.addMember(user);
 		groupRepository.save(group);
+
+		return new GroupAddMemberResBody(user.getId(), user.getEmail(), user.getName(), groupName);
 	}
 
 	// 그룹 설명 변경
 	@Transactional
-	public void modifyDescribtion(GroupModifyRequestDTO request, Long memberId) {
-		String groupName = request.getGroupName();
-		String description = request.getDescription();
+	public GroupModifyResBody modifyDescribtion(GroupModifyReqBody request, Long memberId) {
+		String groupName = request.groupName();
+		String description = request.description();
 
 		// 그룹 내 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
@@ -128,12 +130,14 @@ public class GroupService {
 		Group group = getGroupByName(groupName);
 		group.setDescription(description);
 		groupRepository.save(group);
+
+		return new GroupModifyResBody(groupName, description);
 	}
 
 	// 그룹 나가기
 	@Transactional
-	public void exitGroup(GroupExitOrDeleteRequestDTO request, Long memberId) {
-		String groupName = request.getGroupName();
+	public GroupExitResBody exitGroup(GroupExitOrDeleteReqBody request, Long memberId) {
+		String groupName = request.groupName();
 
 		Group group = getGroupByName(groupName);
 
@@ -149,22 +153,26 @@ public class GroupService {
 
 		group.removeMember(user);
 		entityManager.flush();
+
+		return new GroupExitResBody(user.getId(), user.getEmail(), user.getName(), groupName);
 	}
 
 	// 그룹 삭제하기 (그룹 생성한 유저만 가능)
 	@Transactional
-	public void deleteGroup(GroupExitOrDeleteRequestDTO request, Long memberId) {
-		String groupName = request.getGroupName();
+	public GroupDeleteResBody deleteGroup(GroupExitOrDeleteReqBody request, Long memberId) {
+		String groupName = request.groupName();
 
 		Group group = validateGroupCreator(groupName, memberId);
 		groupRepository.delete(group);
+
+		return new GroupDeleteResBody(groupName);
 
 		// 채팅 및 일정 연계 삭제 확인해야함
 	}
 
 	// 유저가 가입한 그룹 정보 조회하기
 	@Transactional(readOnly = true)
-	public List<GroupResponseDTO> getAllGroups(Long memberId) {
+	public List<GroupResBody> getAllGroups(Long memberId) {
 		Member user = memberService.getById(memberId);
 
 		List<Group> groups = groupRepository.findByMembersContaining(user);
@@ -174,7 +182,7 @@ public class GroupService {
 		}
 
 		return groups.stream()
-			.map(this::toResponseDTO)
+			.map(this::toResBody)
 			.toList();
 	}
 
@@ -194,10 +202,14 @@ public class GroupService {
 		return group.getMembers().stream().anyMatch(m -> m.getId().equals(memberId));   // return; 있다면 true, 없다면 false
 	}
 
-	// converter to responseDTO
-	private GroupResponseDTO toResponseDTO(Group group) {
-		return new GroupResponseDTO(group.getId(), group.getGroupName(), group.getDescription(),
-			group.getCreatedBy().getEmail());
+	// Convert to GroupResponseBody
+	private GroupResBody toResBody(Group group) {
+		return new GroupResBody(
+			group.getId(),
+			group.getGroupName(),
+			group.getDescription(),
+			group.getCreatedBy().getId()
+		);
 	}
 
 	// 그룹 창설자 검증
@@ -220,31 +232,26 @@ public class GroupService {
 
 	// ==================== 그룹 상세 조회 이용 내부메서드 ====================
 	// 멤버 정보 추출해 리스트로 묶어주기
-	private List<GroupMemberDTO> mapToMemberDTOs(Group group) {
+	private List<GroupMemberDTO> mapToMemberResBodyList(Group group) {
 		return group.getMembers().stream()
-			.map(user -> {
-				GroupMemberDTO dto = new GroupMemberDTO();
-				dto.setName(user.getName());
-				dto.setProfileImageUrl(user.getProfileImageUrl());
-				return dto;
-			}).toList();
+			.map(user -> new GroupMemberDTO(user.getName(), user.getProfileImageUrl()))
+			.toList();
 	}
 
 	// 마지막 그룹 공지 추출하기
-	private GroupAnnouncementDTO mapToLatestAnnouncementDTO(Group group) {
+	private GroupAnnouncementSummaryDTO mapToLatestAnnouncementResBody(Group group) {
 		return groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(group)
-			.map(announcement -> {
-				GroupAnnouncementDTO dto = new GroupAnnouncementDTO();
-				dto.setId(announcement.getId());
-				dto.setTitle(announcement.getTitle());
-				dto.setContent(announcement.getContent());
-				dto.setWriterName(announcement.getWriterName());
-				return dto;
-			}).orElse(null);
+			.map(announcement -> new GroupAnnouncementSummaryDTO(
+				announcement.getId(),
+				announcement.getTitle(),
+				announcement.getContent(),
+				announcement.getWriterName(),
+				announcement.getTimeStamp()
+			)).orElse(null);
 	}
 
 	// 해당 그룹의 스케줄 추출하기
-	private GroupScheduleDTO mapToScheduleDTO(Group group) {
+	private GroupScheduleDTO mapToScheduleResBody(Group group) {
 		Optional<Schedule> scheduleOptional = scheduleRepository.findByGroup(group);
 		if (scheduleOptional.isEmpty()) {
 			return null;
@@ -253,25 +260,23 @@ public class GroupService {
 		Schedule schedule = scheduleOptional.get();
 		List<SchedulePlace> places = schedulePlaceRepository.findBySchedule(schedule);
 
-		List<GroupSchedulePlaceDTO> placeDTOs = places.stream()
-			.map(place -> {
-				GroupSchedulePlaceDTO dto = new GroupSchedulePlaceDTO();
-				dto.setContentId(place.getContentId());
-				dto.setPlaceType(place.getPlaceType());
-				dto.setTitle(resolveTitle(place));
-				dto.setAddress(resolveAddress(place));
-				dto.setVisitStart(place.getVisitStart());
-				dto.setVisitEnd(place.getVisitedEnd());
-				dto.setDayOrder(place.getDayOrder());
-				dto.setOrderInDay(place.getOrderInDay());
-				return dto;
-			}).toList();
+		List<GroupSchedulePlaceDTO> placeResBodyList = places.stream()
+			.map(place -> new GroupSchedulePlaceDTO(
+				place.getContentId(),
+				place.getPlaceType(),
+				resolveTitle(place),
+				resolveAddress(place),
+				place.getVisitStart(),
+				place.getVisitedEnd(),
+				place.getDayOrder(),
+				place.getOrderInDay()
+			)).toList();
 
-		GroupScheduleDTO dto = new GroupScheduleDTO();
-		dto.setStartSchedule(schedule.getStartSchedule());
-		dto.setEndSchedule(schedule.getEndSchedule());
-		dto.setPlaces(placeDTOs);
-		return dto;
+		return new GroupScheduleDTO(
+			schedule.getStartSchedule(),
+			schedule.getEndSchedule(),
+			placeResBodyList
+		);
 	}
 
 	private String resolveTitle(SchedulePlace place) {

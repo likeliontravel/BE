@@ -8,8 +8,8 @@ services:
       MYSQL_DATABASE: toleave
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
-    ports:
-      - "3306:3306"
+    #    ports:
+    #      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -57,7 +57,7 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       DB_URL: jdbc:mysql://db:3306/toleave?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       GCP_CREDENTIALS_PATH: /app/credentials/toleave-b9a7b3a17267.json
       REDIS_HOST: redis
