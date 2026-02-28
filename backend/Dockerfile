@@ -37,6 +37,6 @@ COPY --from=builder /app/build/libs/toleave-be-0.0.1.jar app.jar
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD curl -sf http://localhost:8080/error || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD curl -sf http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

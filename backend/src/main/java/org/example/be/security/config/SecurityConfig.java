@@ -62,6 +62,7 @@ public class SecurityConfig {
 				.requestMatchers("/places/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()
 				.requestMatchers("/error").permitAll()
+				.requestMatchers("/health").permitAll()
 				.requestMatchers(HttpMethod.GET, "/schedule/get/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/schedule/getList").authenticated()
 				.anyRequest().authenticated()

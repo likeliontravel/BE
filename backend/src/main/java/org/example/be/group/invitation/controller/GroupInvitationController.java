@@ -25,7 +25,7 @@ public class GroupInvitationController {
 
 	private final GroupInvitationService invitationService;
 
-	@Value("${app.base-url}")
+	@Value("${app.backend-base-url}")
 	private String baseUrl;
 
 	// 초대 링크 조회하기

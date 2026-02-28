@@ -7,6 +7,7 @@ import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
 import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.security.config.SecurityUser;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -27,6 +28,9 @@ public class InvitationJoinController {
 
 	private final GroupInvitationService invitationService;
 	private final GroupService groupService;
+
+	@Value("${app.frontend-base-url}")
+	private String frontendUrl;
 
 	// 로그인 상태에서 초대 링크 클릭 시 자동으로 그룹 가입 처리
 	// 비 로그인 상태에서 초대 링크 클릭 시 로그인 페이지로 리다이렉트.
@@ -67,11 +71,11 @@ public class InvitationJoinController {
 			response.addHeader(HttpHeaders.SET_COOKIE, pendingCookie.toString());
 
 			// 로그인 페이지로 리다이렉트
-			response.sendRedirect("https://toleave.cloud/login");
+			response.sendRedirect(frontendUrl + "/login");
 
 		} catch (Exception e) {
 			// 초대코드가 유효하지 않으면 쿼리파라미터 없이 로그인페이지로 리다이렉트
-			response.sendRedirect("https://toleave.cloud/login");
+			response.sendRedirect(frontendUrl + "/login");
 		}
 
 	}
