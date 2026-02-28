@@ -1,17 +1,16 @@
 package org.example.be.generaluser.service;
 
-//import jakarta.transaction.Transactional;
-
 import java.util.NoSuchElementException;
 
 import org.example.be.exception.custom.InvalidInvitationException;
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.repository.GeneralUserRepository;
-import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
+import org.example.be.member.entity.Member;
+import org.example.be.member.repository.MemberRepository;
 import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +29,7 @@ public class GeneralUserService {
 	private final PasswordEncoder passwordEncoder;
 
 	private final UnifiedUserService unifiedUserService;
+	private final MemberRepository memberRepository;
 
 	private final GroupInvitationService groupInvitationService;
 	private final GroupService groupService;
@@ -72,11 +72,14 @@ public class GeneralUserService {
 				throw new InvalidInvitationException("유효하지 않은 초대 코드입니다.");
 			}
 
-			GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
-			dto.setGroupName(invitation.getGroup().getGroupName());
-			dto.setUserIdentifier("gen_" + generalUserDTO.getEmail());
-
-			groupService.addMemberToGroup(dto);
+			try {
+				Member user = memberRepository.findByEmail(generalUserDTO.getEmail())
+					.orElseThrow(() -> new NoSuchElementException("Member 정보 없음"));
+				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), user.getId());
+			} catch (Exception e) {
+				// TODO: GeneralUser 회원가입이 Member시스템에서 완성되면 제거
+				System.out.println("회원 가입 후 그룹 자동 가입 실패 (Member 시스템 미연동): " + e.getMessage());
+			}
 		}
 	}
 

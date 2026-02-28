@@ -7,7 +7,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
   profiles:
-    active: prod
+    active: ${SPRING_PROFILES_ACTIVE:local}
   output:
     ansi:
       enabled: always
@@ -126,8 +126,9 @@ spring:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
     org.example.be: INFO
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
 
 gcs:
   bucket:

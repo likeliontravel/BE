@@ -3,7 +3,7 @@ package org.example.be.oauth.handler;
 import java.io.IOException;
 import java.util.Map;
 
-import org.example.be.group.dto.GroupAddMemberRequestDTO;
+import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
 import org.example.be.member.entity.Member;
@@ -14,6 +14,8 @@ import org.example.be.oauth.dto.KakaoResponse;
 import org.example.be.oauth.dto.NaverResponse;
 import org.example.be.oauth.dto.OAuth2Response;
 import org.example.be.web.CookieHelper;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -22,6 +24,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -63,18 +66,34 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 		cookieHelper.setCookie("refreshToken", refreshToken);
 		log.debug("JWT 토큰 생성 완료 및 쿠키 설정 완료");
 
-		// 초대 코드가 있을 시 자동 그룹 가입 처리
-		String invitationCode = request.getParameter("invitationCode");
-		if (invitationCode != null && !invitationCode.isEmpty()) {
+		// pendingInvitationCode 쿠키 확인 (비로그인 상태에서 초대링크 클릭 후 소셜 로그인한 경우)
+		String invitationCode = null;
+		if (request.getCookies() != null) {
+			for (Cookie cookie : request.getCookies()) {
+				if ("pendingInvitationCode".equals(cookie.getName())) {
+					invitationCode = cookie.getValue();
+					break;
+				}
+			}
+		}
+
+		if (invitationCode != null) {
 			try {
-				var invitation = groupInvitationService.getValidInvitation(invitationCode);
-				GroupAddMemberRequestDTO dto = new GroupAddMemberRequestDTO();
-				dto.setGroupName(invitation.getGroup().getGroupName());
-				dto.setUserIdentifier(member.getName());
-				groupService.addMemberToGroup(dto);
+				GroupInvitation invitation = groupInvitationService.getValidInvitation(invitationCode);
+				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), member.getId());
 			} catch (Exception e) {
-				// 초대 코드가 유효하지 않아도 로그인 자체는 성공이므로, 여기서 전체 플로우를 깨지 않도록 예외 메시지 로깅만 해준다.
-				System.out.println("OAuth2 로그인 후 자동 그룹 가입 실패 : " + e.getMessage());
+				// 그룹 자동 가입 실패 시 로그인 자체는 유지
+				log.warn("OAuth2 로그인 후 자동 그룹 가입 실패: {}", e.getMessage());
+			} finally {
+				// 가입 성공/실패 여부 무관하게 쿠키 즉시 삭제
+				ResponseCookie deleteCookie = ResponseCookie.from("pendingInvitationCode", "")
+					.httpOnly(true)
+					.secure(true)
+					.path("/")
+					.maxAge(0)    // 쿠키 즉시 삭제
+					.sameSite("Lax")
+					.build();
+				response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
 			}
 		}
 

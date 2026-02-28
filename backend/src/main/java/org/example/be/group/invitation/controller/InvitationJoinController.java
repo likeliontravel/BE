@@ -2,14 +2,17 @@ package org.example.be.group.invitation.controller;
 
 import java.io.IOException;
 
-import org.example.be.group.dto.GroupAddMemberRequestDTO;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
 import org.example.be.resolver.DecodedPathVariable;
-import org.example.be.security.util.SecurityUtil;
+import org.example.be.security.config.SecurityUser;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,14 +29,18 @@ public class InvitationJoinController {
 	private final GroupInvitationService invitationService;
 	private final GroupService groupService;
 
+	@Value("${app.frontend-base-url}")
+	private String frontendUrl;
+
 	// 로그인 상태에서 초대 링크 클릭 시 자동으로 그룹 가입 처리
 	// 비 로그인 상태에서 초대 링크 클릭 시 로그인 페이지로 리다이렉트.
-	// 단, 초대 코드를 쿼리 파라미터에 포함하여 현재 상황을 기억하게 하고,
-	// 로그인 시 성공 핸들러에서 해당 파라미터를 이용해 한번 더 리다이렉션.
+	// 단, 초대 코드를 쿠키(pendingInvitationCode)에 담아 로그인/회원가입 흐름에서
+	// CustomSuccessHandler 또는 MemberController가 읽어 그룹 자동 가입에 활용
 	@GetMapping("/{invitationCode}")
 	public void handleInvitation(
 		@DecodedPathVariable String invitationCode,
 		Authentication authentication,
+		@AuthenticationPrincipal SecurityUser user,
 		HttpServletResponse response) throws IOException {
 
 		try {
@@ -42,13 +49,8 @@ public class InvitationJoinController {
 
 			// 로그인 여부 확인. 로그인 상태라면 바로 자동가입 처리
 			if (authentication != null && authentication.isAuthenticated()) {
-				String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 				String groupName = invitation.getGroup().getGroupName();
-
-				GroupAddMemberRequestDTO addMemeberRequestDTO = new GroupAddMemberRequestDTO();
-				addMemeberRequestDTO.setGroupName(groupName);
-				addMemeberRequestDTO.setUserIdentifier(userIdentifier);
-				groupService.addMemberToGroup(addMemeberRequestDTO);
+				groupService.addMemberToGroup(groupName, user.getId());
 
 				// 그룹 가입 성공 응답
 				response.setStatus(HttpStatus.OK.value());
@@ -57,13 +59,23 @@ public class InvitationJoinController {
 				return;
 			}
 
-			// 로그인 상태가 아니라면 초대코드를 쿼리파라미터로 추가하여 login페이지로 리다이렉트
-			String redirectUrl = "https://api.toleave.cloud/login?invitationCode=" + invitationCode;
-			response.sendRedirect(redirectUrl);
+			// 비로그인 상태: pendingInvitationCode 쿠키를 설정하고 로그인 페이지로 리다이렉트
+			// SameSite=Lax - OAuth 리다이렉트 체인에서도 쿠키가 함께 전송됨.
+			ResponseCookie pendingCookie = ResponseCookie.from("pendingInvitationCode", invitationCode)
+				.httpOnly(true)
+				.secure(true)
+				.path("/")
+				.maxAge(600)    // 10분
+				.sameSite("Lax")
+				.build();
+			response.addHeader(HttpHeaders.SET_COOKIE, pendingCookie.toString());
+
+			// 로그인 페이지로 리다이렉트
+			response.sendRedirect(frontendUrl + "/login");
 
 		} catch (Exception e) {
 			// 초대코드가 유효하지 않으면 쿼리파라미터 없이 로그인페이지로 리다이렉트
-			response.sendRedirect("https://toleave.cloud/login");
+			response.sendRedirect(frontendUrl + "/login");
 		}
 
 	}

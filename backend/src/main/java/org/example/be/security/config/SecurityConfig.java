@@ -8,12 +8,9 @@ import org.example.be.oauth.handler.CustomSuccessHandler;
 import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.filter.CustomAuthenticationFilter;
-import org.example.be.security.provider.RestAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,20 +29,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final RestAuthenticationProvider restAuthenticationProvider;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CustomSuccessHandler customSuccessHandler;
 	private final CustomAuthenticationFilter customAuthenticationFilter;
 
-	@Bean
-	public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-
-		AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
-			AuthenticationManagerBuilder.class);
-		authenticationManagerBuilder.authenticationProvider(restAuthenticationProvider);
-
-		return authenticationManagerBuilder.build();
-	}
+	// @Bean
+	// public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+	//
+	// 	AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(
+	// 		AuthenticationManagerBuilder.class);
+	// 	authenticationManagerBuilder.authenticationProvider(restAuthenticationProvider);
+	//
+	// 	return authenticationManagerBuilder.build();
+	// }
 
 	// 비동기 방식 인증을 진행하기 위한 시큐리티 필터 체인
 	@Bean
@@ -66,6 +62,7 @@ public class SecurityConfig {
 				.requestMatchers("/places/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()
 				.requestMatchers("/error").permitAll()
+				.requestMatchers("/health").permitAll()
 				.requestMatchers(HttpMethod.GET, "/schedule/get/**").permitAll()
 				.requestMatchers(HttpMethod.GET, "/schedule/getList").authenticated()
 				.anyRequest().authenticated()

@@ -1,52 +1,72 @@
 package org.example.be.group.announcement.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.example.be.group.announcement.dto.GroupAnnouncementCreationRequestDTO;
-import org.example.be.group.announcement.dto.GroupAnnouncementDeleteRequestDTO;
-import org.example.be.group.announcement.dto.GroupAnnouncementResponseDTO;
-import org.example.be.group.announcement.service.GroupAnnouncementService;
-import org.example.be.response.CommonResponse;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
-@Controller
+import org.example.be.group.announcement.dto.GroupAnnouncementCreateReqBody;
+import org.example.be.group.announcement.dto.GroupAnnouncementDeleteReqBody;
+import org.example.be.group.announcement.dto.GroupAnnouncementDeleteResBody;
+import org.example.be.group.announcement.dto.GroupAnnouncementResBody;
+import org.example.be.group.announcement.service.GroupAnnouncementService;
+import org.example.be.response.CommonResponse;
+import org.example.be.security.config.SecurityUser;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@RestController
 @RequestMapping("/group/announcement")
 @RequiredArgsConstructor
 public class GroupAnnouncementController {
 
-    private final GroupAnnouncementService groupAnnouncementService;
+	private final GroupAnnouncementService groupAnnouncementService;
 
-    // 그룹 공지 생성하기
-    @PostMapping("/create")
-    public ResponseEntity<CommonResponse<GroupAnnouncementResponseDTO>> createGroupAnnouncement(@RequestBody GroupAnnouncementCreationRequestDTO request) {
-        GroupAnnouncementResponseDTO responseDTO = groupAnnouncementService.createGroupAnnouncement(request);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(responseDTO, "그룹 공지 생성 성공"));
-    }
+	// 그룹 공지 생성하기
+	@PostMapping("/create")
+	public ResponseEntity<CommonResponse<GroupAnnouncementResBody>> createGroupAnnouncement(
+		@Valid @RequestBody GroupAnnouncementCreateReqBody request,
+		@AuthenticationPrincipal SecurityUser user) {
+		GroupAnnouncementResBody response = groupAnnouncementService.createGroupAnnouncement(request, user.getId());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(response, "그룹 공지 생성 성공"));
+	}
 
-    // 가장 최신 공지 1개 조회 ( 최상단에 노출할 공지 )
-    @GetMapping("/latestOne")
-    public ResponseEntity<CommonResponse<GroupAnnouncementResponseDTO>> getLatestGroupAnnouncement(@RequestParam String groupName) {
-        GroupAnnouncementResponseDTO responseDTO = groupAnnouncementService.getLatestAnnouncement(groupName);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(responseDTO, "가장 최신 그룹 공지 1개 조회 성공"));
-    }
+	// 가장 최신 공지 1개 조회 ( 최상단에 노출할 공지 )
+	@GetMapping("/latestOne")
+	public ResponseEntity<CommonResponse<GroupAnnouncementResBody>> getLatestGroupAnnouncement(
+		@RequestParam String groupName,
+		@AuthenticationPrincipal SecurityUser user) {
+		GroupAnnouncementResBody response = groupAnnouncementService.getLatestAnnouncement(groupName, user.getId());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(response, "가장 최신 그룹 공지 1개 조회 성공"));
+	}
 
-    // 해당 그룹 모든 공지 조회 ( 그룹 공지사항 전체 조회 )
-    @GetMapping("/getAllAnnouncement")
-    public ResponseEntity<CommonResponse<List<GroupAnnouncementResponseDTO>>> getAllGroupAnnouncementsByGroupName(@RequestParam("groupName") String groupName) {
-        List<GroupAnnouncementResponseDTO> responseDTOList = groupAnnouncementService.getAllGroupAnnouncements(groupName);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(responseDTOList, "그룹 공지 전체 조회 성공"));
-    }
+	// 해당 그룹 모든 공지 조회 ( 그룹 공지사항 전체 조회 )
+	@GetMapping("/getAllAnnouncement")
+	public ResponseEntity<CommonResponse<List<GroupAnnouncementResBody>>> getAllGroupAnnouncementsByGroupName(
+		@RequestParam("groupName") String groupName,
+		@AuthenticationPrincipal SecurityUser user) {
+		List<GroupAnnouncementResBody> response = groupAnnouncementService.getAllGroupAnnouncements(
+			groupName, user.getId());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(response, "그룹 공지 전체 조회 성공"));
+	}
 
-    // 그룹 공지 삭제 ( 공지 id로 삭제 )
-    @DeleteMapping("/delete")
-    public ResponseEntity<CommonResponse<Void>> deleteGroupAnnouncement(@RequestBody GroupAnnouncementDeleteRequestDTO request) {
-        groupAnnouncementService.deleteGroupAnnouncement(request);
-        return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "그룹 공지 삭제 성공"));
-    }
+	// 그룹 공지 삭제 ( 공지 id로 삭제 )
+	@DeleteMapping("/delete")
+	public ResponseEntity<CommonResponse<GroupAnnouncementDeleteResBody>> deleteGroupAnnouncement(
+		@Valid @RequestBody GroupAnnouncementDeleteReqBody request,
+		@AuthenticationPrincipal SecurityUser user) {
+		GroupAnnouncementDeleteResBody response = groupAnnouncementService.deleteGroupAnnouncement(request,
+			user.getId());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(response, "그룹 공지 삭제 성공"));
+	}
 }
 
 // 나중에 내용정리용 주석
