@@ -2,7 +2,7 @@ package org.example.be.chat.controller;
 
 import java.nio.charset.StandardCharsets;
 
-import org.example.be.chat.dto.ChatMessageDTO;
+import org.example.be.chat.dto.ChatMessageReqBody;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.service.ChatMessageService;
 import org.example.be.security.config.SecurityUser;
@@ -31,7 +31,7 @@ public class ChatMessageSocketController {
 	@MessageMapping("/chat/{groupName}")
 	public void handleMessage(
 		@DestinationVariable String groupName,
-		ChatMessageDTO incomingMessage,
+		ChatMessageReqBody incomingMessage,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
 		// URI 인코딩된 그룹 명 디코딩하기
@@ -50,7 +50,7 @@ public class ChatMessageSocketController {
 		);
 
 		// DTO 변환 후 해당 채팅방 구독자에게 브로드캐스팅
-		ChatMessageDTO chatMessageDTO = chatMessageService.toDTO(savedMessage);
-		messagingTemplate.convertAndSend("/sub/chat/" + groupName, chatMessageDTO);
+		ChatMessageReqBody chatMessageReqBody = chatMessageService.toDTO(savedMessage);
+		messagingTemplate.convertAndSend("/sub/chat/" + groupName, chatMessageReqBody);
 	}
 }

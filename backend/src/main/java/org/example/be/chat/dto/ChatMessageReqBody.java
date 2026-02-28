@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatMessageDTO {
+public class ChatMessageReqBody {
 	private Long id;
 	private String groupName;
 	private Long senderId;

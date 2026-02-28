@@ -2,7 +2,7 @@ package org.example.be.chat.controller;
 
 import java.util.Map;
 
-import org.example.be.chat.dto.ChatMessageDTO;
+import org.example.be.chat.dto.ChatMessageReqBody;
 import org.example.be.chat.service.ChatMessageService;
 import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
@@ -59,11 +59,11 @@ public class ChatMessageController {
 
 	// 해당 그룹의 가장 최신 메시지 1개 조회 ( 채팅 목록에서 요청용 )
 	@GetMapping("/{groupName}/messages/latest")
-	public ResponseEntity<CommonResponse<ChatMessageDTO>> getLatestMessage(
+	public ResponseEntity<CommonResponse<ChatMessageReqBody>> getLatestMessage(
 		@DecodedPathVariable String groupName,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		ChatMessageDTO result = chatMessageService.getLatestMessageOfGroup(groupName, securityUser);
+		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, securityUser);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 조회 성공"));
 	}
 
