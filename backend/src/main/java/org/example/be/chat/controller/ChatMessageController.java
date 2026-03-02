@@ -30,9 +30,9 @@ public class ChatMessageController {
 	@GetMapping("/{groupName}/messages")
 	public ResponseEntity<CommonResponse<Map<String, Object>>> getRecent20Messages(
 		@DecodedPathVariable String groupName,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
-		Map<String, Object> result = chatMessageService.getRecent20Messages(groupName, securityUser.getId());
+		Map<String, Object> result = chatMessageService.getRecent20Messages(groupName, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "최근 메시지 20개 조회 성공"));
 	}
 
@@ -41,10 +41,10 @@ public class ChatMessageController {
 	public ResponseEntity<CommonResponse<Map<String, Object>>> getPrev20Messages(
 		@DecodedPathVariable String groupName,
 		@RequestParam Long lastMessageId,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
 		Map<String, Object> result = chatMessageService.getPrevious20Messages(groupName, lastMessageId,
-			securityUser.getId());
+			user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "이전 메시지 추가 20개 조회 성공"));
 	}
 
@@ -53,9 +53,9 @@ public class ChatMessageController {
 	public ResponseEntity<CommonResponse<Map<String, Object>>> searchMessages(
 		@DecodedPathVariable String groupName,
 		@RequestParam String keyword,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
-		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, securityUser.getId());
+		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "메시지 검색 성공"));
 	}
 
@@ -63,9 +63,9 @@ public class ChatMessageController {
 	@GetMapping("/{groupName}/messages/latest")
 	public ResponseEntity<CommonResponse<ChatMessageReqBody>> getLatestMessage(
 		@DecodedPathVariable String groupName,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
-		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, securityUser.getId());
+		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 조회 성공"));
 	}
 
@@ -74,7 +74,7 @@ public class ChatMessageController {
 	// public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageDTO>>> getGroupsWithLatestMessages(
 	// 	@AuthenticationPrincipal SecurityUser securityUser) {
 	// 	List<ChatRoomListWithLatestMessageDTO> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage(
-	// 		securityUser);
+	// 		user);
 	// 	return ResponseEntity.status(HttpStatus.OK)
 	// 		.body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
 	// }
@@ -85,9 +85,9 @@ public class ChatMessageController {
 	public ResponseEntity<CommonResponse<String>> uploadImageMessage(
 		@RequestParam String groupName,
 		@RequestParam MultipartFile image,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
-		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, securityUser.getId());
+		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(publicUrl, "이미지 메시지 저장 성공"));
 	}
 
