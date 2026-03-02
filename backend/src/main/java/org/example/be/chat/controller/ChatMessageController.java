@@ -29,9 +29,10 @@ public class ChatMessageController {
 	// 해당 그룹 채팅방 최신 20개 메시지 조회 ( 채팅방 최초 입장 시 호출용 )
 	@GetMapping("/{groupName}/messages")
 	public ResponseEntity<CommonResponse<Map<String, Object>>> getRecent20Messages(
-		@DecodedPathVariable String groupName, @AuthenticationPrincipal SecurityUser securityUser
+		@DecodedPathVariable String groupName,
+		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		Map<String, Object> result = chatMessageService.getRecent20Messages(groupName, securityUser);
+		Map<String, Object> result = chatMessageService.getRecent20Messages(groupName, securityUser.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "최근 메시지 20개 조회 성공"));
 	}
 
@@ -42,7 +43,8 @@ public class ChatMessageController {
 		@RequestParam Long lastMessageId,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		Map<String, Object> result = chatMessageService.getPrevious20Messages(groupName, lastMessageId, securityUser);
+		Map<String, Object> result = chatMessageService.getPrevious20Messages(groupName, lastMessageId,
+			securityUser.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "이전 메시지 추가 20개 조회 성공"));
 	}
 
@@ -53,7 +55,7 @@ public class ChatMessageController {
 		@RequestParam String keyword,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, securityUser);
+		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, securityUser.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "메시지 검색 성공"));
 	}
 
@@ -63,7 +65,7 @@ public class ChatMessageController {
 		@DecodedPathVariable String groupName,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, securityUser);
+		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, securityUser.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 조회 성공"));
 	}
 
@@ -85,7 +87,7 @@ public class ChatMessageController {
 		@RequestParam MultipartFile image,
 		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, securityUser);
+		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, securityUser.getId());
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(publicUrl, "이미지 메시지 저장 성공"));
 	}
 

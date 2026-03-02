@@ -22,7 +22,6 @@ import org.example.be.group.repository.GroupRepository;
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
-import org.example.be.security.config.SecurityUser;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,10 +42,10 @@ public class ChatMessageService {
 
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
 	@Transactional
-	public Map<String, Object> getRecent20Messages(String groupName, SecurityUser securityUser) {
+	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
 		System.out.println(
 			"[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
-		Group group = findGroupAndValidateMember(groupName, securityUser.getId());
+		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
 		if (messages.isEmpty()) {
@@ -57,8 +56,8 @@ public class ChatMessageService {
 
 	// 이전 메시지 20개 추가 조회 ( 스크롤 업 시 호출용 )
 	@Transactional
-	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, SecurityUser securityUser) {
-		Group group = findGroupAndValidateMember(groupName, securityUser.getId());
+	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
+		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
 			lastMessageId);
@@ -70,8 +69,8 @@ public class ChatMessageService {
 
 	// 키워드 기반 메시지 검색
 	@Transactional
-	public Map<String, Object> searchMessages(String groupName, String keyword, SecurityUser securityUser) {
-		Group group = findGroupAndValidateMember(groupName, securityUser.getId());
+	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
+		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
 			group, keyword);
@@ -83,8 +82,8 @@ public class ChatMessageService {
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
 	@Transactional
-	public ChatMessageReqBody getLatestMessageOfGroup(String groupName, SecurityUser securityUser) {
-		Group group = findGroupAndValidateMember(groupName, securityUser.getId());
+	public ChatMessageReqBody getLatestMessageOfGroup(String groupName, Long memberId) {
+		Group group = findGroupAndValidateMember(groupName, memberId);
 		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
 		if (message.isPresent()) {
 			return toDTO(message.get());
@@ -141,10 +140,10 @@ public class ChatMessageService {
 	// ==================== 메시지 저장 관련 ====================
 
 	// GCS에 이미지 업로드 수행, public URL 반환
-	public String uploadAndGetPreview(MultipartFile image, String groupName, SecurityUser securityUser) {
+	public String uploadAndGetPreview(MultipartFile image, String groupName, Long memberId) {
 		try {
 			validateImageFile(image);
-			String senderIdentifier = String.valueOf(securityUser.getId());
+			String senderIdentifier = String.valueOf(memberId);
 			return gcsService.uploadChatImage(image, senderIdentifier, groupName);
 		} catch (IOException e) {
 			throw new GCSUploadFailedException("이미지 업로드 중 오류가 발생했습니다.", e);
