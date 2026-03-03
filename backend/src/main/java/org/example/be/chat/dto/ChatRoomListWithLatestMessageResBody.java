@@ -2,7 +2,7 @@ package org.example.be.chat.dto;
 
 import java.time.LocalDateTime;
 
-import org.example.be.chat.entity.ChatMessage;
+import org.example.be.chat.type.MessageType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,5 +17,5 @@ public class ChatRoomListWithLatestMessageResBody {
 	private String groupName;
 	private String latestMessage;
 	private LocalDateTime sendAt;
-	private ChatMessage.MessageType type;
+	private MessageType type;
 }

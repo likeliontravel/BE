@@ -16,6 +16,7 @@ import org.example.be.chat.dto.ChatMessageResBody;
 import org.example.be.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
+import org.example.be.chat.type.MessageType;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.GCSUploadFailedException;
 import org.example.be.exception.custom.ResourceCreationException;
@@ -130,7 +131,7 @@ public class ChatMessageService {
 			ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
 			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
 			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
-			ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
+			MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
 
 			ChatRoomListWithLatestMessageResBody dto = ChatRoomListWithLatestMessageResBody.builder()
 				.groupName(group.getGroupName())
@@ -173,9 +174,9 @@ public class ChatMessageService {
 		Member sender = findMember(memberId);
 
 		// TEXT / IMAGE 결정
-		ChatMessage.MessageType messageType;
+		MessageType messageType;
 		try {
-			messageType = ChatMessage.MessageType.valueOf(type.toUpperCase());
+			messageType = MessageType.valueOf(type.toUpperCase());
 		} catch (Exception e) {
 			throw new IllegalArgumentException("지원하지 않는 메시지 타입입니다.");
 		}
