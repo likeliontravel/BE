@@ -140,7 +140,7 @@ public class ChatMessageService {
 
 		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
 		dtoList.sort(Comparator
-			.comparing(ChatRoomListWithLatestMessageResBody::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
+			.comparing(ChatRoomListWithLatestMessageResBody::sendAt, Comparator.nullsLast(Comparator.naturalOrder()))
 			.reversed());
 
 		return dtoList;
@@ -164,23 +164,15 @@ public class ChatMessageService {
 
 	// 메시지 저장 ( TEXT / IMAGE ) - WebSocket에서 호출
 	@Transactional
-	public ChatMessage saveMessage(String groupName, Long memberId, String content, String type) {
+	public ChatMessage saveMessage(String groupName, Long memberId, String content, MessageType type) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		Member sender = findMember(memberId);
-
-		// TEXT / IMAGE 결정
-		MessageType messageType;
-		try {
-			messageType = MessageType.valueOf(type.toUpperCase());
-		} catch (Exception e) {
-			throw new IllegalArgumentException("지원하지 않는 메시지 타입입니다.");
-		}
 
 		ChatMessage chatMessage = ChatMessage.builder()
 			.group(group)
 			.sender(sender)
 			.content(content)
-			.type(messageType)
+			.type(type)
 			.sendAt(LocalDateTime.now())
 			.build();
 		try {
@@ -254,7 +246,7 @@ public class ChatMessageService {
 			.id(entity.getId())
 			.groupName(entity.getGroup().getGroupName())
 			.senderId(entity.getSender().getId())
-			.type(entity.getType().name())
+			.type(entity.getType())
 			.content(entity.getContent())
 			.sendAt(entity.getSendAt())
 			.build();

@@ -45,8 +45,8 @@ public class ChatMessageSocketController {
 		ChatMessage savedMessage = chatMessageService.saveMessage(
 			decodedGroupName,
 			user.getId(),
-			incomingMessage.getContent(),
-			incomingMessage.getType()
+			incomingMessage.content(),
+			incomingMessage.type()
 		);
 
 		// DTO 변환 후 해당 채팅방 구독자에게 브로드캐스팅
