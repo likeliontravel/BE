@@ -26,9 +26,6 @@ import org.example.be.group.repository.GroupRepository;
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
-import org.example.be.member.service.MemberService;
-import org.example.be.unifieduser.repository.UnifiedUserRepository;
-import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,9 +39,6 @@ public class ChatMessageService {
 
 	private final ChatMessageRepository chatMessageRepository;
 	private final GroupRepository groupRepository;
-	private final UnifiedUserRepository unifiedUserRepository;
-	private final UnifiedUserService unifiedUserService;
-	private final MemberService memberService;
 	private final GCSService gcsService;
 	private final MemberRepository memberRepository;
 
