@@ -7,11 +7,21 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID}
       credentials:
         location: ${GCP_CREDENTIALS_PATH}
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.example.be: INFO
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+
+app:
+  backend-base-url: http://localhost:8080
+  frontend-base-url: http://localhost:3000

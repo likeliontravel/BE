@@ -2,6 +2,8 @@ package org.example.be.chat.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.chat.dto.ChatMessageReqBody;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
@@ -22,6 +25,10 @@ import org.example.be.group.repository.GroupRepository;
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
+import org.example.be.member.service.MemberService;
+import org.example.be.security.util.SecurityUtil;
+import org.example.be.unifieduser.repository.UnifiedUserRepository;
+import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +42,11 @@ public class ChatMessageService {
 
 	private final ChatMessageRepository chatMessageRepository;
 	private final GroupRepository groupRepository;
-	private final MemberRepository memberRepository;
+	private final UnifiedUserRepository unifiedUserRepository;
+	private final UnifiedUserService unifiedUserService;
+	private final MemberService memberService;
 	private final GCSService gcsService;
+	private final MemberRepository memberRepository;
 
 	// ==================== 일반 REST API ====================
 
@@ -93,49 +103,53 @@ public class ChatMessageService {
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
-	// @Transactional(readOnly = true)
-	// public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage(SecurityUser securityUser) {
-	// 	Member member = findMember(securityUser.getId());
-	//
-	// 	// 요청자가 속한 그룹 목록
-	// 	List<Group> groups = groupRepository.findByMembersContaining(member);
-	// 	if (groups.isEmpty()) {
-	// 		return Collections.emptyList();
-	// 	}
-	//
-	// 	// groupName -> latest ChatMessage 메핑
-	// 	Map<String, ChatMessage> latestByGroupName = new HashMap<>();
-	// 	for (Group group : groups) {
-	// 		Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
-	// 		latestByGroupName.put(group.getGroupName(), latest.orElse(null));
-	// 	}
-	//
-	// 	// DTO로 변환
-	// 	List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
-	// 	for (Group group : groups) {
-	// 		ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
-	// 		String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
-	// 		LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
-	// 		ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
-	//
-	// 		ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
-	// 			.groupName(group.getGroupName())
-	// 			.latestMessage(latestMessageContent)
-	// 			.sendAt(latestMessageSendAt)
-	// 			.type(latestMessageType)
-	// 			.build();
-	//
-	// 		dtoList.add(dto);
-	// 	}
-	//
-	// 	// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
-	// 	dtoList.sort(Comparator
-	// 		.comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
-	// 		.reversed());
-	//
-	// 	return dtoList;
-	//
-	// }
+	@Transactional(readOnly = true)
+	public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage() {
+		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
+		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
+		Member user = memberService.findByEmail(userIdentifier.substring(4))
+			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+
+		// 요청자가 속한 그룹 목록
+		List<Group> groups = groupRepository.findByMembersContaining(user);
+		if (groups.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		// groupName -> latest ChatMessage 메핑
+		Map<String, ChatMessage> latestByGroupName = new HashMap<>();
+		for (Group group : groups) {
+			Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
+			latestByGroupName.put(group.getGroupName(), latest.orElse(null));
+		}
+
+		// DTO로 변환
+		List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
+		for (Group group : groups) {
+			ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
+			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
+			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
+			ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
+
+			ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
+				.groupName(group.getGroupName())
+				.latestMessage(latestMessageContent)
+				.sendAt(latestMessageSendAt)
+				.type(latestMessageType)
+				.build();
+
+			dtoList.add(dto);
+		}
+
+		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
+		dtoList.sort(Comparator
+			.comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
+			.reversed());
+
+		return dtoList;
+
+	}
 
 	// ==================== 메시지 저장 관련 ====================
 

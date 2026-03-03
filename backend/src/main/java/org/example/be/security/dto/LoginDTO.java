@@ -1,13 +1,13 @@
-package org.example.be.security.dto;
-
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class LoginDTO {
-
-    private String email;
-
-    private String password;
-}
+// package org.example.be.security.dto;
+//
+// import lombok.Getter;
+// import lombok.Setter;
+//
+// @Getter
+// @Setter
+// public class LoginDTO {
+//
+//     private String email;
+//
+//     private String password;
+// }
