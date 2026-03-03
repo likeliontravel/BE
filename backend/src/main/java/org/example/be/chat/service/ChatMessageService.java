@@ -12,7 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.example.be.chat.dto.ChatMessageReqBody;
+import org.example.be.chat.dto.ChatMessageResBody;
 import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
@@ -92,7 +92,7 @@ public class ChatMessageService {
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
 	@Transactional
-	public ChatMessageReqBody getLatestMessageOfGroup(String groupName, Long memberId) {
+	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
 		if (message.isPresent()) {
@@ -232,7 +232,7 @@ public class ChatMessageService {
 
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.
 	private Map<String, Object> buildMessageWithProfiles(List<ChatMessage> messages) {
-		List<ChatMessageReqBody> dtoList = messages.stream()
+		List<ChatMessageResBody> dtoList = messages.stream()
 			.sorted(Comparator.comparing(ChatMessage::getSendAt))
 			.map(this::toDTO)
 			.collect(Collectors.toList());
@@ -253,8 +253,8 @@ public class ChatMessageService {
 	}
 
 	// Entity -> DTO 파싱
-	public ChatMessageReqBody toDTO(ChatMessage entity) {
-		return ChatMessageReqBody.builder()
+	public ChatMessageResBody toDTO(ChatMessage entity) {
+		return ChatMessageResBody.builder()
 			.id(entity.getId())
 			.groupName(entity.getGroup().getGroupName())
 			.senderId(entity.getSender().getId())

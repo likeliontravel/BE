@@ -1,8 +1,10 @@
 package org.example.be.chat.controller;
 
+import java.util.List;
 import java.util.Map;
 
-import org.example.be.chat.dto.ChatMessageReqBody;
+import org.example.be.chat.dto.ChatMessageResBody;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
 import org.example.be.chat.service.ChatMessageService;
 import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
@@ -61,23 +63,21 @@ public class ChatMessageController {
 
 	// 해당 그룹의 가장 최신 메시지 1개 조회 ( 채팅 목록에서 요청용 )
 	@GetMapping("/{groupName}/messages/latest")
-	public ResponseEntity<CommonResponse<ChatMessageReqBody>> getLatestMessage(
+	public ResponseEntity<CommonResponse<ChatMessageResBody>> getLatestMessage(
 		@DecodedPathVariable String groupName,
 		@AuthenticationPrincipal SecurityUser user
 	) {
-		ChatMessageReqBody result = chatMessageService.getLatestMessageOfGroup(groupName, user.getId());
+		ChatMessageResBody result = chatMessageService.getLatestMessageOfGroup(groupName, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "해당 그룹 가장 최신 메시지 조회 성공"));
 	}
 
 	// 채팅방 목록 조회 ( 최근 메시지 1개 포함 )
-	// @GetMapping("/user-groups/with-latest")
-	// public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageDTO>>> getGroupsWithLatestMessages(
-	// 	@AuthenticationPrincipal SecurityUser securityUser) {
-	// 	List<ChatRoomListWithLatestMessageDTO> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage(
-	// 		user);
-	// 	return ResponseEntity.status(HttpStatus.OK)
-	// 		.body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
-	// }
+	@GetMapping("/user-groups/with-latest")
+	public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageDTO>>> getGroupsWithLatestMessages() {
+		List<ChatRoomListWithLatestMessageDTO> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage();
+		return ResponseEntity.status(HttpStatus.OK)
+			.body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
+	}
 
 	// 이미지 메시지 업로드 ( REST 방식 - 미리보기를 띄우기 위해 publicURL을 먼저 보여줄 때 호출 )
 	// GCS에 업로드 후 이미지의 public URL을 반환해준다
