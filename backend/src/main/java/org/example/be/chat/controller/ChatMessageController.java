@@ -73,8 +73,11 @@ public class ChatMessageController {
 
 	// 채팅방 목록 조회 ( 최근 메시지 1개 포함 )
 	@GetMapping("/user-groups/with-latest")
-	public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageResBody>>> getGroupsWithLatestMessages() {
-		List<ChatRoomListWithLatestMessageResBody> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage();
+	public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageResBody>>> getGroupsWithLatestMessages(
+		@AuthenticationPrincipal SecurityUser user
+	) {
+		List<ChatRoomListWithLatestMessageResBody> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage(
+			user.getId());
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
 	}

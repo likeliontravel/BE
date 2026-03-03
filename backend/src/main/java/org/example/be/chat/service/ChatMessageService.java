@@ -27,7 +27,6 @@ import org.example.be.member.dto.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.member.service.MemberService;
-import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.repository.UnifiedUserRepository;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -105,30 +104,32 @@ public class ChatMessageService {
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
 	@Transactional(readOnly = true)
-	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage() {
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage(Long memberId) {
 		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
 		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
+		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
 
 		// 요청자가 속한 그룹 목록
-		List<Group> groups = groupRepository.findByMembersContaining(user);
+		List<Group> groups = groupRepository.findByMembersContaining(member);
 		if (groups.isEmpty()) {
 			return Collections.emptyList();
 		}
 
+		List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessagesForGroups(groups);
+
 		// groupName -> latest ChatMessage 메핑
-		Map<String, ChatMessage> latestByGroupName = new HashMap<>();
-		for (Group group : groups) {
-			Optional<ChatMessage> latest = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
-			latestByGroupName.put(group.getGroupName(), latest.orElse(null));
-		}
+		Map<Long, ChatMessage> latestMessageMap =
+			latestMessages.stream()
+				.collect(Collectors.toMap(
+					m -> m.getGroup().getId(),
+					m -> m
+				));
 
 		// DTO로 변환
 		List<ChatRoomListWithLatestMessageResBody> dtoList = new ArrayList<>();
 		for (Group group : groups) {
-			ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
+			ChatMessage latestMessage = latestMessageMap.get(group.getId());
 			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
 			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
 			MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
