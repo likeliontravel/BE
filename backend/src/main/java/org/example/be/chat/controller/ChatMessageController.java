@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.example.be.chat.dto.ChatMessageResBody;
-import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.chat.service.ChatMessageService;
 import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.response.CommonResponse;
@@ -73,8 +73,8 @@ public class ChatMessageController {
 
 	// 채팅방 목록 조회 ( 최근 메시지 1개 포함 )
 	@GetMapping("/user-groups/with-latest")
-	public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageDTO>>> getGroupsWithLatestMessages() {
-		List<ChatRoomListWithLatestMessageDTO> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage();
+	public ResponseEntity<CommonResponse<List<ChatRoomListWithLatestMessageResBody>>> getGroupsWithLatestMessages() {
+		List<ChatRoomListWithLatestMessageResBody> groupsAndMessages = chatMessageService.getGroupsWithLatestMessage();
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(CommonResponse.success(groupsAndMessages, "그룹 목록 및 각 최신 메시지 조회 성공"));
 	}

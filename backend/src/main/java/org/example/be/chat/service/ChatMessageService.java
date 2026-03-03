@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.chat.dto.ChatMessageResBody;
-import org.example.be.chat.dto.ChatRoomListWithLatestMessageDTO;
+import org.example.be.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
@@ -104,7 +104,7 @@ public class ChatMessageService {
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
 	@Transactional(readOnly = true)
-	public List<ChatRoomListWithLatestMessageDTO> getGroupsWithLatestMessage() {
+	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage() {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
 		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
@@ -125,14 +125,14 @@ public class ChatMessageService {
 		}
 
 		// DTO로 변환
-		List<ChatRoomListWithLatestMessageDTO> dtoList = new ArrayList<>();
+		List<ChatRoomListWithLatestMessageResBody> dtoList = new ArrayList<>();
 		for (Group group : groups) {
 			ChatMessage latestMessage = latestByGroupName.get(group.getGroupName());
 			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
 			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
 			ChatMessage.MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
 
-			ChatRoomListWithLatestMessageDTO dto = ChatRoomListWithLatestMessageDTO.builder()
+			ChatRoomListWithLatestMessageResBody dto = ChatRoomListWithLatestMessageResBody.builder()
 				.groupName(group.getGroupName())
 				.latestMessage(latestMessageContent)
 				.sendAt(latestMessageSendAt)
@@ -144,7 +144,7 @@ public class ChatMessageService {
 
 		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
 		dtoList.sort(Comparator
-			.comparing(ChatRoomListWithLatestMessageDTO::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
+			.comparing(ChatRoomListWithLatestMessageResBody::getSendAt, Comparator.nullsLast(Comparator.naturalOrder()))
 			.reversed());
 
 		return dtoList;

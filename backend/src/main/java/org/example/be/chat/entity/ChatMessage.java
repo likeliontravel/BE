@@ -2,6 +2,7 @@ package org.example.be.chat.entity;
 
 import java.time.LocalDateTime;
 
+import org.example.be.chat.type.MessageType;
 import org.example.be.group.entitiy.Group;
 import org.example.be.member.entity.Member;
 
@@ -57,9 +58,5 @@ public class ChatMessage {
 	// 메시지 전송 시간
 	@Column(nullable = false)
 	private LocalDateTime sendAt;
-
-	// 메시지 유형 ( 추후 확장 고려 enum )
-	public enum MessageType {
-		TEXT, IMAGE
-	}
+	
 }

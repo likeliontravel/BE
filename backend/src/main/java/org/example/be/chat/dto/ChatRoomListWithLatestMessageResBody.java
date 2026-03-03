@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatRoomListWithLatestMessageDTO {
+public class ChatRoomListWithLatestMessageResBody {
 	private String groupName;
 	private String latestMessage;
 	private LocalDateTime sendAt;
