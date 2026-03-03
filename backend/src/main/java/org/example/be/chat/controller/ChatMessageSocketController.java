@@ -32,19 +32,19 @@ public class ChatMessageSocketController {
 	public void handleMessage(
 		@DestinationVariable String groupName,
 		ChatMessageResBody incomingMessage,
-		@AuthenticationPrincipal SecurityUser securityUser
+		@AuthenticationPrincipal SecurityUser user
 	) {
 		// URI 인코딩된 그룹 명 디코딩하기
 		String decodedGroupName = UriUtils.decode(groupName, StandardCharsets.UTF_8);
 
-		if (securityUser == null) {
+		if (user == null) {
 			throw new IllegalArgumentException("WebSocket 세션에 사용자 정보가 없습니다.");
 		}
 
 		// 메시지를 DB에 저장
 		ChatMessage savedMessage = chatMessageService.saveMessage(
 			decodedGroupName,
-			securityUser.getId(),
+			user.getId(),
 			incomingMessage.getContent(),
 			incomingMessage.getType()
 		);
