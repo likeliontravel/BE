@@ -1,6 +1,7 @@
 package org.example.be.chat.controller;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 
 import org.example.be.chat.dto.ChatMessageResBody;
 import org.example.be.chat.entity.ChatMessage;
@@ -10,7 +11,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.util.UriUtils;
 
@@ -33,8 +34,9 @@ public class ChatMessageSocketController {
 	public void handleMessage(
 		@DestinationVariable String groupName,
 		@Payload ChatMessageResBody incomingMessage,
-		@AuthenticationPrincipal SecurityUser user
+		Principal principal
 	) {
+		SecurityUser user = (SecurityUser)((UsernamePasswordAuthenticationToken)principal).getPrincipal();
 		// URI 인코딩된 그룹 명 디코딩하기
 		String decodedGroupName = UriUtils.decode(groupName, StandardCharsets.UTF_8);
 
