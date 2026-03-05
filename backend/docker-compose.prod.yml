@@ -60,7 +60,7 @@ services:
       - ${GCP_CREDENTIALS_HOST_PATH}:/app/credentials/toleave-b9a7b3a17267.json:ro
 
   frontend:
-    image: jwj9127/toleave-frontend:latest
+    image: byeongduk/toleave-frontend:latest
     container_name: toleave-frontend
     restart: unless-stopped
     networks:
