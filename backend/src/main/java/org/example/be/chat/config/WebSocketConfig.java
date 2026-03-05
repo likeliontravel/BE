@@ -24,7 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 		registry.addEndpoint("/ws")
 			.addInterceptors(new CustomHandshakeInterceptor(authTokenService, groupRepository))
 			.setHandshakeHandler(new CustomHandshakeHandler())
-			.setAllowedOrigins("https://localhost:3000", "https://localhost:5500", "https://toleave.cloud")
+			.setAllowedOrigins("https://localhost:3000", "http://localhost:5500", "https://toleave.cloud")
 			.withSockJS();  // SockJS fallback 지원
 	}
 

@@ -8,6 +8,7 @@ import org.example.be.chat.service.ChatMessageService;
 import org.example.be.security.config.SecurityUser;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -31,7 +32,7 @@ public class ChatMessageSocketController {
 	@MessageMapping("/chat/{groupName}")
 	public void handleMessage(
 		@DestinationVariable String groupName,
-		ChatMessageResBody incomingMessage,
+		@Payload ChatMessageResBody incomingMessage,
 		@AuthenticationPrincipal SecurityUser user
 	) {
 		// URI 인코딩된 그룹 명 디코딩하기
