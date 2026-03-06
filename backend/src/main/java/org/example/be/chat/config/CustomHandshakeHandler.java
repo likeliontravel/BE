@@ -1,30 +1,27 @@
 package org.example.be.chat.config;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.server.ServerHttpRequest;
-import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
-
 import java.security.Principal;
 import java.util.Map;
 
+import org.example.be.security.config.SecurityUser;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+
 public class CustomHandshakeHandler extends DefaultHandshakeHandler {
 
-    @Override
-    protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler,
-                                      Map<String, Object> attributes) {
+	@Override
+	protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler,
+		Map<String, Object> attributes) {
 
-        String userIdentifier = (String) attributes.get("userIdentifier");
-        return () -> userIdentifier;
+		SecurityUser securityUser = (SecurityUser)attributes.get("securityUser");
 
-//        // 위 리턴구문 작동 형태
-//        return new Principal() {
-//            @Override
-//            public String getName() {
-//                return userIdentifier;
-//            }
-//        };
-    }
+		if (securityUser == null) {
+			return null;
+		}
 
+		// SecurityUser를 담은 Authentication 객체 반환 ( @AuthenticationPrincipal 연동을 위함 )
+		return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
+	}
 }

@@ -1,8 +1,7 @@
 package org.example.be.chat.config;
 
 import org.example.be.group.repository.GroupRepository;
-import org.example.be.jwt.service.JWTBlackListService;
-import org.example.be.jwt.util.JWTUtil;
+import org.example.be.member.service.AuthTokenService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -16,17 +15,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-	private final JWTUtil jwtUtil;
-	private final JWTBlackListService jwtBlackListService;
+	private final AuthTokenService authTokenService;
 	private final GroupRepository groupRepository;
 
 	// 클라이언트가 접속할 WebSocket 엔드포인트 등록
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint("/ws")
-			.addInterceptors(new CustomHandshakeInterceptor(jwtUtil, jwtBlackListService, groupRepository))
+			.addInterceptors(new CustomHandshakeInterceptor(authTokenService, groupRepository))
 			.setHandshakeHandler(new CustomHandshakeHandler())
-			.setAllowedOrigins("https://localhost:3000", "https://localhost:5500", "https://toleave.cloud")
+			.setAllowedOrigins("https://localhost:3000", "http://localhost:5500", "https://toleave.cloud")
 			.withSockJS();  // SockJS fallback 지원
 	}
 

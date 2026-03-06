@@ -30,9 +30,9 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
 
     public final DateTimePath<java.time.LocalDateTime> sendAt = createDateTime("sendAt", java.time.LocalDateTime.class);
 
-    public final org.example.be.unifieduser.entity.QUnifiedUser sender;
+    public final org.example.be.member.entity.QMember sender;
 
-    public final EnumPath<ChatMessage.MessageType> type = createEnum("type", ChatMessage.MessageType.class);
+    public final EnumPath<org.example.be.chat.type.MessageType> type = createEnum("type", org.example.be.chat.type.MessageType.class);
 
     public QChatMessage(String variable) {
         this(ChatMessage.class, forVariable(variable), INITS);
@@ -53,7 +53,7 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
     public QChatMessage(Class<? extends ChatMessage> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.group = inits.isInitialized("group") ? new org.example.be.group.entitiy.QGroup(forProperty("group"), inits.get("group")) : null;
-        this.sender = inits.isInitialized("sender") ? new org.example.be.unifieduser.entity.QUnifiedUser(forProperty("sender"), inits.get("sender")) : null;
+        this.sender = inits.isInitialized("sender") ? new org.example.be.member.entity.QMember(forProperty("sender")) : null;
     }
 
 }
