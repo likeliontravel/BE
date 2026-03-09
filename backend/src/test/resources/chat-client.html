@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Toleave Chat Test (Image Support)</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<style>
+body {
+    font-family: sans-serif;
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#messages {
+    border: 1px solid #ccc;
+    height: 400px;
+    overflow-y: scroll;
+    margin-bottom: 10px;
+    padding: 15px;
+    background: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+label {
+    width: 100px;
+    font-weight: bold;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    background: #007bff;
+    color: white;
+}
+
+button:disabled {
+    background: #ccc;
+}
+
+.msg-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.msg-image {
+    max-width: 200px;
+    border-radius: 5px;
+    display: block;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+.timestamp {
+    font-size: 0.7em;
+    color: #888;
+    margin-bottom: 3px;
+}
+
+.sender {
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 3px;
+}
+
+hr {
+    margin: 20px 0;
+    border: 0;
+    border-top: 1px solid #eee;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Toleave 채팅 테스트 (이미지 포함)</h2>
+
+<div class="input-group">
+<label>Access Token:</label>
+<input type="text" id="accessToken" placeholder="Bearer 제외하고 토큰만 입력">
+</div>
+
+<div class="input-group">
+<label>Group Name:</label>
+<input type="text" id="groupName" placeholder="그룹 명 입력">
+</div>
+
+<div style="margin-bottom: 20px;">
+<button id="connectBtn">연결하기</button>
+<button id="disconnectBtn" disabled style="background:#dc3545;">연결종료</button>
+</div>
+
+<div id="messages"></div>
+
+<div class="input-group">
+<input type="text" id="messageInput" placeholder="메시지를 입력하세요" disabled>
+<button id="sendBtn" disabled>전송</button>
+</div>
+
+<div class="input-group">
+<label>이미지 전송:</label>
+<input type="file" id="imageFileInput" accept="image/*" disabled>
+<button id="sendImageBtn" disabled style="background:#28a745;">이미지 전송</button>
+</div>
+
+<script>
+
+let stompClient = null;
+let currentGroupName = "";
+
+const connectBtn = document.getElementById('connectBtn');
+const disconnectBtn = document.getElementById('disconnectBtn');
+const sendBtn = document.getElementById('sendBtn');
+const sendImageBtn = document.getElementById('sendImageBtn');
+const messageInput = document.getElementById('messageInput');
+const imageFileInput = document.getElementById('imageFileInput');
+const messagesDiv = document.getElementById('messages');
+
+function connect() {
+
+    const token = document.getElementById('accessToken').value;
+    const groupName = document.getElementById('groupName').value;
+    currentGroupName = groupName;
+
+    if (!token || !groupName) {
+        alert("Token과 Group Name을 입력해주세요.");
+        return;
+    }
+
+    const socket = new SockJS(
+        `http://localhost:8080/ws?accessToken=${token}&groupName=${encodeURIComponent(groupName)}`
+    );
+
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function(frame) {
+
+        console.log('Connected: ' + frame);
+        setConnected(true);
+
+        stompClient.subscribe(
+            `/sub/chat/${encodeURIComponent(groupName)}`,
+            function(chat) {
+                showMessage(JSON.parse(chat.body));
+            }
+        );
+
+    }, function(error) {
+
+        console.error('STOMP Error: ' + error);
+        alert("연결에 실패했습니다. 토큰이나 그룹명을 확인하세요.");
+
+    });
+
+}
+
+function disconnect() {
+
+    if (stompClient !== null) {
+        stompClient.disconnect();
+    }
+
+    setConnected(false);
+    console.log("Disconnected");
+
+}
+
+function sendMessage() {
+
+    const content = messageInput.value;
+
+    if (content && stompClient) {
+
+        const chatMessage = {
+            groupName: currentGroupName,
+            content: content,
+            type: 'TEXT'
+        };
+
+        stompClient.send(
+            `/pub/chat/${encodeURIComponent(currentGroupName)}`,
+            {},
+            JSON.stringify(chatMessage)
+        );
+
+        messageInput.value = '';
+
+    }
+
+}
+
+async function uploadAndSendImage() {
+
+    const file = imageFileInput.files[0];
+    const token = document.getElementById('accessToken').value;
+
+    if (!file) {
+        alert("이미지 파일을 선택해주세요.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("groupName", currentGroupName);
+
+    try {
+
+        sendImageBtn.disabled = true;
+        sendImageBtn.textContent = "업로드 중...";
+
+        const response = await fetch(
+            `http://localhost:8080/chat/image/upload`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.data) {
+
+            const imageUrl = result.data;
+
+            const chatMessage = {
+                groupName: currentGroupName,
+                content: imageUrl,
+                type: 'IMAGE'
+            };
+
+            stompClient.send(
+                `/pub/chat/${encodeURIComponent(currentGroupName)}`,
+                {},
+                JSON.stringify(chatMessage)
+            );
+
+            imageFileInput.value = "";
+
+        } else {
+
+            alert("이미지 업로드 실패: " + (result.message || "서버 에러"));
+
+        }
+
+    } catch(error) {
+
+        console.error("Image Upload Error:", error);
+        alert("이미지 전송 중 오류가 발생했습니다.");
+
+    } finally {
+
+        sendImageBtn.disabled = false;
+        sendImageBtn.textContent = "이미지 전송";
+
+    }
+
+}
+
+function setConnected(connected) {
+
+    connectBtn.disabled = connected;
+    disconnectBtn.disabled = !connected;
+    sendBtn.disabled = !connected;
+    sendImageBtn.disabled = !connected;
+    messageInput.disabled = !connected;
+    imageFileInput.disabled = !connected;
+
+}
+
+function showMessage(message) {
+
+    const msgItem = document.createElement('div');
+    msgItem.className = 'msg-item';
+
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'sender';
+    senderDiv.textContent = `User ${message.senderId}`;
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'timestamp';
+    timeDiv.textContent =
+        message.sendAt
+            ? new Date(message.sendAt).toLocaleString()
+            : '방금 전';
+
+    msgItem.appendChild(senderDiv);
+    msgItem.appendChild(timeDiv);
+
+    if (message.type === 'IMAGE') {
+
+        const img = document.createElement('img');
+        img.src = message.content;
+        img.className = 'msg-image';
+
+        img.onclick = () => window.open(message.content, '_blank');
+
+        msgItem.appendChild(img);
+
+    } else {
+
+        const textDiv = document.createElement('div');
+        textDiv.textContent = message.content;
+        msgItem.appendChild(textDiv);
+
+    }
+
+    messagesDiv.appendChild(msgItem);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+}
+
+connectBtn.onclick = connect;
+disconnectBtn.onclick = disconnect;
+sendBtn.onclick = sendMessage;
+sendImageBtn.onclick = uploadAndSendImage;
+
+messageInput.onkeypress = function(e) {
+    if (e.key === 'Enter') sendMessage();
+};
+
+</script>
+
+</body>
+</html>
