@@ -70,7 +70,9 @@ public class Board extends Base {
 		String escapedContent) {
 		Board board = new Board();
 		board.setTitle(req.title());
-		board.setContent(req.content());
+		board.setContent(escapedContent);
+		board.setWriter(writer);
+		board.setWriterIdentifier(writerIdentifier);
 		board.setBoardHits(0); // 생성할 때는 조회수가 0
 		board.setTheme(req.theme());
 		board.setRegion(req.region());
