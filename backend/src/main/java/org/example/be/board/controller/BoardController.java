@@ -2,8 +2,10 @@ package org.example.be.board.controller;
 
 import java.util.List;
 
+import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
+import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
@@ -95,15 +97,15 @@ public class BoardController {
 	// ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
 	// 게시판 글 생성 ( 작성 )
 	@PostMapping("/create")
-	public ResponseEntity<CommonResponse<BoardResBody>> writeBoard(@RequestBody BoardResBody boardResBody) {
-		BoardResBody savedBoardResBody = boardService.writeBoard(boardResBody);
+	public ResponseEntity<CommonResponse<BoardResBody>> writeBoard(@RequestBody BoardCreateReqBody reqBody) {
+		BoardResBody savedBoardResBody = boardService.writeBoard(reqBody);
 		return ResponseEntity.ok(CommonResponse.success(savedBoardResBody, "게시글 저장 성공"));
 	}
 
 	// 게시판 글 수정
 	@PutMapping("/update")
-	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@RequestBody BoardResBody boardResBody) {
-		BoardResBody updatedBoardResBody = boardService.updateBoard(boardResBody);
+	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@RequestBody BoardUpdateReqBody reqBody) {
+		BoardResBody updatedBoardResBody = boardService.updateBoard(reqBody);
 		return ResponseEntity.ok(CommonResponse.success(updatedBoardResBody, "게시글 글 수정 성공"));
 	}
 
