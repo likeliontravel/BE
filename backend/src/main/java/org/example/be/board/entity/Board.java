@@ -3,7 +3,7 @@ package org.example.be.board.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.example.be.board.dto.BoardDTO;
+import org.example.be.board.dto.BoardResBody;
 import org.example.be.config.Base;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -65,29 +65,29 @@ public class Board extends Base {
 	private List<Comment> commentList = new ArrayList<>();
 
 	// dto를 엔티티로 변환 ( 게시글 생성 )
-	public static Board toCreateEntity(BoardDTO boardDTO) {
+	public static Board toCreateEntity(BoardResBody boardResBody) {
 		Board board = new Board();
-		board.setTitle(boardDTO.getTitle());
-		board.setContent(boardDTO.getContent());
+		board.setTitle(boardResBody.getTitle());
+		board.setContent(boardResBody.getContent());
 		board.setBoardHits(0); // 생성할 때는 조회수가 0
-		board.setTheme(boardDTO.getTheme());
-		board.setRegion(boardDTO.getRegion());
-		board.setThumbnailPublicUrl(boardDTO.getThumbnailPublicUrl());
-		board.setWriterIdentifier(boardDTO.getWriterIdentifier());
+		board.setTheme(boardResBody.getTheme());
+		board.setRegion(boardResBody.getRegion());
+		board.setThumbnailPublicUrl(boardResBody.getThumbnailPublicUrl());
+		board.setWriterIdentifier(boardResBody.getWriterIdentifier());
 		return board;
 	}
 
 	// dto를 엔티티로 변환 ( 게시글 업데이트 )
-	public static Board toUpdateEntity(BoardDTO boardDTO, String originalWriterIdentifier) {
+	public static Board toUpdateEntity(BoardResBody boardResBody, String originalWriterIdentifier) {
 		Board board = new Board();
-		board.setTitle(boardDTO.getTitle());
-		board.setContent(boardDTO.getContent());
-		board.setWriter(boardDTO.getWriter());
+		board.setTitle(boardResBody.getTitle());
+		board.setContent(boardResBody.getContent());
+		board.setWriter(boardResBody.getWriter());
 		board.setWriterIdentifier(originalWriterIdentifier);
-		board.setBoardHits(boardDTO.getBoardHits());
-		board.setTheme(boardDTO.getTheme());
-		board.setRegion(boardDTO.getRegion());
-		board.setThumbnailPublicUrl(boardDTO.getThumbnailPublicUrl());
+		board.setBoardHits(boardResBody.getBoardHits());
+		board.setTheme(boardResBody.getTheme());
+		board.setRegion(boardResBody.getRegion());
+		board.setThumbnailPublicUrl(boardResBody.getThumbnailPublicUrl());
 		return board;
 	}
 }
