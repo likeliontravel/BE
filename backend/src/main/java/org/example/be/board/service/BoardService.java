@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.example.be.board.dto.BoardResBody;
-import org.example.be.board.dto.BoardSearchRequestDTO;
+import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.BoardSortType;
@@ -91,7 +91,7 @@ public class BoardService {
 	}
 
 	// 검색 게시판 목록 조회 ( 초기라 검색결과가 많지 않을 것 같아서 Pageable 미사용 )
-	public List<BoardResBody> searchBoardByKeyword(BoardSearchRequestDTO request) {
+	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody request) {
 		String searchKeyword = request.getSearchKeyword();
 
 		if (searchKeyword == null || searchKeyword.isEmpty()) {
@@ -115,7 +115,7 @@ public class BoardService {
 
 	// 테마 별 게시판 목록 조회
 	@Transactional
-	public List<BoardResBody> searchBoardByTheme(BoardSearchRequestDTO request) {
+	public List<BoardResBody> searchBoardByTheme(BoardSearchReqBody request) {
 
 		int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
 		int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();
@@ -141,7 +141,7 @@ public class BoardService {
 
 	// 지역 별 게시판 목록 조회
 	@Transactional
-	public List<BoardResBody> searchBoardByRegion(BoardSearchRequestDTO request) {
+	public List<BoardResBody> searchBoardByRegion(BoardSearchReqBody request) {
 
 		int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
 		int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();

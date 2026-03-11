@@ -3,7 +3,7 @@ package org.example.be.board.controller;
 import java.util.List;
 
 import org.example.be.board.dto.BoardResBody;
-import org.example.be.board.dto.BoardSearchRequestDTO;
+import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
@@ -59,7 +59,7 @@ public class BoardController {
 	public ResponseEntity<CommonResponse<List<BoardResBody>>> getSearchedBoard(
 		@RequestParam String searchKeyword,
 		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, null, searchKeyword, boardSortType, null, null);
+		BoardSearchReqBody request = new BoardSearchReqBody(null, null, searchKeyword, boardSortType, null, null);
 		List<BoardResBody> searchedBoardList = boardService.searchBoardByKeyword(request);
 		return ResponseEntity.ok(CommonResponse.success(searchedBoardList, "게시판 키워드 검색 성공"));
 	}
@@ -73,7 +73,7 @@ public class BoardController {
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchRequestDTO request = new BoardSearchRequestDTO(theme, null, null, boardSortType, page, size);
+		BoardSearchReqBody request = new BoardSearchReqBody(theme, null, null, boardSortType, page, size);
 		List<BoardResBody> boardResBodyList = boardService.searchBoardByTheme(request);
 		return ResponseEntity.ok(CommonResponse.success(boardResBodyList, "테마 별 게시판 목록 조회 성공"));
 	}
@@ -87,7 +87,7 @@ public class BoardController {
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchRequestDTO request = new BoardSearchRequestDTO(null, region, null, boardSortType, page, size);
+		BoardSearchReqBody request = new BoardSearchReqBody(null, region, null, boardSortType, page, size);
 		List<BoardResBody> boardResBodyList = boardService.searchBoardByRegion(request);
 		return ResponseEntity.ok(CommonResponse.success(boardResBodyList, "지역 별 게시판 목록 조회 성공"));
 	}
