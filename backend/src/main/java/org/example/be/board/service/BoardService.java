@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.SimplePageableRequestDTO;
@@ -169,10 +170,10 @@ public class BoardService {
 
 	// 게시글 작성 ( 생성 )
 	@Transactional
-	public BoardResBody writeBoard(BoardResBody boardResBody) {
+	public BoardResBody writeBoard(BoardCreateReqBody req) {
 
 		// 입력된 게시판 필수 입력 누락정보 확인
-		validateBoardDTO(boardResBody);
+		validateBoardCreate(req);
 
 		try {
 			// 사용자 인증 확인, 게시글 작성자 값 결정
@@ -180,16 +181,13 @@ public class BoardService {
 			String writer = unifiedUserService.getNameByUserIdentifier(userIdentifier);
 
 			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
-			String escapedContent = StringEscapeUtils.escapeHtml4(boardResBody.getContent());
-			boardResBody.setContent(escapedContent);
+			String escapedContent = StringEscapeUtils.escapeHtml4(req.content());
 
 			// 저장할 엔티티로 변환, 작성자 정보 기입
-			Board board = Board.toCreateEntity(boardResBody);
-			board.setWriter(writer);
-			board.setWriterIdentifier(userIdentifier);
+			Board board = Board.toCreateEntity(req, writer, userIdentifier, escapedContent);
 
 			Board savedBoard = boardRepository.save(board);
-			return BoardResBody.toDTO(savedBoard);
+			return BoardResBody.toDTO(savedBoard, null);
 
 		} catch (Exception e) {
 			throw new ResourceCreationException("게시글 저장 실패. : \n" + e.getMessage());
@@ -279,23 +277,11 @@ public class BoardService {
 	}
 
 	// 게시글 입력DTO 유효성 검사
-	private void validateBoardDTO(BoardResBody boardResBody) {
-		if (boardResBody.getTitle() == null || boardResBody.getTitle().isBlank()) {
-			throw new IllegalArgumentException("게시글 제목은 필수 입력입니다.");
-		}
-		if (boardResBody.getContent() == null || boardResBody.getContent().isBlank()) {
-			throw new IllegalArgumentException("게시글 내용은 필수 입력입니다.");
-		}
-		if (boardResBody.getTheme() == null || boardResBody.getTheme().isBlank()) {
-			throw new IllegalArgumentException("테마는 필수 입력입니다.");
-		}
-		if (boardResBody.getRegion() == null || boardResBody.getRegion().isBlank()) {
-			throw new IllegalArgumentException("지역은 필수 입력입니다.");
-		}
-		if (!placeCategoryService.existsByTheme(boardResBody.getTheme())) {
+	private void validateBoardCreate(BoardCreateReqBody req) {
+		if (!placeCategoryService.existsByTheme(req.theme())) {
 			throw new IllegalArgumentException("해당 테마는 지원하지 않는 테마입니다.");
 		}
-		if (!tourRegionService.existsByRegion(boardResBody.getRegion())) {
+		if (!tourRegionService.existsByRegion(req.region())) {
 			throw new IllegalArgumentException("해당 지역은 지원하지 않는 지역입니다.");
 		}
 	}
