@@ -12,6 +12,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
+import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.board.dto.SimplePageableRequestDTO;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.BoardSortType;
@@ -196,28 +197,24 @@ public class BoardService {
 
 	// 게시글 수정
 	@Transactional
-	public BoardResBody updateBoard(BoardResBody boardResBody) {
+	public BoardResBody updateBoard(BoardUpdateReqBody req) {
 		// 수정자가 작성자와 일치하는지 확인
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		// 기존 게시글 조회 (없으면 예외 발생)
-		Board originalBoard = boardRepository.findById(boardResBody.getId())
+		Board originalBoard = boardRepository.findById(req.id())
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		if (!userIdentifier.equals(originalBoard.getWriterIdentifier())) {
 			throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
 		}
-
 		// 들어온 수정데이터 유효성 확인
-		validateBoardDTO(boardResBody);
+		validateBoardUpdate(req);
 
 		try {
 			// HTML escape처리
-			String escapedContent = StringEscapeUtils.escapeHtml4(boardResBody.getContent());
-			boardResBody.setContent(escapedContent);
-
-			// 작성자는 기존 유지
-			boardResBody.setWriter(originalBoard.getWriter());
+			String escapedContent = req.content() != null ? StringEscapeUtils.escapeHtml4(req.content()) : null;
+			Board.updateEntity(originalBoard, req, escapedContent);
 
 			// 새로운 게시글 데이터 생성 및 저장
 			Board updatedBoard = Board.toUpdateEntity(boardResBody, originalBoard.getWriterIdentifier());
@@ -276,12 +273,38 @@ public class BoardService {
 		}).toList();
 	}
 
-	// 게시글 입력DTO 유효성 검사
 	private void validateBoardCreate(BoardCreateReqBody req) {
-		if (!placeCategoryService.existsByTheme(req.theme())) {
+		validateTheme(req.theme());
+		validateRegion(req.region());
+	}
+
+	private void validateBoardUpdate(BoardUpdateReqBody req) {
+
+		if (req.theme() != null) {
+			validateTheme(req.theme());
+		}
+
+		if (req.region() != null) {
+			validateRegion(req.region());
+		}
+
+		if (req.title() != null && req.title().isBlank()) {
+			throw new IllegalArgumentException("제목은 비어 있을 수 없습니다.");
+		}
+
+		if (req.content() != null && req.content().isBlank()) {
+			throw new IllegalArgumentException("내용은 비어 있을 수 없습니다.");
+		}
+	}
+
+	private void validateTheme(String theme) {
+		if (!placeCategoryService.existsByTheme(theme)) {
 			throw new IllegalArgumentException("해당 테마는 지원하지 않는 테마입니다.");
 		}
-		if (!tourRegionService.existsByRegion(req.region())) {
+	}
+
+	private void validateRegion(String region) {
+		if (!tourRegionService.existsByRegion(region)) {
 			throw new IllegalArgumentException("해당 지역은 지원하지 않는 지역입니다.");
 		}
 	}
