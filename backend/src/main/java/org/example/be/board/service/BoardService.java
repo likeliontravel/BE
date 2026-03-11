@@ -55,8 +55,7 @@ public class BoardService {
 		increaseBoardHits(board);
 
 		String profileImageUrl = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(
-				board.getWriterIdentifier())
-			.getProfileImageUrl();
+			board.getWriterIdentifier()).getProfileImageUrl();
 
 		return BoardResBody.from(board, profileImageUrl);
 	}
@@ -83,6 +82,7 @@ public class BoardService {
 		List<Board> boards = switch (boardSortType) {
 			case POPULAR -> boardRepository.findAllByOrderByBoardHitsDesc(pageable).getContent();
 			case RECENT -> boardRepository.findAllByOrderByUpdatedTimeDesc(pageable).getContent();
+			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
 		return enrichWithProfileImage(boards);
@@ -90,25 +90,25 @@ public class BoardService {
 
 	// 검색 게시판 목록 조회 ( 초기라 검색결과가 많지 않을 것 같아서 Pageable 미사용 )
 	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody reqBody) {
-		String searchKeyword = reqBody.getSearchKeyword();
+		String searchKeyword = reqBody.searchKeyword();
 
 		if (searchKeyword == null || searchKeyword.isEmpty()) {
 			throw new IllegalArgumentException("키워드를 입력해야 합니다.");
 		}
 
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
 
-		return switch (boardSortType) {
-			case POPULAR -> boardRepository
-				.findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(searchKeyword,
-					searchKeyword, searchKeyword)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
-			case RECENT -> boardRepository
-				.findByTitleContainingOrContentContainingOrWriterContainingOrderByUpdatedTimeDesc(searchKeyword,
-					searchKeyword, searchKeyword)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
+		List<Board> boards = switch (boardSortType) {
+			case POPULAR ->
+				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(
+					searchKeyword, searchKeyword, searchKeyword);
+			case RECENT ->
+				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByUpdatedTimeDesc(
+					searchKeyword, searchKeyword, searchKeyword);
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
+
+		return enrichWithProfileImage(boards);
 	}
 
 	// 테마 별 게시판 목록 조회
@@ -130,9 +130,13 @@ public class BoardService {
 
 		return switch (boardSortType) {
 			case POPULAR -> boardRepository.findByThemeOrderByBoardHitsDesc(theme, pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
+				.stream()
+				.map(BoardResBody::toDTO)
+				.collect(Collectors.toList());
 			case RECENT -> boardRepository.findByThemeOrderByUpdatedTimeDesc(theme, pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
+				.stream()
+				.map(BoardResBody::toDTO)
+				.collect(Collectors.toList());
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 	}
@@ -156,9 +160,13 @@ public class BoardService {
 
 		return switch (boardSortType) {
 			case POPULAR -> boardRepository.findByRegionOrderByBoardHitsDesc(region, pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
+				.stream()
+				.map(BoardResBody::toDTO)
+				.collect(Collectors.toList());
 			case RECENT -> boardRepository.findByRegionOrderByUpdatedTimeDesc(region, pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
+				.stream()
+				.map(BoardResBody::toDTO)
+				.collect(Collectors.toList());
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 	}
@@ -223,8 +231,7 @@ public class BoardService {
 	// 게시글 삭제
 	@Transactional
 	public void deleteBoard(Long id) {
-		Board board = boardRepository.findById(id)
-			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+		Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		// 사용자 인증 정보 확인
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
@@ -254,8 +261,7 @@ public class BoardService {
 			.collect(Collectors.toSet());
 
 		Map<String, String> profileMap = writerIdentifiers.stream()
-			.collect(Collectors.toMap(
-				id -> id,
+			.collect(Collectors.toMap(id -> id,
 				id -> unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(id).getProfileImageUrl()));
 
 		return boards.stream()
