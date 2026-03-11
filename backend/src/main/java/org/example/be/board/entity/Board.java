@@ -3,7 +3,8 @@ package org.example.be.board.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.example.be.board.dto.BoardResBody;
+import org.example.be.board.dto.BoardCreateReqBody;
+import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.config.Base;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -65,29 +66,29 @@ public class Board extends Base {
 	private List<Comment> commentList = new ArrayList<>();
 
 	// dto를 엔티티로 변환 ( 게시글 생성 )
-	public static Board toCreateEntity(BoardResBody boardResBody) {
+	public static Board toCreateEntity(BoardCreateReqBody req, String writer, String writerIdentifier,
+		String escapedContent) {
 		Board board = new Board();
-		board.setTitle(boardResBody.getTitle());
-		board.setContent(boardResBody.getContent());
+		board.setTitle(req.title());
+		board.setContent(req.content());
 		board.setBoardHits(0); // 생성할 때는 조회수가 0
-		board.setTheme(boardResBody.getTheme());
-		board.setRegion(boardResBody.getRegion());
-		board.setThumbnailPublicUrl(boardResBody.getThumbnailPublicUrl());
-		board.setWriterIdentifier(boardResBody.getWriterIdentifier());
+		board.setTheme(req.theme());
+		board.setRegion(req.region());
+		board.setThumbnailPublicUrl(req.thumbnailPublicUrl());
 		return board;
 	}
 
 	// dto를 엔티티로 변환 ( 게시글 업데이트 )
-	public static Board toUpdateEntity(BoardResBody boardResBody, String originalWriterIdentifier) {
-		Board board = new Board();
-		board.setTitle(boardResBody.getTitle());
-		board.setContent(boardResBody.getContent());
-		board.setWriter(boardResBody.getWriter());
-		board.setWriterIdentifier(originalWriterIdentifier);
-		board.setBoardHits(boardResBody.getBoardHits());
-		board.setTheme(boardResBody.getTheme());
-		board.setRegion(boardResBody.getRegion());
-		board.setThumbnailPublicUrl(boardResBody.getThumbnailPublicUrl());
-		return board;
+	public static void toUpdateEntity(Board board, BoardUpdateReqBody req, String escapedContent) {
+		if (req.title() != null)
+			board.setTitle(req.title());
+		if (req.content() != null)
+			board.setContent(escapedContent);
+		if (req.theme() != null)
+			board.setTheme(req.theme());
+		if (req.region() != null)
+			board.setRegion(req.region());
+		if (req.thumbnailPublicUrl() != null)
+			board.setThumbnailPublicUrl(req.thumbnailPublicUrl());
 	}
 }
