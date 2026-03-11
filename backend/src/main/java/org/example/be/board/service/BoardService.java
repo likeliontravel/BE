@@ -88,7 +88,6 @@ public class BoardService {
 		return enrichWithProfileImage(boards);
 	}
 
-	// 검색 게시판 목록 조회 ( 초기라 검색결과가 많지 않을 것 같아서 Pageable 미사용 )
 	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody reqBody) {
 		String searchKeyword = reqBody.searchKeyword();
 
@@ -96,15 +95,19 @@ public class BoardService {
 			throw new IllegalArgumentException("키워드를 입력해야 합니다.");
 		}
 
+		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
+		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
+		Pageable pageable = PageRequest.of(page, size);
+
 		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
 
 		List<Board> boards = switch (boardSortType) {
 			case POPULAR ->
 				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(
-					searchKeyword, searchKeyword, searchKeyword);
+					searchKeyword, searchKeyword, searchKeyword, pageable);
 			case RECENT ->
 				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByUpdatedTimeDesc(
-					searchKeyword, searchKeyword, searchKeyword);
+					searchKeyword, searchKeyword, searchKeyword, pageable);
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
