@@ -19,7 +19,7 @@ public record BoardResBody(
 	String writerProfileImageUrl
 ) {
 	// 엔티티를 dto로 변환
-	public static BoardResBody toDTO(Board board, String profileImageUrl) {
+	public static BoardResBody from(Board board, String profileImageUrl) {
 		return new BoardResBody(
 			board.getId(),
 			board.getTitle(),

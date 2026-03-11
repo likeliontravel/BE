@@ -55,13 +55,11 @@ public class BoardService {
 
 		increaseBoardHits(board);
 
-		BoardResBody dto = BoardResBody.toDTO(board);
+		String profileImageUrl = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(
+				board.getWriterIdentifier())
+			.getProfileImageUrl();
 
-		UnifiedUsersNameAndProfileImageUrl profile = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(
-			board.getWriterIdentifier());
-		dto.setWriterProfileImageUrl(profile.getProfileImageUrl());
-
-		return dto;
+		return BoardResBody.from(board, profileImageUrl);
 	}
 
 	// 조회수 증가 처리
