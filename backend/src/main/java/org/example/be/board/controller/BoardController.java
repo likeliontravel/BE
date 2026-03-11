@@ -6,7 +6,7 @@ import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.BoardUpdateReqBody;
-import org.example.be.board.dto.SimplePageableRequestDTO;
+import org.example.be.board.dto.SimplePageableReqBody;
 import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
 import org.example.be.response.CommonResponse;
@@ -49,7 +49,7 @@ public class BoardController {
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
-		SimplePageableRequestDTO request = new SimplePageableRequestDTO(page, size, boardSortType);
+		SimplePageableReqBody request = new SimplePageableReqBody(page, size, boardSortType);
 		List<BoardResBody> allBoardList = boardService.getSortedBoardList(request);
 		return ResponseEntity.ok(CommonResponse.success(allBoardList, "정렬된 전체 게시글 조회 성공"));
 	}

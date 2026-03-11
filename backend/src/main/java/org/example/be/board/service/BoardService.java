@@ -13,7 +13,7 @@ import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.BoardUpdateReqBody;
-import org.example.be.board.dto.SimplePageableRequestDTO;
+import org.example.be.board.dto.SimplePageableReqBody;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.repository.BoardRepository;
@@ -74,12 +74,12 @@ public class BoardService {
 
 	// 전체 게시판 목록 조회 ( 인기순은 sortType값 POPULAR, 최신순은 sortType값 RECENT; 누락 시 기본값 인기순 POPULAR)
 	@Transactional
-	public List<BoardResBody> getSortedBoardList(SimplePageableRequestDTO request) {
+	public List<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
 
-		int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
-		int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();
+		int page = (reqBody.getPage() == null || reqBody.getPage() < 0) ? DEFAULT_PAGE : reqBody.getPage();
+		int size = (reqBody.getSize() == null || reqBody.getSize() <= 0) ? DEFAULT_SIZE : reqBody.getSize();
 
-		BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
 		Pageable pageable = PageRequest.of(page, size);
 
@@ -93,14 +93,14 @@ public class BoardService {
 	}
 
 	// 검색 게시판 목록 조회 ( 초기라 검색결과가 많지 않을 것 같아서 Pageable 미사용 )
-	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody request) {
-		String searchKeyword = request.getSearchKeyword();
+	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody reqBody) {
+		String searchKeyword = reqBody.getSearchKeyword();
 
 		if (searchKeyword == null || searchKeyword.isEmpty()) {
 			throw new IllegalArgumentException("키워드를 입력해야 합니다.");
 		}
 
-		BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
 		return switch (boardSortType) {
 			case POPULAR -> boardRepository
@@ -117,18 +117,18 @@ public class BoardService {
 
 	// 테마 별 게시판 목록 조회
 	@Transactional
-	public List<BoardResBody> searchBoardByTheme(BoardSearchReqBody request) {
+	public List<BoardResBody> searchBoardByTheme(BoardSearchReqBody reqBody) {
 
-		int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
-		int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();
+		int page = (reqBody.getPage() == null || reqBody.getPage() < 0) ? DEFAULT_PAGE : reqBody.getPage();
+		int size = (reqBody.getSize() == null || reqBody.getSize() <= 0) ? DEFAULT_SIZE : reqBody.getSize();
 
-		String theme = request.getTheme();
+		String theme = reqBody.getTheme();
 
 		if (theme == null || theme.isEmpty()) {
 			throw new IllegalArgumentException("테마를 입력해야 합니다.");
 		}
 
-		BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
 		Pageable pageable = PageRequest.of(page, size);
 
@@ -143,18 +143,18 @@ public class BoardService {
 
 	// 지역 별 게시판 목록 조회
 	@Transactional
-	public List<BoardResBody> searchBoardByRegion(BoardSearchReqBody request) {
+	public List<BoardResBody> searchBoardByRegion(BoardSearchReqBody reqBody) {
 
-		int page = (request.getPage() == null || request.getPage() < 0) ? DEFAULT_PAGE : request.getPage();
-		int size = (request.getSize() == null || request.getSize() <= 0) ? DEFAULT_SIZE : request.getSize();
+		int page = (reqBody.getPage() == null || reqBody.getPage() < 0) ? DEFAULT_PAGE : reqBody.getPage();
+		int size = (reqBody.getSize() == null || reqBody.getSize() <= 0) ? DEFAULT_SIZE : reqBody.getSize();
 
-		String region = request.getRegion();
+		String region = reqBody.getRegion();
 
 		if (region == null || region.isEmpty()) {
 			throw new IllegalArgumentException("지역을 입력해야 합니다.");
 		}
 
-		BoardSortType boardSortType = Optional.ofNullable(request.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
 
 		Pageable pageable = PageRequest.of(page, size);
 
@@ -171,10 +171,10 @@ public class BoardService {
 
 	// 게시글 작성 ( 생성 )
 	@Transactional
-	public BoardResBody writeBoard(BoardCreateReqBody req) {
+	public BoardResBody writeBoard(BoardCreateReqBody reqBody) {
 
 		// 입력된 게시판 필수 입력 누락정보 확인
-		validateBoardCreate(req);
+		validateBoardCreate(reqBody);
 
 		try {
 			// 사용자 인증 확인, 게시글 작성자 값 결정
@@ -182,10 +182,10 @@ public class BoardService {
 			String writer = unifiedUserService.getNameByUserIdentifier(userIdentifier);
 
 			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
-			String escapedContent = StringEscapeUtils.escapeHtml4(req.content());
+			String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
 
 			// 저장할 엔티티로 변환, 작성자 정보 기입
-			Board board = Board.toCreateEntity(req, writer, userIdentifier, escapedContent);
+			Board board = Board.toCreateEntity(reqBody, writer, userIdentifier, escapedContent);
 
 			Board savedBoard = boardRepository.save(board);
 			return BoardResBody.toDTO(savedBoard, null);
@@ -197,24 +197,24 @@ public class BoardService {
 
 	// 게시글 수정
 	@Transactional
-	public BoardResBody updateBoard(BoardUpdateReqBody req) {
+	public BoardResBody updateBoard(BoardUpdateReqBody reqBody) {
 		// 수정자가 작성자와 일치하는지 확인
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		// 기존 게시글 조회 (없으면 예외 발생)
-		Board originalBoard = boardRepository.findById(req.id())
+		Board originalBoard = boardRepository.findById(reqBody.id())
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		if (!userIdentifier.equals(originalBoard.getWriterIdentifier())) {
 			throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
 		}
 		// 들어온 수정데이터 유효성 확인
-		validateBoardUpdate(req);
+		validateBoardUpdate(reqBody);
 
 		try {
 			// HTML escape처리
-			String escapedContent = req.content() != null ? StringEscapeUtils.escapeHtml4(req.content()) : null;
-			Board.toUpdateEntity(originalBoard, req, escapedContent);
+			String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
+			Board.toUpdateEntity(originalBoard, reqBody, escapedContent);
 
 			// 새로운 게시글 데이터 생성 및 저장
 			Board savedBoard = boardRepository.save(originalBoard);
