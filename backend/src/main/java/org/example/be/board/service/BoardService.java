@@ -24,7 +24,6 @@ import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.security.util.SecurityUtil;
-import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,20 +73,19 @@ public class BoardService {
 	@Transactional
 	public List<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
 
-		int page = (reqBody.getPage() == null || reqBody.getPage() < 0) ? DEFAULT_PAGE : reqBody.getPage();
-		int size = (reqBody.getSize() == null || reqBody.getSize() <= 0) ? DEFAULT_SIZE : reqBody.getSize();
+		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
+		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
 
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
 
 		Pageable pageable = PageRequest.of(page, size);
 
-		return switch (boardSortType) {
-			case POPULAR -> boardRepository.findAllByOrderByBoardHitsDesc(pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
-			case RECENT -> boardRepository.findAllByOrderByUpdatedTimeDesc(pageable)
-				.stream().map(BoardResBody::toDTO).collect(Collectors.toList());
-			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
+		List<Board> boards = switch (boardSortType) {
+			case POPULAR -> boardRepository.findAllByOrderByBoardHitsDesc(pageable).getContent();
+			case RECENT -> boardRepository.findAllByOrderByUpdatedTimeDesc(pageable).getContent();
 		};
+
+		return enrichWithProfileImage(boards);
 	}
 
 	// 검색 게시판 목록 조회 ( 초기라 검색결과가 많지 않을 것 같아서 Pageable 미사용 )
@@ -255,19 +253,14 @@ public class BoardService {
 			.filter(Objects::nonNull)
 			.collect(Collectors.toSet());
 
-		Map<String, UnifiedUsersNameAndProfileImageUrl> userProfileMap = writerIdentifiers.stream()
-			.map(identifier -> Map.entry(identifier,
-				unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(identifier)))
-			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		Map<String, String> profileMap = writerIdentifiers.stream()
+			.collect(Collectors.toMap(
+				id -> id,
+				id -> unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(id).getProfileImageUrl()));
 
-		return boards.stream().map(board -> {
-			BoardResBody dto = BoardResBody.toDTO(board);
-			UnifiedUsersNameAndProfileImageUrl profile = userProfileMap.get(board.getWriterIdentifier());
-			if (profile != null) {
-				dto.setWriterProfileImageUrl(profile.getProfileImageUrl());
-			}
-			return dto;
-		}).toList();
+		return boards.stream()
+			.map(board -> BoardResBody.from(board, profileMap.get(board.getWriterIdentifier())))
+			.toList();
 	}
 
 	private void validateBoardCreate(BoardCreateReqBody req) {
