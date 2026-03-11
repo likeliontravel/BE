@@ -115,30 +115,26 @@ public class BoardService {
 	@Transactional
 	public List<BoardResBody> searchBoardByTheme(BoardSearchReqBody reqBody) {
 
-		int page = (reqBody.getPage() == null || reqBody.getPage() < 0) ? DEFAULT_PAGE : reqBody.getPage();
-		int size = (reqBody.getSize() == null || reqBody.getSize() <= 0) ? DEFAULT_SIZE : reqBody.getSize();
+		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
+		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
 
-		String theme = reqBody.getTheme();
+		String theme = reqBody.theme();
 
 		if (theme == null || theme.isEmpty()) {
 			throw new IllegalArgumentException("테마를 입력해야 합니다.");
 		}
 
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.getBoardSortType()).orElse(BoardSortType.POPULAR);
+		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
 
 		Pageable pageable = PageRequest.of(page, size);
 
-		return switch (boardSortType) {
-			case POPULAR -> boardRepository.findByThemeOrderByBoardHitsDesc(theme, pageable)
-				.stream()
-				.map(BoardResBody::toDTO)
-				.collect(Collectors.toList());
-			case RECENT -> boardRepository.findByThemeOrderByUpdatedTimeDesc(theme, pageable)
-				.stream()
-				.map(BoardResBody::toDTO)
-				.collect(Collectors.toList());
+		List<Board> boards = switch (boardSortType) {
+			case POPULAR -> boardRepository.findByThemeOrderByBoardHitsDesc(theme, pageable).getContent();
+			case RECENT -> boardRepository.findByThemeOrderByUpdatedTimeDesc(theme, pageable).getContent();
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
+
+		return enrichWithProfileImage(boards);
 	}
 
 	// 지역 별 게시판 목록 조회
