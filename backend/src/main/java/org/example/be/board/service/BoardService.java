@@ -21,10 +21,10 @@ import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.member.repository.MemberRepository;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.security.util.SecurityUtil;
-import org.example.be.unifieduser.service.UnifiedUserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class BoardService {
 
 	private final BoardRepository boardRepository;
-	private final UnifiedUserService unifiedUserService;
+	private final MemberRepository memberRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
 
@@ -52,18 +52,9 @@ public class BoardService {
 		Board board = boardRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("Id 해당 게시글을 찾을 수 없습니다. id: " + id));
 
-		increaseBoardHits(board);
+		board.increaseHits();
 
-		String profileImageUrl = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(
-			board.getWriterIdentifier()).getProfileImageUrl();
-
-		return BoardResBody.from(board, profileImageUrl);
-	}
-
-	// 조회수 증가 처리
-	private void increaseBoardHits(Board board) {
-		board.setBoardHits(board.getBoardHits() + 1);
-		boardRepository.save(board); // 조회수 반영
+		return BoardResBody.from(board, board.getWriter().getProfileImageUrl());
 	}
 
 	// ======================= 게시글 List 조회 ======================= //
