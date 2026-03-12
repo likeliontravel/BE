@@ -45,13 +45,8 @@ public class BoardController {
 	// * param : page, size, BoardSortType( POPULAR / RECENT ) default:POPULAR
 	// * return : 입력한 정렬타입으로 정렬한 전체 BoardDTO List
 	@GetMapping("/all")
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(
-		@RequestParam(required = false) Integer page,
-		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
-		SimplePageableReqBody request = new SimplePageableReqBody(page, size, boardSortType);
-		List<BoardResBody> allBoardList = boardService.getSortedBoardList(request);
-		return ResponseEntity.ok(CommonResponse.success(allBoardList, "정렬된 전체 게시글 조회 성공"));
+	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
+		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
 
 	// 키워드 검색으로 게시판 글 목록 조회
@@ -60,10 +55,12 @@ public class BoardController {
 	@GetMapping("/search")
 	public ResponseEntity<CommonResponse<List<BoardResBody>>> getSearchedBoard(
 		@RequestParam String searchKeyword,
+		@RequestParam(required = false) Integer page,
+		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchReqBody request = new BoardSearchReqBody(null, null, searchKeyword, boardSortType, null, null);
-		List<BoardResBody> searchedBoardList = boardService.searchBoardByKeyword(request);
-		return ResponseEntity.ok(CommonResponse.success(searchedBoardList, "게시판 키워드 검색 성공"));
+
+		BoardSearchReqBody request = new BoardSearchReqBody(null, null, searchKeyword, boardSortType, page, size);
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "게시판 키워드 검색 성공"));
 	}
 
 	// 테마 별 게시판 글 목록 조회
@@ -76,8 +73,7 @@ public class BoardController {
 		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
 		BoardSearchReqBody request = new BoardSearchReqBody(theme, null, null, boardSortType, page, size);
-		List<BoardResBody> boardResBodyList = boardService.searchBoardByTheme(request);
-		return ResponseEntity.ok(CommonResponse.success(boardResBodyList, "테마 별 게시판 목록 조회 성공"));
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "테마 별 게시판 목록 조회 성공"));
 	}
 
 	// 지역 별 게시판 글 목록 조회
@@ -90,8 +86,7 @@ public class BoardController {
 		@RequestParam(required = false) Integer size,
 		@RequestParam(required = false) BoardSortType boardSortType) {
 		BoardSearchReqBody request = new BoardSearchReqBody(null, region, null, boardSortType, page, size);
-		List<BoardResBody> boardResBodyList = boardService.searchBoardByRegion(request);
-		return ResponseEntity.ok(CommonResponse.success(boardResBodyList, "지역 별 게시판 목록 조회 성공"));
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "지역 별 게시판 목록 조회 성공"));
 	}
 
 	// ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
