@@ -222,8 +222,8 @@ public class BoardService {
 		Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		// 사용자 인증 정보 확인
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		if (!userIdentifier.equals(board.getWriterIdentifier())) {
+		String email = SecurityUtil.getUserIdentifierFromAuthentication();
+		if (!email.equals(board.getWriter().getEmail())) {
 			throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
 		}
 		// Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
