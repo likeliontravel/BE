@@ -21,14 +21,17 @@ import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.security.util.SecurityUtil;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -168,14 +171,15 @@ public class BoardService {
 
 		try {
 			// 사용자 인증 확인, 게시글 작성자 값 결정
-			String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-			String writer = unifiedUserService.getNameByUserIdentifier(userIdentifier);
+			String email = SecurityUtil.getUserIdentifierFromAuthentication();
+			Member member = memberRepository.findByEmail(email)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
 
 			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
 			String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
 
 			// 저장할 엔티티로 변환, 작성자 정보 기입
-			Board board = Board.toCreateEntity(reqBody, writer, userIdentifier, escapedContent);
+			Board board = Board.toCreateEntity(reqBody, member, escapedContent);
 
 			Board savedBoard = boardRepository.save(board);
 			return BoardResBody.from(savedBoard, null);
@@ -189,13 +193,13 @@ public class BoardService {
 	@Transactional
 	public BoardResBody updateBoard(BoardUpdateReqBody reqBody) {
 		// 수정자가 작성자와 일치하는지 확인
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+		String email = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		// 기존 게시글 조회 (없으면 예외 발생)
 		Board originalBoard = boardRepository.findById(reqBody.id())
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
-		if (!userIdentifier.equals(originalBoard.getWriterIdentifier())) {
+		if (!email.equals(originalBoard.getWriter().getEmail())) {
 			throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
 		}
 		// 들어온 수정데이터 유효성 확인
