@@ -213,11 +213,9 @@ public class BoardService {
 		try {
 			// HTML escape처리
 			String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
-			Board.toUpdateEntity(originalBoard, reqBody, escapedContent);
+			originalBoard.toUpdateEntity(reqBody, escapedContent);
 
-			// 새로운 게시글 데이터 생성 및 저장
-			Board savedBoard = boardRepository.save(originalBoard);
-			return BoardResBody.from(savedBoard, null);
+			return BoardResBody.from(originalBoard, null);
 		} catch (Exception e) {
 			throw new ResourceUpdateException("게시글 수정 실패. : \n" + e.getMessage());
 		}
