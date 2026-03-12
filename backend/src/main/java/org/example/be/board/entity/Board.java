@@ -6,6 +6,7 @@ import java.util.List;
 import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.config.Base;
+import org.example.be.member.entity.Member;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -13,6 +14,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -33,12 +36,9 @@ public class Board extends Base {
 	private String content;
 
 	// 작성자
-	@Column(nullable = false)
-	private String writer;
-
-	// 작성자 identifier - 검증용
-	@Column
-	private String writerIdentifier;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "member_id", nullable = false)
+	private Member writer;
 
 	// 조회수
 	@Column(nullable = false)
@@ -62,13 +62,11 @@ public class Board extends Base {
 	private List<Comment> commentList = new ArrayList<>();
 
 	// 게시글 생성 (정적 팩토리 메서드)
-	public static Board toCreateEntity(BoardCreateReqBody req, String writer, String writerIdentifier,
-		String escapedContent) {
+	public static Board toCreateEntity(BoardCreateReqBody req, Member writer, String escapedContent) {
 		Board board = new Board();
 		board.title = req.title();
 		board.content = escapedContent;
 		board.writer = writer;
-		board.writerIdentifier = writerIdentifier;
 		board.boardHits = 0;
 		board.theme = req.theme();
 		board.region = req.region();
