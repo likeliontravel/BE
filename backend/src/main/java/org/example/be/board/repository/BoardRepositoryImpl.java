@@ -60,8 +60,12 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
 		return (region != null && !region.isEmpty()) ? board.region.eq(region) : null;
 	}
 
-	private BooleanExpression keywordContains(String s) {
-		return null;
+	private BooleanExpression keywordContains(String keyword) {
+		if (keyword == null || keyword.isEmpty())
+			return null;
+		return board.title.contains(keyword)
+			.or(board.content.contains(keyword))
+			.or(board.writer.contains(keyword));
 	}
 
 	//OrderSpecifier 는 order by 절에서 사용할 수 있는 객체로, 정렬 기준과 방향을 지정하는데 사용하는 클래스 입니당
