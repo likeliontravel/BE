@@ -69,6 +69,7 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
 		if (boardSortType == BoardSortType.RECENT) {
 			return board.updatedTime.desc();
 		}
+		// 기본값은 인기순으로 조회 ( 조회수 기준 )
 		return board.boardHits.desc();
 	}
 
