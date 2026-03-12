@@ -1,12 +1,8 @@
 package org.example.be.board.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.example.be.board.dto.BoardCreateReqBody;
@@ -243,17 +239,8 @@ public class BoardService {
 
 	// 게시글 반환결과(List<BoardDTO>)에 작성자 profile image url 추가
 	private List<BoardResBody> enrichWithProfileImage(List<Board> boards) {
-		Set<String> writerIdentifiers = boards.stream()
-			.map(Board::getWriterIdentifier)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toSet());
-
-		Map<String, String> profileMap = writerIdentifiers.stream()
-			.collect(Collectors.toMap(id -> id,
-				id -> unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(id).getProfileImageUrl()));
-
 		return boards.stream()
-			.map(board -> BoardResBody.from(board, profileMap.get(board.getWriterIdentifier())))
+			.map(board -> BoardResBody.from(board, board.getWriter().getProfileImageUrl()))
 			.toList();
 	}
 
