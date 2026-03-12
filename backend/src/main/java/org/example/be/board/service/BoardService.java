@@ -2,16 +2,13 @@ package org.example.be.board.service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.example.be.board.dto.BoardCreateReqBody;
 import org.example.be.board.dto.BoardResBody;
 import org.example.be.board.dto.BoardSearchReqBody;
 import org.example.be.board.dto.BoardUpdateReqBody;
-import org.example.be.board.dto.SimplePageableReqBody;
 import org.example.be.board.entity.Board;
-import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.ResourceCreationException;
@@ -19,9 +16,11 @@ import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
+import org.example.be.member.service.MemberService;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryService;
 import org.example.be.security.util.SecurityUtil;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -39,13 +38,12 @@ public class BoardService {
 	private final MemberRepository memberRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
+	private final MemberService memberService;
 
 	private static final int DEFAULT_PAGE = 0;
 	private static final int DEFAULT_SIZE = 30;
 
-	// ======================= 게시글 한 개 조회 ======================= //
-
-	// 게시글 PK ( ID )로 게시글 조회
+	// ======================= 게시글 상세 조회 ======================= //
 	@Transactional
 	public BoardResBody getBoard(Long id) {
 		Board board = boardRepository.findById(id)
@@ -56,104 +54,22 @@ public class BoardService {
 		return BoardResBody.from(board, board.getWriter().getProfileImageUrl());
 	}
 
-	// ======================= 게시글 List 조회 ======================= //
+	// ======================= 게시글 통합 조회 (QueryDSL 사용)======================= //
 
-	// 전체 게시판 목록 조회 ( 인기순은 sortType값 POPULAR, 최신순은 sortType값 RECENT; 누락 시 기본값 인기순 POPULAR)
+	/**
+	 * 전제 조회, 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
+	 * QueryDSL을 활용하여 동적 쿼리를 사용해 조건이 있는 경우에만 필터링 합니다
+	 */
 	@Transactional
-	public List<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
-
-		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
-		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
-
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
-
-		Pageable pageable = PageRequest.of(page, size);
-
-		List<Board> boards = switch (boardSortType) {
-			case POPULAR -> boardRepository.findAllByOrderByBoardHitsDesc(pageable).getContent();
-			case RECENT -> boardRepository.findAllByOrderByUpdatedTimeDesc(pageable).getContent();
-			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
-		};
-
-		return mapToBoardResBody(boards);
-	}
-
-	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody reqBody) {
-		String searchKeyword = reqBody.searchKeyword();
-
-		if (searchKeyword == null || searchKeyword.isEmpty()) {
-			throw new IllegalArgumentException("키워드를 입력해야 합니다.");
-		}
-
+	public List<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
 		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
 		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
 		Pageable pageable = PageRequest.of(page, size);
 
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
+		Page<Board> boardPage = boardRepository.search(reqBody, pageable);
 
-		List<Board> boards = switch (boardSortType) {
-			case POPULAR ->
-				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByBoardHitsDesc(
-					searchKeyword, searchKeyword, searchKeyword, pageable);
-			case RECENT ->
-				boardRepository.findByTitleContainingOrContentContainingOrWriterContainingOrderByUpdatedTimeDesc(
-					searchKeyword, searchKeyword, searchKeyword, pageable);
-			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
-		};
+		return mapToBoardResBody(boardPage.getContent());
 
-		return mapToBoardResBody(boards);
-	}
-
-	// 테마 별 게시판 목록 조회
-	@Transactional
-	public List<BoardResBody> searchBoardByTheme(BoardSearchReqBody reqBody) {
-
-		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
-		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
-
-		String theme = reqBody.theme();
-
-		if (theme == null || theme.isEmpty()) {
-			throw new IllegalArgumentException("테마를 입력해야 합니다.");
-		}
-
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
-
-		Pageable pageable = PageRequest.of(page, size);
-
-		List<Board> boards = switch (boardSortType) {
-			case POPULAR -> boardRepository.findByThemeOrderByBoardHitsDesc(theme, pageable).getContent();
-			case RECENT -> boardRepository.findByThemeOrderByUpdatedTimeDesc(theme, pageable).getContent();
-			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
-		};
-
-		return mapToBoardResBody(boards);
-	}
-
-	// 지역 별 게시판 목록 조회
-	@Transactional
-	public List<BoardResBody> searchBoardByRegion(BoardSearchReqBody reqBody) {
-
-		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
-		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
-
-		String region = reqBody.region();
-
-		if (region == null || region.isEmpty()) {
-			throw new IllegalArgumentException("지역을 입력해야 합니다.");
-		}
-
-		BoardSortType boardSortType = Optional.ofNullable(reqBody.boardSortType()).orElse(BoardSortType.POPULAR);
-
-		Pageable pageable = PageRequest.of(page, size);
-
-		List<Board> boards = switch (boardSortType) {
-			case POPULAR -> boardRepository.findByRegionOrderByBoardHitsDesc(region, pageable).getContent();
-			case RECENT -> boardRepository.findByRegionOrderByUpdatedTimeDesc(region, pageable).getContent();
-			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
-		};
-
-		return mapToBoardResBody(boards);
 	}
 
 	// ======================= 게시글 관리 ( 생성 수정 삭제 ) ======================= //
