@@ -31,7 +31,6 @@ public record BoardResBody(
 			board.getThumbnailPublicUrl(),
 			board.getCreatedTime(),
 			board.getUpdatedTime(),
-			board.getWriterIdentifier(),
 			profileImageUrl
 		);
 	}
