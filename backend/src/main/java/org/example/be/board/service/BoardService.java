@@ -75,7 +75,7 @@ public class BoardService {
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
-		return enrichWithProfileImage(boards);
+		return mapToBoardResBody(boards);
 	}
 
 	public List<BoardResBody> searchBoardByKeyword(BoardSearchReqBody reqBody) {
@@ -101,7 +101,7 @@ public class BoardService {
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
-		return enrichWithProfileImage(boards);
+		return mapToBoardResBody(boards);
 	}
 
 	// 테마 별 게시판 목록 조회
@@ -127,7 +127,7 @@ public class BoardService {
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
-		return enrichWithProfileImage(boards);
+		return mapToBoardResBody(boards);
 	}
 
 	// 지역 별 게시판 목록 조회
@@ -153,7 +153,7 @@ public class BoardService {
 			default -> throw new IllegalArgumentException("지원하지 않는 정렬 기준입니다. boardSortType: " + boardSortType);
 		};
 
-		return enrichWithProfileImage(boards);
+		return mapToBoardResBody(boards);
 	}
 
 	// ======================= 게시글 관리 ( 생성 수정 삭제 ) ======================= //
@@ -237,8 +237,7 @@ public class BoardService {
 
 	// ========== 내부 메서드 ==========
 
-	// 게시글 반환결과(List<BoardDTO>)에 작성자 profile image url 추가
-	private List<BoardResBody> enrichWithProfileImage(List<Board> boards) {
+	private List<BoardResBody> mapToBoardResBody(List<Board> boards) {
 		return boards.stream()
 			.map(board -> BoardResBody.from(board, board.getWriter().getProfileImageUrl()))
 			.toList();
