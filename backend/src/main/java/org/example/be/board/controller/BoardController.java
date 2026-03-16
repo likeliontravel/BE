@@ -10,7 +10,9 @@ import org.example.be.board.dto.SimplePageableReqBody;
 import org.example.be.board.entity.BoardSortType;
 import org.example.be.board.service.BoardService;
 import org.example.be.response.CommonResponse;
+import org.example.be.security.config.SecurityUser;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +37,8 @@ public class BoardController {
 	// ==================== 게시판 1개 조회 ==================== //
 	// id로 게시판 글 1개 조회
 	@GetMapping("/{id}")
-	public ResponseEntity<CommonResponse<BoardResBody>> getBoard(@PathVariable Long id) {
+	public ResponseEntity<CommonResponse<BoardResBody>> getBoard(@PathVariable Long id,
+		@AuthenticationPrincipal SecurityUser user) {
 		BoardResBody boardResBody = boardService.getBoard(id);
 		return ResponseEntity.ok(CommonResponse.success(boardResBody, "게시판 글 조회 성공"));
 	}
