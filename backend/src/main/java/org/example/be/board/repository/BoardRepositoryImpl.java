@@ -65,7 +65,7 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
 			return null;
 		return board.title.contains(keyword)
 			.or(board.content.contains(keyword))
-			.or(board.writer.contains(keyword));
+			.or(board.writer.name.contains(keyword));
 	}
 
 	//OrderSpecifier 는 order by 절에서 사용할 수 있는 객체로, 정렬 기준과 방향을 지정하는데 사용하는 클래스 입니당
