@@ -15,9 +15,12 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepositoryCustom {
 
-	private JPAQueryFactory queryFactory;
+	private final JPAQueryFactory queryFactory;
 
 	@Override
 	public Page<Board> search(BoardSearchReqBody reqBody, Pageable pageable) {
