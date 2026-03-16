@@ -73,7 +73,8 @@ public class BoardController {
 		@RequestParam String theme,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
+		@RequestParam(required = false) BoardSortType boardSortType,
+		@AuthenticationPrincipal SecurityUser user) {
 		BoardSearchReqBody request = new BoardSearchReqBody(theme, null, null, boardSortType, page, size);
 		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "테마 별 게시판 목록 조회 성공"));
 	}
