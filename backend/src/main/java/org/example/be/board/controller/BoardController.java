@@ -99,7 +99,7 @@ public class BoardController {
 	}
 
 	// 게시판 글 수정
-	@PatchMapping("/update/{id}")
+	@PatchMapping("/{id}")
 	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@PathVariable Long id,
 		@RequestBody BoardUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
@@ -108,7 +108,7 @@ public class BoardController {
 	}
 
 	// 게시판 글 삭제
-	@DeleteMapping("/delete/{id}")
+	@DeleteMapping("/{id}")
 	public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id,
 		@AuthenticationPrincipal SecurityUser user) {
 		boardService.deleteBoard(id, user.getId());
