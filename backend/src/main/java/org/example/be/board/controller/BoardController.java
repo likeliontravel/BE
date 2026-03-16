@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,9 +92,9 @@ public class BoardController {
 	// ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
 	// 게시판 글 생성 ( 작성 )
 	@PostMapping("/create")
-	public ResponseEntity<CommonResponse<BoardResBody>> writeBoard(@RequestBody BoardCreateReqBody reqBody,
+	public ResponseEntity<CommonResponse<BoardResBody>> writeBoard(@Valid @RequestBody BoardCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
-		BoardResBody savedBoardResBody = boardService.writeBoard(reqBody);
+		BoardResBody savedBoardResBody = boardService.writeBoard(reqBody, user.getId());
 		return ResponseEntity.ok(CommonResponse.success(savedBoardResBody, "게시글 저장 성공"));
 	}
 
