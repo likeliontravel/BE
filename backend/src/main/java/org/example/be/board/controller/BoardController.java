@@ -104,7 +104,8 @@ public class BoardController {
 
 	// 게시판 글 수정
 	@PutMapping("/update")
-	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@RequestBody BoardUpdateReqBody reqBody) {
+	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@RequestBody BoardUpdateReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
 		BoardResBody updatedBoardResBody = boardService.updateBoard(reqBody);
 		return ResponseEntity.ok(CommonResponse.success(updatedBoardResBody, "게시글 글 수정 성공"));
 	}
