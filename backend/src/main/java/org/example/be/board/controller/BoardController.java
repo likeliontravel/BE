@@ -112,7 +112,8 @@ public class BoardController {
 
 	// 게시판 글 삭제
 	@DeleteMapping("/delete/{id}")
-	public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id) {
+	public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id,
+		@AuthenticationPrincipal SecurityUser user) {
 		boardService.deleteBoard(id);
 		return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
 	}
