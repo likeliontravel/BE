@@ -44,9 +44,6 @@ public class BoardController {
 	}
 
 	// ==================== 게시판 목록 조회 ==================== //
-	// 전체 게시판 글 목록 조회 ( 인기순 / 최신순 )
-	// * param : page, size, BoardSortType( POPULAR / RECENT ) default:POPULAR
-	// * return : 입력한 정렬타입으로 정렬한 전체 BoardDTO List
 	@GetMapping("/all")
 	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
@@ -61,7 +58,8 @@ public class BoardController {
 		@RequestParam String searchKeyword,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
+		@RequestParam(required = false) BoardSortType boardSortType,
+		@AuthenticationPrincipal SecurityUser user) {
 
 		BoardSearchReqBody request = new BoardSearchReqBody(null, null, searchKeyword, boardSortType, page, size);
 		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "게시판 키워드 검색 성공"));
