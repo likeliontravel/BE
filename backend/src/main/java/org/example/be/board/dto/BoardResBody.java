@@ -15,7 +15,6 @@ public record BoardResBody(
 	String thumbnailPublicUrl,
 	LocalDateTime createdTime,
 	LocalDateTime updatedTime,
-	String writerIdentifier, // 작성자 본인확인 로직 강화 - 0520 추가
 	String writerProfileImageUrl
 ) {
 	// 엔티티를 dto로 변환
@@ -24,7 +23,7 @@ public record BoardResBody(
 			board.getId(),
 			board.getTitle(),
 			board.getContent(),
-			board.getWriter(),
+			board.getWriter().getName(),
 			board.getBoardHits(),
 			board.getTheme(),
 			board.getRegion(),
