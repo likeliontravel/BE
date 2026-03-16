@@ -20,7 +20,6 @@ import org.example.be.member.repository.MemberRepository;
 import org.example.be.member.service.MemberService;
 import org.example.be.place.region.TourRegionService;
 import org.example.be.place.theme.PlaceCategoryService;
-import org.example.be.security.util.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -112,10 +111,10 @@ public class BoardService {
 
 	// 게시글 수정
 	@Transactional
-	public BoardResBody updateBoard(Long boardId, BoardUpdateReqBody reqBody, Long memberId) {
+	public BoardResBody updateBoard(Long id, BoardUpdateReqBody reqBody, Long memberId) {
 
 		// 기존 게시글 조회 (없으면 예외 발생)
-		Board originalBoard = boardRepository.findById(boardId)
+		Board originalBoard = boardRepository.findById(id)
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		if (!memberId.equals(originalBoard.getWriter().getId())) {
@@ -137,12 +136,10 @@ public class BoardService {
 
 	// 게시글 삭제
 	@Transactional
-	public void deleteBoard(Long id) {
+	public void deleteBoard(Long id, Long memberId) {
 		Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
-		// 사용자 인증 정보 확인
-		String email = SecurityUtil.getUserIdentifierFromAuthentication();
-		if (!email.equals(board.getWriter().getEmail())) {
+		if (!memberId.equals(board.getWriter().getId())) {
 			throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
 		}
 		// Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.

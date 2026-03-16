@@ -111,7 +111,7 @@ public class BoardController {
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<CommonResponse<Void>> deleteBoard(@PathVariable Long id,
 		@AuthenticationPrincipal SecurityUser user) {
-		boardService.deleteBoard(id);
+		boardService.deleteBoard(id, user.getId());
 		return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
 	}
 }
