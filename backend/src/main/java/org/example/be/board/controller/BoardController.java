@@ -15,9 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -99,10 +99,11 @@ public class BoardController {
 	}
 
 	// 게시판 글 수정
-	@PutMapping("/update")
-	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@RequestBody BoardUpdateReqBody reqBody,
+	@PatchMapping("/update/{id}")
+	public ResponseEntity<CommonResponse<BoardResBody>> updateBoard(@PathVariable Long id,
+		@RequestBody BoardUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
-		BoardResBody updatedBoardResBody = boardService.updateBoard(reqBody);
+		BoardResBody updatedBoardResBody = boardService.updateBoard(id, reqBody, user.getId());
 		return ResponseEntity.ok(CommonResponse.success(updatedBoardResBody, "게시글 글 수정 성공"));
 	}
 

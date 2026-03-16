@@ -1,5 +1,7 @@
 package org.example.be.board.dto;
 
+import org.hibernate.validator.constraints.URL;
+
 import jakarta.validation.constraints.NotBlank;
 
 public record BoardCreateReqBody(
@@ -11,6 +13,7 @@ public record BoardCreateReqBody(
 	String theme,
 	@NotBlank(message = "지역은 필수입니다.")
 	String region,
+	@URL(message = "유효한 URL 형식이어야 합니다.")
 	String thumbnailPublicUrl
 ) {
 }

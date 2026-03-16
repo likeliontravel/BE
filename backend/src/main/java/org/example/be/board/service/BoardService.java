@@ -112,15 +112,13 @@ public class BoardService {
 
 	// 게시글 수정
 	@Transactional
-	public BoardResBody updateBoard(BoardUpdateReqBody reqBody) {
-		// 수정자가 작성자와 일치하는지 확인
-		String email = SecurityUtil.getUserIdentifierFromAuthentication();
+	public BoardResBody updateBoard(Long boardId, BoardUpdateReqBody reqBody, Long memberId) {
 
 		// 기존 게시글 조회 (없으면 예외 발생)
-		Board originalBoard = boardRepository.findById(reqBody.id())
+		Board originalBoard = boardRepository.findById(boardId)
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
-		if (!email.equals(originalBoard.getWriter().getEmail())) {
+		if (!memberId.equals(originalBoard.getWriter().getId())) {
 			throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
 		}
 		// 들어온 수정데이터 유효성 확인
