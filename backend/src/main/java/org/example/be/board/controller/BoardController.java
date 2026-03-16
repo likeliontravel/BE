@@ -48,7 +48,8 @@ public class BoardController {
 	// * param : page, size, BoardSortType( POPULAR / RECENT ) default:POPULAR
 	// * return : 입력한 정렬타입으로 정렬한 전체 BoardDTO List
 	@GetMapping("/all")
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
+	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
 		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
 
