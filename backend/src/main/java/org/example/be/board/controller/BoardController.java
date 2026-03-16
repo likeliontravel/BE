@@ -87,7 +87,8 @@ public class BoardController {
 		@RequestParam String region,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
+		@RequestParam(required = false) BoardSortType boardSortType,
+		@AuthenticationPrincipal SecurityUser user) {
 		BoardSearchReqBody request = new BoardSearchReqBody(null, region, null, boardSortType, page, size);
 		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "지역 별 게시판 목록 조회 성공"));
 	}
