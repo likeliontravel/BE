@@ -37,8 +37,7 @@ public class BoardController {
 	// ==================== 게시판 1개 조회 ==================== //
 	// id로 게시판 글 1개 조회
 	@GetMapping("/{id}")
-	public ResponseEntity<CommonResponse<BoardResBody>> getBoard(@PathVariable Long id,
-		@AuthenticationPrincipal SecurityUser user) {
+	public ResponseEntity<CommonResponse<BoardResBody>> getBoard(@PathVariable Long id) {
 		BoardResBody boardResBody = boardService.getBoard(id);
 		return ResponseEntity.ok(CommonResponse.success(boardResBody, "게시판 글 조회 성공"));
 	}
