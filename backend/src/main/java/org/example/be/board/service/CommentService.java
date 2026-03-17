@@ -80,6 +80,10 @@ public class CommentService {
 			parentComment = commentRepository.findById(reqBody.parentCommentId())
 				.orElseThrow(() -> new NoSuchElementException(
 					"이 자식 댓글의 부모 댓글이 존재하지 않습니다. parentCommentId: " + reqBody.parentCommentId()));
+			
+			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
+				throw new IllegalArgumentException("다른 게시글의 댓글에 대댓글을 달 수 없습니다.");
+			}
 		}
 		Comment comment = Comment.toCreateEntity(reqBody.content(), writer, boardEntity, parentComment);
 

@@ -41,9 +41,8 @@ public class CommentController {
 	public ResponseEntity<CommonResponse<String>> write(@PathVariable Long boardId,
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
-		// 댓글 작성 로직 수행
+		
 		commentService.writecomment(boardId, reqBody, user.getId());
-		// 성공적인 댓글 작성 후 ResponseEntity로 응답
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(CommonResponse.success("댓글이 작성되었습니다.", "댓글 등록 성공"));
 	}
