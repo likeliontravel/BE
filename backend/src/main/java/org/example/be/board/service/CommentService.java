@@ -16,7 +16,6 @@ import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
-import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -115,13 +114,11 @@ public class CommentService {
 	}
 
 	@Transactional
-	public void deletecomment(Long id) {
-		String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-
-		Comment comment = commentRepository.findById(id)
+	public void deletecomment(Long commentId, Long userId) {
+		Comment comment = commentRepository.findById(commentId)
 			.orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
 
-		if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
+		if (!comment.getWriter().getId().equals(userId)) {
 			throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
 		}
 		try {

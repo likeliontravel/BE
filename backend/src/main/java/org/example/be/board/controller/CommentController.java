@@ -60,9 +60,11 @@ public class CommentController {
 	}
 
 	// 댓글 삭제
-	@DeleteMapping("/{id}")
-	public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long id) {
-		commentService.deletecomment(id);
+	@DeleteMapping("/{commentId}")
+	public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long commentId,
+		@AuthenticationPrincipal SecurityUser user) {
+
+		commentService.deletecomment(commentId, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "댓글 삭제 성공"));
 	}
 
