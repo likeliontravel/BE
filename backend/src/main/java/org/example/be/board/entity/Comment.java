@@ -3,7 +3,9 @@ package org.example.be.board.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.example.be.board.dto.CommentCreateReqBody;
 import org.example.be.board.dto.CommentResBody;
+import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.config.Base;
 import org.example.be.member.entity.Member;
 import org.hibernate.annotations.OnDelete;
@@ -45,13 +47,20 @@ public class Comment extends Base {
 	private Board board;
 
 	// 부모댓글 작성시
-	public static Comment toCreateEntity(String commentContent, Member member, Board board, Comment parentComment) {
+	public static Comment toCreateEntity(CommentCreateReqBody reqBody, Member member, Board board,
+		Comment parentComment) {
 		Comment comment = new Comment();
-		comment.setCommentContent(commentContent);
+		comment.setCommentContent(reqBody.content());
 		comment.setWriter(member);
 		comment.setBoard(board);
 		comment.setParentComment(parentComment);
 		return comment;
+	}
+
+	public void toUpdateEntity(CommentUpdateReqBody reqBody) {
+		if (reqBody.content() != null) {
+			this.commentContent = reqBody.content();
+		}
 	}
 
 	// 대댓글인 경우

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.example.be.board.dto.CommentCreateReqBody;
 import org.example.be.board.dto.CommentResBody;
+import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.board.service.CommentService;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.config.SecurityUser;
@@ -30,29 +31,30 @@ public class CommentController {
 	private final CommentService commentService;
 
 	// 댓글 조회
-	@GetMapping("/{id}")
+	@GetMapping("/{boardId}")
 	public ResponseEntity<CommonResponse<List<CommentResBody>>> getAllComments(@PathVariable Long boardId) {
 		List<CommentResBody> comments = commentService.getAllComments(boardId);
 		return ResponseEntity.ok(CommonResponse.success(comments, "댓글 목록 조회 성공"));
 	}
 
 	//댓글 작성
-	@PostMapping("{id}")
+	@PostMapping("{boardId}")
 	public ResponseEntity<CommonResponse<String>> write(@PathVariable Long boardId,
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
-		
+
 		commentService.writecomment(boardId, reqBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(CommonResponse.success("댓글이 작성되었습니다.", "댓글 등록 성공"));
 	}
 
 	// 댓글 수정 - 작성자 본인만 수정 가능
-	@PutMapping("/{id}")
-	public ResponseEntity<CommonResponse<String>> update(@PathVariable Long id,
-		@RequestBody CommentResBody commentResBody) {
-		commentResBody.setId(id);
-		commentService.updatecommemt(commentResBody);
+	@PutMapping("/{commentId}")
+	public ResponseEntity<CommonResponse<String>> update(@PathVariable Long commentId,
+		@Valid @RequestBody CommentUpdateReqBody commentResBody,
+		@AuthenticationPrincipal SecurityUser user) {
+
+		commentService.updatecommemt(commentId, commentResBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
 	}

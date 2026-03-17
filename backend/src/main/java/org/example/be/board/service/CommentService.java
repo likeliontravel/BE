@@ -5,6 +5,7 @@ import java.util.NoSuchElementException;
 
 import org.example.be.board.dto.CommentCreateReqBody;
 import org.example.be.board.dto.CommentResBody;
+import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.board.entity.Board;
 import org.example.be.board.entity.Comment;
 import org.example.be.board.repository.BoardRepository;
@@ -80,12 +81,12 @@ public class CommentService {
 			parentComment = commentRepository.findById(reqBody.parentCommentId())
 				.orElseThrow(() -> new NoSuchElementException(
 					"이 자식 댓글의 부모 댓글이 존재하지 않습니다. parentCommentId: " + reqBody.parentCommentId()));
-			
+
 			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
 				throw new IllegalArgumentException("다른 게시글의 댓글에 대댓글을 달 수 없습니다.");
 			}
 		}
-		Comment comment = Comment.toCreateEntity(reqBody.content(), writer, boardEntity, parentComment);
+		Comment comment = Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment);
 
 		try {
 			Comment saveComment = commentRepository.save(comment);
@@ -97,19 +98,17 @@ public class CommentService {
 
 	// 댓글 수정
 	@Transactional
-	public void updatecommemt(CommentResBody commentResBody) {
-		String currentUserIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
+	public CommentResBody updatecommemt(Long commentId, CommentUpdateReqBody reqBody, Long userId) {
+		Comment comment = commentRepository.findById(commentId)
+			.orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentId));
 
-		Comment comment = commentRepository.findById(commentResBody.getId())
-			.orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentResBody.getId()));
-
-		if (!currentUserIdentifier.equals(comment.getCommentWriterIdentifier())) {
+		if (!comment.getWriter().getId().equals(userId)) {
 			throw new ForbiddenResourceAccessException("작성자 본인만 수정할 수 있습니다.");
 		}
 
-		comment.setCommentContent(commentResBody.getCommentContent());
 		try {
-			commentRepository.save(comment);
+			comment.toUpdateEntity(reqBody);
+			return CommentResBody.from(comment);
 		} catch (Exception e) {
 			throw new ResourceUpdateException("댓글 수정 실패", e);
 		}
