@@ -1,10 +1,10 @@
 package org.example.be.board.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import org.example.be.board.dto.CommentCreateReqBody;
 import org.example.be.board.dto.CommentResBody;
@@ -19,6 +19,9 @@ import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,31 +36,33 @@ public class CommentService {
 	private final MemberRepository memberRepository;
 
 	// 해당 게시글 댓글 조회
-	public List<CommentResBody> getAllComments(Long boardId) {
-
+	@Transactional
+	public Page<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
 		boardRepository.findById(boardId)
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. boardId: " + boardId));
 
-		List<Comment> allComments = commentRepository.findAllByBoardIdWithMember(boardId);
+		Page<Comment> rootPage = commentRepository.findRootComments(boardId, pageable);
+		List<Comment> rootComments = rootPage.getContent();
 
-		List<CommentResBody> commentResBodyList = new ArrayList<>();
-		Map<Long, CommentResBody> map = new HashMap<>();
+		if (rootComments.isEmpty())
+			return new PageImpl<>(List.of(), pageable, 0);
 
-		allComments.forEach(comment -> {
-			CommentResBody dto = CommentResBody.from(comment);
-			map.put(comment.getId(), dto);
+		List<Long> rootIds = rootComments.stream().map(Comment::getId).toList();
+		List<Comment> childComments = commentRepository.findChildrenByParentIds(rootIds);
 
-			if (comment.getParentComment() != null) {
-				CommentResBody parentDto = map.get(comment.getParentComment().getId());
-				if (parentDto != null) {
-					parentDto.childComments().add(dto);
-				} else {
-					commentResBodyList.add(dto);
-					// 부모 댓글이 아직 map에 없으면 일단 최상위로 추가, 나중에 자식 댓글이 부모 댓글을 찾을 때 map에서 찾아서 자식 댓글로 추가
-				}
-			}
-		});
-		return commentResBodyList;
+		Map<Long, List<CommentResBody>> childMap = childComments.stream()
+			.map(CommentResBody::from)
+			.collect(Collectors.groupingBy(CommentResBody::parentCommentId));
+
+		List<CommentResBody> result = rootComments.stream()
+			.map(root -> {
+				CommentResBody rootDto = CommentResBody.from(root);
+				rootDto.childComments().addAll(childMap.getOrDefault(root.getId(), new ArrayList<>()));
+				return rootDto;
+			})
+			.toList();
+
+		return new PageImpl<>(result, pageable, rootPage.getTotalElements());
 	}
 
 	// 댓글 작성

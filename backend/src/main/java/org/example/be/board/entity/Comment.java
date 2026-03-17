@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.example.be.board.dto.CommentCreateReqBody;
-import org.example.be.board.dto.CommentResBody;
 import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.config.Base;
 import org.example.be.member.entity.Member;
@@ -61,17 +60,6 @@ public class Comment extends Base {
 		if (reqBody.content() != null) {
 			this.commentContent = reqBody.content();
 		}
-	}
-
-	// 대댓글인 경우
-	public static Comment toSaveReplyEntity(CommentResBody commentResBody, Board board, Comment parentComment) {
-		Comment comment = new Comment();
-		comment.setCommentWriter(commentResBody.getCommentWriter());
-		comment.setCommentWriterIdentifier(commentResBody.getCommentWriterIdentifier());
-		comment.setCommentContent(commentResBody.getCommentContent());
-		comment.setBoard(board);
-		comment.setParentComment(parentComment);
-		return comment;
 	}
 
 }

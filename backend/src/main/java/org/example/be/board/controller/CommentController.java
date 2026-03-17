@@ -1,13 +1,14 @@
 package org.example.be.board.controller;
 
-import java.util.List;
-
 import org.example.be.board.dto.CommentCreateReqBody;
 import org.example.be.board.dto.CommentResBody;
 import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.board.service.CommentService;
 import org.example.be.response.CommonResponse;
 import org.example.be.security.config.SecurityUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -32,8 +34,13 @@ public class CommentController {
 
 	// 댓글 조회
 	@GetMapping("/{boardId}")
-	public ResponseEntity<CommonResponse<List<CommentResBody>>> getAllComments(@PathVariable Long boardId) {
-		List<CommentResBody> comments = commentService.getAllComments(boardId);
+	public ResponseEntity<CommonResponse<Page<CommentResBody>>> getAllComments(@PathVariable Long boardId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size) {
+
+		Pageable pageable = PageRequest.of(page, size);
+
+		Page<CommentResBody> comments = commentService.getAllComments(boardId, pageable);
 		return ResponseEntity.ok(CommonResponse.success(comments, "댓글 목록 조회 성공"));
 	}
 

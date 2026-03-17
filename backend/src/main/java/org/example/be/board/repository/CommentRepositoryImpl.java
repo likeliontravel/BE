@@ -6,6 +6,9 @@ import static org.example.be.member.entity.QMember.*;
 import java.util.List;
 
 import org.example.be.board.entity.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -17,15 +20,40 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
 	private final JPAQueryFactory queryFactory;
 
 	@Override
-	public List<Comment> findAllByBoardIdWithMember(Long boardId) {
+	public Page<Comment> findRootComments(Long boardId, Pageable pageable) {
+		List<Comment> contents = queryFactory
+			.selectFrom(comment)
+			.join(comment.writer, member).fetchJoin()
+			.where(
+				comment.board.id.eq(boardId),
+				comment.parentComment.isNull() // 부모가 없는 댓글만 조회
+			)
+			.orderBy(comment.createdTime.asc())
+			.offset(pageable.getOffset())
+			.limit(pageable.getPageSize())
+			.fetch();
+
+		Long total = queryFactory
+			.select(comment.count())
+			.from(comment)
+			.where(
+				comment.board.id.eq(boardId),
+				comment.parentComment.isNull()
+			)
+			.fetchOne();
+
+		return new PageImpl<>(contents, pageable, total != null ? total : 0L);
+
+	}
+
+	@Override
+	public List<Comment> findChildrenByParentIds(List<Long> parentIds) {
 		return queryFactory
 			.selectFrom(comment)
 			.join(comment.writer, member).fetchJoin()
-			.leftJoin(comment.parentComment)
-			.where(comment.board.id.eq(boardId))
+			.where(comment.parentComment.id.in(parentIds))
 			.orderBy(comment.createdTime.asc())
 			.fetch();
-
 	}
 
 }
