@@ -21,7 +21,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
 		return queryFactory
 			.selectFrom(comment)
 			.join(comment.writer, member).fetchJoin()
-			.leftJoin(comment.parentComment).fetchJoin()
+			.leftJoin(comment.parentComment)
 			.where(comment.board.id.eq(boardId))
 			.orderBy(comment.createdTime.asc())
 			.fetch();
