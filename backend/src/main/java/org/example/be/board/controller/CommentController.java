@@ -43,7 +43,7 @@ public class CommentController {
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.writecomment(boardId, reqBody, user.getId());
+		commentService.writeComment(boardId, reqBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(CommonResponse.success("댓글이 작성되었습니다.", "댓글 등록 성공"));
 	}
@@ -54,7 +54,7 @@ public class CommentController {
 		@Valid @RequestBody CommentUpdateReqBody commentResBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.updatecommemt(commentId, commentResBody, user.getId());
+		commentService.updateComment(commentId, commentResBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
 	}
@@ -64,7 +64,7 @@ public class CommentController {
 	public ResponseEntity<CommonResponse<String>> delete(@PathVariable Long commentId,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.deletecomment(commentId, user.getId());
+		commentService.deleteComment(commentId, user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "댓글 삭제 성공"));
 	}
 

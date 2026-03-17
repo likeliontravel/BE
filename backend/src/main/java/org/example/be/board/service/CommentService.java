@@ -1,6 +1,9 @@
 package org.example.be.board.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.example.be.board.dto.CommentCreateReqBody;
@@ -16,7 +19,6 @@ import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
-import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,38 +38,31 @@ public class CommentService {
 		boardRepository.findById(boardId)
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. boardId: " + boardId));
 
-		List<Comment> commentList = commentRepository.findByBoardId(boardId);
+		List<Comment> allComments = commentRepository.findAllByBoardIdWithMember(boardId);
 
-		if (commentList.isEmpty()) {
-			throw new NoSuchElementException("해당 게시글에 댓글이 존재하지 않습니다. boardId: " + boardId);
-		}
+		List<CommentResBody> commentResBodyList = new ArrayList<>();
+		Map<Long, CommentResBody> map = new HashMap<>();
 
-		return commentList.stream().map(comment -> {
-			CommentResBody dto = new CommentResBody();
-			dto.setId(comment.getId());
-			dto.setCommentContent(comment.getCommentContent());
-			dto.setBoardId(boardId);
-			dto.setCommentWriterIdentifier(comment.getCommentWriterIdentifier());
-			dto.setCommentCreatedTime(comment.getCreatedTime());
+		allComments.forEach(comment -> {
+			CommentResBody dto = CommentResBody.from(comment);
+			map.put(comment.getId(), dto);
 
 			if (comment.getParentComment() != null) {
-				dto.setParentCommentId(comment.getParentComment().getId());
+				CommentResBody parentDto = map.get(comment.getParentComment().getId());
+				if (parentDto != null) {
+					parentDto.childComments().add(dto);
+				} else {
+					commentResBodyList.add(dto);
+					// 부모 댓글이 아직 map에 없으면 일단 최상위로 추가, 나중에 자식 댓글이 부모 댓글을 찾을 때 map에서 찾아서 자식 댓글로 추가
+				}
 			}
-
-			// 작성자 프로필 정보 (이름, 프로필 사진) 별도 조회 후 dto set
-			UnifiedUsersNameAndProfileImageUrl profile = unifiedUserService.getNameAndProfileImageUrlByUserIdentifier(
-				comment.getCommentWriterIdentifier());
-			dto.setCommentWriter(profile.getName());
-			dto.setCommentWriterProfileImageUrl(profile.getProfileImageUrl());
-
-			return dto;
-		}).toList();
-
+		});
+		return commentResBodyList;
 	}
 
 	// 댓글 작성
 	@Transactional
-	public CommentResBody writecomment(Long boardId, CommentCreateReqBody reqBody, Long userId) {
+	public CommentResBody writeComment(Long boardId, CommentCreateReqBody reqBody, Long userId) {
 		Member writer = memberRepository.findById(userId)
 			.orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다. userId: " + userId));
 
@@ -85,11 +80,9 @@ public class CommentService {
 				throw new IllegalArgumentException("다른 게시글의 댓글에 대댓글을 달 수 없습니다.");
 			}
 		}
-		Comment comment = Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment);
-
 		try {
-			Comment saveComment = commentRepository.save(comment);
-			return CommentResBody.from(saveComment);
+			Comment comment = Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment);
+			return CommentResBody.from(commentRepository.save(comment));
 		} catch (Exception e) {
 			throw new ResourceCreationException("댓글 작성 실패", e);
 		}
@@ -97,7 +90,7 @@ public class CommentService {
 
 	// 댓글 수정
 	@Transactional
-	public CommentResBody updatecommemt(Long commentId, CommentUpdateReqBody reqBody, Long userId) {
+	public CommentResBody updateComment(Long commentId, CommentUpdateReqBody reqBody, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
 			.orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentId));
 
@@ -114,7 +107,7 @@ public class CommentService {
 	}
 
 	@Transactional
-	public void deletecomment(Long commentId, Long userId) {
+	public void deleteComment(Long commentId, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
 			.orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
 

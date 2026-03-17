@@ -30,19 +30,18 @@ public class QComment extends EntityPathBase<Comment> {
 
     public final StringPath commentContent = createString("commentContent");
 
-    public final StringPath commentWriter = createString("commentWriter");
-
-    public final StringPath commentWriterIdentifier = createString("commentWriterIdentifier");
-
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdTime = _super.createdTime;
 
-    public final NumberPath<Long> id = createNumber("id", Long.class);
+    //inherited
+    public final NumberPath<Long> id = _super.id;
 
     public final QComment parentComment;
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedTime = _super.updatedTime;
+
+    public final org.example.be.member.entity.QMember writer;
 
     public QComment(String variable) {
         this(Comment.class, forVariable(variable), INITS);
@@ -62,8 +61,9 @@ public class QComment extends EntityPathBase<Comment> {
 
     public QComment(Class<? extends Comment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.board = inits.isInitialized("board") ? new QBoard(forProperty("board")) : null;
+        this.board = inits.isInitialized("board") ? new QBoard(forProperty("board"), inits.get("board")) : null;
         this.parentComment = inits.isInitialized("parentComment") ? new QComment(forProperty("parentComment"), inits.get("parentComment")) : null;
+        this.writer = inits.isInitialized("writer") ? new org.example.be.member.entity.QMember(forProperty("writer")) : null;
     }
 
 }
