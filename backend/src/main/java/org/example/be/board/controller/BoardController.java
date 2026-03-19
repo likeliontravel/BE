@@ -91,7 +91,7 @@ public class BoardController {
 
 	// ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
 	// 게시판 글 생성 ( 작성 )
-	@PostMapping("/create")
+	@PostMapping
 	public ResponseEntity<CommonResponse<BoardResBody>> writeBoard(@Valid @RequestBody BoardCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
 		BoardResBody savedBoardResBody = boardService.writeBoard(reqBody, user.getId());
