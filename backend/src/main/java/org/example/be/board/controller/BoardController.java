@@ -44,7 +44,7 @@ public class BoardController {
 	}
 
 	// ==================== 게시판 목록 조회 ==================== //
-	@GetMapping("/all")
+	@GetMapping
 	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
 		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
