@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/invite")
 @RequiredArgsConstructor
@@ -74,6 +76,7 @@ public class InvitationJoinController {
 			response.sendRedirect(frontendUrl + "/login");
 
 		} catch (Exception e) {
+			log.error("[invite] invitationCode={}, error={}", invitationCode, e.getMessage(), e);
 			// 초대코드가 유효하지 않으면 쿼리파라미터 없이 로그인페이지로 리다이렉트
 			response.sendRedirect(frontendUrl + "/login");
 		}

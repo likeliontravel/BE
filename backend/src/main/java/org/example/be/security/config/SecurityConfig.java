@@ -58,6 +58,7 @@ public class SecurityConfig {
 				.requestMatchers("/mail/**").permitAll()
 				.requestMatchers("/board/**").permitAll()
 				.requestMatchers("/comment/**").permitAll()
+				.requestMatchers("/invite/**").permitAll()
 				.requestMatchers("/tourism/**").permitAll()
 				.requestMatchers("/places/**").permitAll()
 				.requestMatchers("/ws/**").permitAll()
