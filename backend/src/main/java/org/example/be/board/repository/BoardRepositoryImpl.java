@@ -1,6 +1,7 @@
 package org.example.be.board.repository;
 
 import static org.example.be.board.entity.QBoard.*;
+import static org.example.be.member.entity.QMember.*;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class BoardRepositoryImpl implements BoardRepositoryCustom {
 		 */
 		List<Board> content = queryFactory
 			.selectFrom(board)
+			.join(board.writer, member).fetchJoin()
 			.where(
 				themeEq(reqBody.theme()),
 				regionEq(reqBody.region()),
