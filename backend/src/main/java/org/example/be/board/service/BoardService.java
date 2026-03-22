@@ -90,10 +90,11 @@ public class BoardService {
 		// 입력된 게시판 필수 입력 누락정보 확인
 		validateBoardCreate(reqBody);
 
+		// 사용자 인증 확인, 게시글 작성자 값 결정
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
 		try {
-			// 사용자 인증 확인, 게시글 작성자 값 결정
-			Member member = memberRepository.findById(memberId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
 			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
 			String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
