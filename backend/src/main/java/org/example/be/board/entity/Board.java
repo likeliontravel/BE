@@ -3,8 +3,10 @@ package org.example.be.board.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.example.be.board.dto.BoardDTO;
+import org.example.be.board.dto.BoardCreateReqBody;
+import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.config.Base;
+import org.example.be.member.entity.Member;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -12,18 +14,16 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor // 기본 생성자
-@AllArgsConstructor // 모든 필드를 매개변수로 하는 생성자
+@NoArgsConstructor
 @Table(name = "board")
 public class Board extends Base {
 
@@ -32,30 +32,27 @@ public class Board extends Base {
 	private String title;
 
 	// 내용
-	@Column(nullable = false, columnDefinition = "MEDIUMTEXT")  // TEXT(글자 수 54,535까지 저장)와 달리 MEDIUMTEXT는 16MB까지 저장 가능.
+	@Column(nullable = false, columnDefinition = "MEDIUMTEXT")
 	private String content;
 
 	// 작성자
-	@Column(nullable = false)
-	private String writer;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "member_id", nullable = false)
+	private Member writer;
 
-	// 작성자 identifier - 검증용 추가 0520
-	@Column
-	private String writerIdentifier;
-
-	// 조회수 인기글을 받아오기 위해 사용
+	// 조회수
 	@Column(nullable = false)
 	private int boardHits;
 
-	// 테마 ( 필수 입력 )
+	// 테마
 	@Column(nullable = false)
 	private String theme;
 
-	// 지역 ( 필수 입력 )
+	// 지역
 	@Column(nullable = false)
 	private String region;
 
-	// 썸네일 이미지 퍼블릭URL
+	// 썸네일 이미지 URL
 	@Column
 	private String thumbnailPublicUrl;
 
@@ -64,30 +61,56 @@ public class Board extends Base {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private List<Comment> commentList = new ArrayList<>();
 
-	// dto를 엔티티로 변환 ( 게시글 생성 )
-	public static Board toCreateEntity(BoardDTO boardDTO) {
+	// 게시글 생성 (정적 팩토리 메서드)
+	public static Board toCreateEntity(BoardCreateReqBody req, Member writer, String escapedContent) {
 		Board board = new Board();
-		board.setTitle(boardDTO.getTitle());
-		board.setContent(boardDTO.getContent());
-		board.setBoardHits(0); // 생성할 때는 조회수가 0
-		board.setTheme(boardDTO.getTheme());
-		board.setRegion(boardDTO.getRegion());
-		board.setThumbnailPublicUrl(boardDTO.getThumbnailPublicUrl());
-		board.setWriterIdentifier(boardDTO.getWriterIdentifier());
+		board.title = req.title();
+		board.content = escapedContent;
+		board.writer = writer;
+		board.boardHits = 0;
+		board.theme = req.theme();
+		board.region = req.region();
+		board.thumbnailPublicUrl = req.thumbnailPublicUrl();
 		return board;
 	}
 
-	// dto를 엔티티로 변환 ( 게시글 업데이트 )
-	public static Board toUpdateEntity(BoardDTO boardDTO, String originalWriterIdentifier) {
-		Board board = new Board();
-		board.setTitle(boardDTO.getTitle());
-		board.setContent(boardDTO.getContent());
-		board.setWriter(boardDTO.getWriter());
-		board.setWriterIdentifier(originalWriterIdentifier);
-		board.setBoardHits(boardDTO.getBoardHits());
-		board.setTheme(boardDTO.getTheme());
-		board.setRegion(boardDTO.getRegion());
-		board.setThumbnailPublicUrl(boardDTO.getThumbnailPublicUrl());
-		return board;
+	// 게시글 수정
+	public void toUpdateEntity(BoardUpdateReqBody req, String escapedContent) {
+
+		if (req.title() != null) {
+			this.title = req.title();
+		}
+
+		if (req.content() != null) {
+			this.content = escapedContent;
+		}
+
+		if (req.theme() != null) {
+			this.theme = req.theme();
+		}
+
+		if (req.region() != null) {
+			this.region = req.region();
+		}
+
+		if (req.thumbnailPublicUrl() != null) {
+			this.thumbnailPublicUrl = req.thumbnailPublicUrl();
+		}
+	}
+
+	// 조회수 증가
+	public void increaseHits() {
+		this.boardHits++;
+	}
+
+	// 댓글 연관관계 편의 메서드
+	public void addComment(Comment comment) {
+		commentList.add(comment);
+		comment.setBoard(this);
+	}
+
+	public void removeComment(Comment comment) {
+		commentList.remove(comment);
+		comment.setBoard(null);
 	}
 }

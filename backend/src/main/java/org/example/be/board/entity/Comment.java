@@ -1,67 +1,65 @@
 package org.example.be.board.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.example.be.board.dto.CommentDTO;
+import org.example.be.board.dto.CommentCreateReqBody;
+import org.example.be.board.dto.CommentUpdateReqBody;
 import org.example.be.config.Base;
+import org.example.be.member.entity.Member;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
 @Table(name = "comment")
 public class Comment extends Base {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "BIGINT UNSIGNED")
-    private Long id;
 
-    @Column(nullable = false)
-    private String commentWriter;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "member_id", nullable = false)
+	private Member writer;
 
-    @Column
-    private String commentWriterIdentifier; // 권한 확인용
+	@Column(nullable = false)
+	private String commentContent;
 
-    @Column
-    private String commentContent;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "parentcomment_id")
+	private Comment parentComment; // null이면 일반 댓글 아니면 대댓글
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parentcomment_id")
-    private Comment parentComment; // null이면 일반 댓글 아니면 대댓글
+	@OneToMany(mappedBy = "parentComment", orphanRemoval = true)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	private List<Comment> childComments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "parentComment",orphanRemoval = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private List<Comment> childComments = new ArrayList<>();
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "board_id")
+	private Board board;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id")
-    private Board board;
+	// 부모댓글 작성시
+	public static Comment toCreateEntity(CommentCreateReqBody reqBody, Member member, Board board,
+		Comment parentComment) {
+		Comment comment = new Comment();
+		comment.setCommentContent(reqBody.content());
+		comment.setWriter(member);
+		comment.setBoard(board);
+		comment.setParentComment(parentComment);
+		return comment;
+	}
 
-    // 부모댓글 작성시
-    public static Comment toSaveEntity(CommentDTO commentDTO,Board board) {
-        Comment comment = new Comment();
-        comment.setCommentWriter(commentDTO.getCommentWriter());
-        comment.setCommentContent(commentDTO.getCommentContent());
-        comment.setCommentWriterIdentifier(commentDTO.getCommentWriterIdentifier());
-        comment.setBoard(board);
-        return comment;
-    }
-
-    // 대댓글인 경우
-    public static Comment toSaveReplyEntity(CommentDTO commentDTO, Board board, Comment parentComment) {
-        Comment comment = new Comment();
-        comment.setCommentWriter(commentDTO.getCommentWriter());
-        comment.setCommentWriterIdentifier(commentDTO.getCommentWriterIdentifier());
-        comment.setCommentContent(commentDTO.getCommentContent());
-        comment.setBoard(board);
-        comment.setParentComment(parentComment);
-        return comment;
-    }
+	public void toUpdateEntity(CommentUpdateReqBody reqBody) {
+		if (reqBody.content() != null) {
+			this.commentContent = reqBody.content();
+		}
+	}
 
 }
