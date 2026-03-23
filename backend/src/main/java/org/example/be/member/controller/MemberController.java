@@ -9,6 +9,7 @@ import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
 import org.example.be.member.dto.MemberNameUpdateReqBody;
+import org.example.be.member.dto.MemberPolicyUpdateReqBody;
 import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
@@ -166,6 +167,14 @@ public class MemberController {
 	public ResponseEntity<CommonResponse<Void>> deleteProfileImage(@AuthenticationPrincipal SecurityUser user) {
 		memberService.deleteProfileImage(user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 삭제 성공"));
+	}
+
+	@PatchMapping("/me/policy")
+	public ResponseEntity<CommonResponse<Void>> updatePolicyAgreed(
+		@Valid @RequestBody MemberPolicyUpdateReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
+		memberService.updatePolicyAgreed(user.getId(), reqBody.policyAgreed());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이용약관 동의 여부 변경 성공"));
 	}
 
 	private void issueTokensAndSetCookies(Member member) {

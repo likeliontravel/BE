@@ -74,4 +74,8 @@ public class Member extends Base {
 	public void updateProfileImageUrl(String profileImageUrl) {
 		this.profileImageUrl = profileImageUrl;
 	}
+
+	public void updatePolicyAgreed(Boolean policyAgreed) {
+		this.policyAgreed = policyAgreed;
+	}
 }

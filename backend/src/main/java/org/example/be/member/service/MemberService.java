@@ -99,4 +99,10 @@ public class MemberService {
 			member.updateProfileImageUrl(null);
 		}
 	}
+
+	@Transactional
+	public void updatePolicyAgreed(long memberId, boolean policyAgreed) {
+		Member member = getById(memberId);
+		member.updatePolicyAgreed(policyAgreed);
+	}
 }

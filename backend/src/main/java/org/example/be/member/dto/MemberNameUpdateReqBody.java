@@ -6,5 +6,4 @@ public record MemberNameUpdateReqBody(
 	@NotBlank
 	String name
 ) {
-
 }
