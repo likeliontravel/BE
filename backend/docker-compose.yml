@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
-    container_name: mysql-db
+    container_name: toleave-mysql
     environment:
       MYSQL_DATABASE: toleave
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -24,7 +24,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: toleave-redis
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "6379:6379"
     volumes:
@@ -58,6 +60,7 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      TZ: Asia/Seoul
       DB_URL: jdbc:mysql://db:3306/toleave?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
       GCP_CREDENTIALS_PATH: /app/credentials/toleave-b9a7b3a17267.json
       REDIS_HOST: redis
@@ -77,6 +80,8 @@ services:
   nginx:
     image: nginx:latest
     container_name: toleave-nginx
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "80:80"
       - "443:443"

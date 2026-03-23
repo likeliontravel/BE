@@ -29,6 +29,8 @@ FROM eclipse-temurin:17-jre-jammy
 
 LABEL authors="yeboong99"
 
+ENV TZ=Asia/Seoul
+
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

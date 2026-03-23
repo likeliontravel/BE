@@ -25,6 +25,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "6379:6379"
     volumes:
@@ -56,6 +58,7 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
     volumes:
       - ${GCP_CREDENTIALS_HOST_PATH}:/app/credentials/toleave-b9a7b3a17267.json:ro
 
@@ -69,6 +72,8 @@ services:
   nginx:
     image: nginx:latest
     container_name: toleave-nginx
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "80:80"
       - "443:443"
