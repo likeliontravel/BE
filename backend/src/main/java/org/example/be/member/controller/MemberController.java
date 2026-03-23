@@ -20,6 +20,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -126,8 +127,8 @@ public class MemberController {
 		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
 	}
 
-	@GetMapping("/profile")
-	public ResponseEntity<CommonResponse<MemberDto>> profile(@AuthenticationPrincipal SecurityUser securityUser) {
+	@GetMapping("/me")
+	public ResponseEntity<CommonResponse<MemberDto>> me(@AuthenticationPrincipal SecurityUser securityUser) {
 		Member member = memberService.getById(securityUser.getId());
 		MemberDto memberDto = MemberDto.from(member);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
@@ -140,6 +141,8 @@ public class MemberController {
 		memberService.updatePassword(passwordUpdateReqBody);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
 	}
+
+	@PatchMapping
 
 	private void issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);
