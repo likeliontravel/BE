@@ -67,6 +67,7 @@ public class MemberService {
 		memberRepository.save(member);
 	}
 
+	@Transactional
 	public void updateName(long memberId, String name) {
 		Member member = getById(memberId);
 
@@ -75,6 +76,7 @@ public class MemberService {
 		memberRepository.save(member);
 	}
 
+	@Transactional
 	public String updateProfileImageUrl(Long memberId, MultipartFile file) throws IOException {
 		Member member = getById(memberId);
 
@@ -86,5 +88,15 @@ public class MemberService {
 		member.updateProfileImageUrl(profileImageUrl);
 
 		return profileImageUrl;
+	}
+
+	@Transactional
+	public void deleteProfileImage(long memberId) {
+		Member member = getById(memberId);
+
+		if (member.getProfileImageUrl() != null) {
+			gcsService.deleteProfileImage(member.getProfileImageUrl());
+			member.updateProfileImageUrl(null);
+		}
 	}
 }

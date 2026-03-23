@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -159,6 +160,12 @@ public class MemberController {
 		@AuthenticationPrincipal SecurityUser user) throws IOException {
 		String profileImageUrl = memberService.updateProfileImageUrl(user.getId(), file);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
+	}
+
+	@DeleteMapping("/me/profileImage/delete")
+	public ResponseEntity<CommonResponse<Void>> deleteProfileImage(@AuthenticationPrincipal SecurityUser user) {
+		memberService.deleteProfileImage(user.getId());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 삭제 성공"));
 	}
 
 	private void issueTokensAndSetCookies(Member member) {
