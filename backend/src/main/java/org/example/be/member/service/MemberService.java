@@ -54,16 +54,24 @@ public class MemberService {
 
 	// 비밀번호 변경 로직
 	@Transactional
-	public void updatePassword(PasswordUpdateReqBody reqBody) {
+	public void updatePassword(Long memberId, PasswordUpdateReqBody reqBody) {
 
-		Member member = memberRepository.findByEmail(reqBody.email())
-			.orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원이 없습니다."));
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
 
-		// 새 비밀번호 암호화 및 업데이트
 		String newEncodedPassword = passwordEncoder.encode(reqBody.password());
 		member.changePassword(newEncodedPassword);
 
 		memberRepository.save(member);
 	}
 
+	public void updateName(long memberId, String name) {
+
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+
+		member.changeName(name);
+
+		memberRepository.save(member);
+	}
 }

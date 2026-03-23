@@ -6,6 +6,7 @@ import org.example.be.group.service.GroupService;
 import org.example.be.member.dto.MemberDto;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
+import org.example.be.member.dto.MemberNameUpdateReqBody;
 import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
@@ -128,21 +129,26 @@ public class MemberController {
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<CommonResponse<MemberDto>> me(@AuthenticationPrincipal SecurityUser securityUser) {
-		Member member = memberService.getById(securityUser.getId());
+	public ResponseEntity<CommonResponse<MemberDto>> me(@AuthenticationPrincipal SecurityUser user) {
+		Member member = memberService.getById(user.getId());
 		MemberDto memberDto = MemberDto.from(member);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
 	}
 
 	// 비밀번호 변경
 	@PutMapping("/passwordUpdate")
-	public ResponseEntity<CommonResponse<String>> updatePassword(
-		@RequestBody PasswordUpdateReqBody passwordUpdateReqBody) {
-		memberService.updatePassword(passwordUpdateReqBody);
+	public ResponseEntity<CommonResponse<String>> updatePassword(@RequestBody PasswordUpdateReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
+		memberService.updatePassword(user.getId(), reqBody);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
 	}
 
-	@PatchMapping
+	@PatchMapping("/me/name")
+	public ResponseEntity<CommonResponse<String>> updateName(@Valid @RequestBody MemberNameUpdateReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
+		memberService.updateName(user.getId(), reqBody.name());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 이름 변경 성공"));
+	}
 
 	private void issueTokensAndSetCookies(Member member) {
 		String accessToken = authTokenService.genAccessToken(member);

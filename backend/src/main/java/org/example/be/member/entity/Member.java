@@ -66,4 +66,8 @@ public class Member extends Base {
 	public void changePassword(String newEncodedPassword) {
 		this.password = newEncodedPassword;
 	}
+
+	public void changeName(String name) {
+		this.name = name;
+	}
 }
