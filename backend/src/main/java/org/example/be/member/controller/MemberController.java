@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -148,6 +150,13 @@ public class MemberController {
 		@AuthenticationPrincipal SecurityUser user) {
 		memberService.updateName(user.getId(), reqBody.name());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 이름 변경 성공"));
+	}
+
+	@PostMapping("/me/profileImage")
+	public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file,
+		@AuthenticationPrincipal SecurityUser user) {
+		String profileImageUrl = memberService.updateProfileImageUrl(user.getId(), file);
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
 	}
 
 	private void issueTokensAndSetCookies(Member member) {

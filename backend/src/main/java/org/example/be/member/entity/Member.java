@@ -70,4 +70,8 @@ public class Member extends Base {
 	public void changeName(String name) {
 		this.name = name;
 	}
+
+	public void updateProfileImageUrl(String profileImageUrl) {
+		this.profileImageUrl = profileImageUrl;
+	}
 }

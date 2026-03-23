@@ -1,7 +1,9 @@
 package org.example.be.member.service;
 
+import java.io.IOException;
 import java.util.Optional;
 
+import org.example.be.gcs.GCSService;
 import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class MemberService {
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final GCSService gcsService;
 
 	public Member join(MemberJoinReqBody reqBody) {
 		if (memberRepository.existsByEmail(reqBody.email())) {
@@ -55,9 +59,7 @@ public class MemberService {
 	// 비밀번호 변경 로직
 	@Transactional
 	public void updatePassword(Long memberId, PasswordUpdateReqBody reqBody) {
-
-		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+		Member member = getById(memberId);
 
 		String newEncodedPassword = passwordEncoder.encode(reqBody.password());
 		member.changePassword(newEncodedPassword);
@@ -66,12 +68,23 @@ public class MemberService {
 	}
 
 	public void updateName(long memberId, String name) {
-
-		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+		Member member = getById(memberId);
 
 		member.changeName(name);
 
 		memberRepository.save(member);
+	}
+
+	public String updateProfileImageUrl(Long memberId, MultipartFile file) throws IOException {
+		Member member = getById(memberId);
+
+		if (member.getProfileImageUrl() != null) {
+			gcsService.deleteProfileImage(member.getProfileImageUrl());
+		}
+
+		String profileImageUrl = gcsService.uploadProfileImage(file, memberId);
+		member.updateProfileImageUrl(profileImageUrl);
+
+		return profileImageUrl;
 	}
 }
