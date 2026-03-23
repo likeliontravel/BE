@@ -186,7 +186,19 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "유료구독 여부 변경 성공"));
 	}
 
+	@DeleteMapping("/me")
+	public ResponseEntity<CommonResponse<String>> deleteMember(@AuthenticationPrincipal SecurityUser user) {
+		memberService.deleteMember(user.getId());
+
+		cookieHelper.deleteCookie("accessToken");
+		cookieHelper.deleteCookie("refreshToken");
+
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
+
+	}
+
 	private void issueTokensAndSetCookies(Member member) {
+
 		String accessToken = authTokenService.genAccessToken(member);
 		String refreshToken = authTokenService.RefreshToken(member);
 

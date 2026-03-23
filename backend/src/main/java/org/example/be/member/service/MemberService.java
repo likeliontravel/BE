@@ -111,4 +111,14 @@ public class MemberService {
 		Member member = getById(memberId);
 		member.updateSubscribed(subscribed);
 	}
+
+	public void deleteMember(long memberId) {
+		Member member = getById(memberId);
+
+		if (member.getProfileImageUrl() != null) {
+			gcsService.deleteProfileImage(member.getProfileImageUrl());
+		}
+
+		memberRepository.delete(member);
+	}
 }
