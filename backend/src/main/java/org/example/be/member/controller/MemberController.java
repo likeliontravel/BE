@@ -1,5 +1,7 @@
 package org.example.be.member.controller;
 
+import java.io.IOException;
+
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
@@ -154,7 +156,7 @@ public class MemberController {
 
 	@PostMapping("/me/profileImage")
 	public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file,
-		@AuthenticationPrincipal SecurityUser user) {
+		@AuthenticationPrincipal SecurityUser user) throws IOException {
 		String profileImageUrl = memberService.updateProfileImageUrl(user.getId(), file);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
 	}
