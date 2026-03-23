@@ -23,7 +23,7 @@ import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.gcs.GCSService;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
-import org.example.be.member.dto.MemberDto;
+import org.example.be.member.dto.response.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.security.core.context.SecurityContextHolder;

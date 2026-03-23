@@ -1,4 +1,4 @@
-package org.example.be.member.dto;
+package org.example.be.member.dto.response;
 
 import org.example.be.member.entity.Member;
 

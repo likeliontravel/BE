@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.example.be.gcs.GCSService;
-import org.example.be.member.dto.MemberJoinReqBody;
-import org.example.be.member.dto.PasswordUpdateReqBody;
+import org.example.be.member.dto.request.MemberJoinReqBody;
+import org.example.be.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.http.HttpStatus;

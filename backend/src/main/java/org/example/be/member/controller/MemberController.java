@@ -5,13 +5,13 @@ import java.io.IOException;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
-import org.example.be.member.dto.MemberDto;
-import org.example.be.member.dto.MemberJoinReqBody;
-import org.example.be.member.dto.MemberLoginReqBody;
-import org.example.be.member.dto.MemberNameUpdateReqBody;
-import org.example.be.member.dto.MemberPolicyUpdateReqBody;
-import org.example.be.member.dto.MemberSubscribedUpdateReqBody;
-import org.example.be.member.dto.PasswordUpdateReqBody;
+import org.example.be.member.dto.request.MemberJoinReqBody;
+import org.example.be.member.dto.request.MemberLoginReqBody;
+import org.example.be.member.dto.request.MemberNameUpdateReqBody;
+import org.example.be.member.dto.request.MemberPolicyUpdateReqBody;
+import org.example.be.member.dto.request.MemberSubscribedUpdateReqBody;
+import org.example.be.member.dto.request.PasswordUpdateReqBody;
+import org.example.be.member.dto.response.MemberDto;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
@@ -137,6 +137,7 @@ public class MemberController {
 
 	@GetMapping("/me")
 	public ResponseEntity<CommonResponse<MemberDto>> me(@AuthenticationPrincipal SecurityUser user) {
+
 		Member member = memberService.getById(user.getId());
 		MemberDto memberDto = MemberDto.from(member);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
@@ -146,6 +147,7 @@ public class MemberController {
 	@PutMapping("/passwordUpdate")
 	public ResponseEntity<CommonResponse<String>> updatePassword(@RequestBody PasswordUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
+
 		memberService.updatePassword(user.getId(), reqBody);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "비밀번호 변경 성공"));
 	}
@@ -153,6 +155,7 @@ public class MemberController {
 	@PatchMapping("/me/name")
 	public ResponseEntity<CommonResponse<String>> updateName(@Valid @RequestBody MemberNameUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
+
 		memberService.updateName(user.getId(), reqBody.name());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 이름 변경 성공"));
 	}
@@ -160,12 +163,14 @@ public class MemberController {
 	@PostMapping("/me/profileImage")
 	public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file,
 		@AuthenticationPrincipal SecurityUser user) throws IOException {
+
 		String profileImageUrl = memberService.updateProfileImageUrl(user.getId(), file);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
 	}
 
 	@DeleteMapping("/me/profileImage/delete")
 	public ResponseEntity<CommonResponse<Void>> deleteProfileImage(@AuthenticationPrincipal SecurityUser user) {
+
 		memberService.deleteProfileImage(user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "프로필 사진 삭제 성공"));
 	}
@@ -174,6 +179,7 @@ public class MemberController {
 	public ResponseEntity<CommonResponse<Void>> updatePolicyAgreed(
 		@Valid @RequestBody MemberPolicyUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
+
 		memberService.updatePolicyAgreed(user.getId(), reqBody.policyAgreed());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이용약관 동의 여부 변경 성공"));
 	}
@@ -182,6 +188,7 @@ public class MemberController {
 	public ResponseEntity<CommonResponse<Void>> updateSubscribed(
 		@Valid @RequestBody MemberSubscribedUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
+
 		memberService.updateSubscribed(user.getId(), reqBody.subscribed());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "유료구독 여부 변경 성공"));
 	}
@@ -189,6 +196,8 @@ public class MemberController {
 	@DeleteMapping("/me")
 	public ResponseEntity<CommonResponse<String>> deleteMember(@AuthenticationPrincipal SecurityUser user) {
 		memberService.deleteMember(user.getId());
+
+		refreshTokenStore.revokeAllByUserId(user.getId());
 
 		cookieHelper.deleteCookie("accessToken");
 		cookieHelper.deleteCookie("refreshToken");

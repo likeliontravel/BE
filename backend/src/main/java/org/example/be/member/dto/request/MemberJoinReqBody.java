@@ -1,4 +1,4 @@
-package org.example.be.member.dto;
+package org.example.be.member.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
