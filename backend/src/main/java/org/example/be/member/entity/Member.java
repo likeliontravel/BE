@@ -78,4 +78,8 @@ public class Member extends Base {
 	public void updatePolicyAgreed(Boolean policyAgreed) {
 		this.policyAgreed = policyAgreed;
 	}
+
+	public void updateSubscribed(boolean subscribed) {
+		this.subscribed = subscribed;
+	}
 }

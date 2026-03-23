@@ -105,4 +105,10 @@ public class MemberService {
 		Member member = getById(memberId);
 		member.updatePolicyAgreed(policyAgreed);
 	}
+
+	@Transactional
+	public void updateSubscribed(long memberId, boolean subscribed) {
+		Member member = getById(memberId);
+		member.updateSubscribed(subscribed);
+	}
 }

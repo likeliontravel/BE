@@ -10,6 +10,7 @@ import org.example.be.member.dto.MemberJoinReqBody;
 import org.example.be.member.dto.MemberLoginReqBody;
 import org.example.be.member.dto.MemberNameUpdateReqBody;
 import org.example.be.member.dto.MemberPolicyUpdateReqBody;
+import org.example.be.member.dto.MemberSubscribedUpdateReqBody;
 import org.example.be.member.dto.PasswordUpdateReqBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
@@ -175,6 +176,14 @@ public class MemberController {
 		@AuthenticationPrincipal SecurityUser user) {
 		memberService.updatePolicyAgreed(user.getId(), reqBody.policyAgreed());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "이용약관 동의 여부 변경 성공"));
+	}
+
+	@PatchMapping("/me/subscribed")
+	public ResponseEntity<CommonResponse<Void>> updateSubscribed(
+		@Valid @RequestBody MemberSubscribedUpdateReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser user) {
+		memberService.updateSubscribed(user.getId(), reqBody.subscribed());
+		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "유료구독 여부 변경 성공"));
 	}
 
 	private void issueTokensAndSetCookies(Member member) {
