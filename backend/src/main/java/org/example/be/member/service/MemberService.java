@@ -62,7 +62,9 @@ public class MemberService {
 	public void updatePassword(Long memberId, PasswordUpdateReqBody reqBody) {
 		Member member = getById(memberId);
 
-		String newEncodedPassword = passwordEncoder.encode(reqBody.password());
+		checkPassword(member, reqBody.oldPassword());
+
+		String newEncodedPassword = passwordEncoder.encode(reqBody.newPassword());
 		member.changePassword(newEncodedPassword);
 
 		memberRepository.save(member);
