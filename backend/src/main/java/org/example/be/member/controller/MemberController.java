@@ -12,6 +12,7 @@ import org.example.be.member.dto.request.MemberPolicyUpdateReqBody;
 import org.example.be.member.dto.request.MemberSubscribedUpdateReqBody;
 import org.example.be.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.member.dto.response.MemberDto;
+import org.example.be.member.dto.response.MemberProfileResBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.AuthTokenService;
 import org.example.be.member.service.MemberService;
@@ -27,6 +28,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -204,6 +206,12 @@ public class MemberController {
 
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
 
+	}
+
+	@GetMapping("/getNameAndImage/{memberId}")
+	public ResponseEntity<CommonResponse<MemberProfileResBody>> getNameAndImage(@PathVariable Long memberId) {
+		MemberProfileResBody resBody = memberService.getMemberProfile(memberId);
+		return ResponseEntity.ok(CommonResponse.success(resBody, "회원 이름과 프로필 이미지 조회 성공"));
 	}
 
 	private void issueTokensAndSetCookies(Member member) {

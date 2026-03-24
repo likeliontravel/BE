@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.example.be.gcs.GCSService;
 import org.example.be.member.dto.request.MemberJoinReqBody;
 import org.example.be.member.dto.request.PasswordUpdateReqBody;
+import org.example.be.member.dto.response.MemberProfileResBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.http.HttpStatus;
@@ -120,5 +121,10 @@ public class MemberService {
 		}
 
 		memberRepository.delete(member);
+	}
+
+	public MemberProfileResBody getMemberProfile(Long memberId) {
+		Member member = getById(memberId);
+		return MemberProfileResBody.from(member);
 	}
 }
