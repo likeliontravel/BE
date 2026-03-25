@@ -102,7 +102,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
 	}
 
-	@GetMapping("/getNameAndImage/{memberId}")
+	@GetMapping("/{memberId}/profile")
 	public ResponseEntity<CommonResponse<MemberProfileResBody>> getNameAndImage(@PathVariable Long memberId) {
 		MemberProfileResBody resBody = memberService.getMemberProfile(memberId);
 		return ResponseEntity.ok(CommonResponse.success(resBody, "회원 이름과 프로필 이미지 조회 성공"));
