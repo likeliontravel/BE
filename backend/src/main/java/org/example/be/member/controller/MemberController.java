@@ -170,7 +170,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
 	}
 
-	@DeleteMapping("/me/profileImage/delete")
+	@DeleteMapping("/me/profileImage")
 	public ResponseEntity<CommonResponse<Void>> deleteProfileImage(@AuthenticationPrincipal SecurityUser user) {
 
 		memberService.deleteProfileImage(user.getId());
