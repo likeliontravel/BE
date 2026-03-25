@@ -42,19 +42,16 @@ public class MemberService {
 		return member;
 	}
 
-	public Optional<Member> findByEmail(String email) {
-		return memberRepository.findByEmail(email);
-	}
+	// 비밀번호 초기화 로직
+	@Transactional
+	public void resetPassword(String email, String newPassword) {
+		Member member = findByEmail(email)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-	public void checkPassword(Member member, String password) {
-		if (!passwordEncoder.matches(password, member.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
-		}
-	}
+		String newEncodedPassword = passwordEncoder.encode(newPassword);
+		member.changePassword(newEncodedPassword);
 
-	public Member getById(long id) {
-		return memberRepository.findById(id)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+		memberRepository.save(member);
 	}
 
 	// 비밀번호 변경 로직
@@ -129,4 +126,20 @@ public class MemberService {
 		Member member = getById(memberId);
 		return MemberProfileResBody.from(member);
 	}
+
+	public Optional<Member> findByEmail(String email) {
+		return memberRepository.findByEmail(email);
+	}
+
+	public void checkPassword(Member member, String password) {
+		if (!passwordEncoder.matches(password, member.getPassword())) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
+		}
+	}
+
+	public Member getById(long id) {
+		return memberRepository.findById(id)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+	}
+
 }
