@@ -49,7 +49,7 @@ public class MemberController {
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
 	}
 
-	// 비밀번호 변경(찾기 기능 x, 로그인한 상태에서만 변경 가능, 마이페이지에서 가능)
+	// 비밀번호 재설정(찾기 기능 x, 로그인한 상태에서만 변경 가능, 마이페이지에서 가능)
 	@PutMapping("/me/password")
 	public ResponseEntity<CommonResponse<String>> updatePassword(@RequestBody PasswordUpdateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {

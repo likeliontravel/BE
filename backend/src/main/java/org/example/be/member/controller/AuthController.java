@@ -108,7 +108,7 @@ public class AuthController {
 		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
 	}
 
-	// 비밀번호 재설정 요청
+	// 비밀번호 초기화 요청
 	@PostMapping("/password/reset/request")
 	public ResponseEntity<CommonResponse<Void>> requestPasswordReset(
 		@Valid @RequestBody PasswordResetSendReqBody reqBody) {
@@ -116,7 +116,7 @@ public class AuthController {
 		return ResponseEntity.ok(CommonResponse.success(null, "비밀번호 초기화 이메일 발송 성공"));
 	}
 
-	// 비밀번호 재설정
+	// 비밀번호 초기화
 	@PostMapping("/password/reset")
 	public ResponseEntity<CommonResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetReqBody reqBody) {
 		mailService.verifyCode(new MailVerifyReqBody(reqBody.email(), reqBody.code()));
