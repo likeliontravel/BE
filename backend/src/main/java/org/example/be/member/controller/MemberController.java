@@ -5,11 +5,15 @@ import java.io.IOException;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
+import org.example.be.mail.dto.MailVerifyReqBody;
+import org.example.be.mail.service.MailService;
 import org.example.be.member.dto.request.MemberJoinReqBody;
 import org.example.be.member.dto.request.MemberLoginReqBody;
 import org.example.be.member.dto.request.MemberNameUpdateReqBody;
 import org.example.be.member.dto.request.MemberPolicyUpdateReqBody;
 import org.example.be.member.dto.request.MemberSubscribedUpdateReqBody;
+import org.example.be.member.dto.request.PasswordResetReqBody;
+import org.example.be.member.dto.request.PasswordResetSendReqBody;
 import org.example.be.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.member.dto.response.MemberDto;
 import org.example.be.member.dto.response.MemberProfileResBody;
@@ -55,6 +59,7 @@ public class MemberController {
 	private final RefreshTokenStore refreshTokenStore;
 	private final GroupInvitationService groupInvitationService;
 	private final GroupService groupService;
+	private final MailService mailService;
 
 	// 그룹 가입 로직 추가에 대한 설명입니다. :
 	//
@@ -135,6 +140,22 @@ public class MemberController {
 		cookieHelper.deleteCookie("refreshToken");
 
 		return ResponseEntity.ok(CommonResponse.success(null, "로그아웃 성공"));
+	}
+
+	@PostMapping("/password/reset/request")
+	public ResponseEntity<CommonResponse<Void>> requestPasswordReset(
+		@Valid @RequestBody PasswordResetSendReqBody reqBody) {
+		mailService.sendPasswordResetMail(reqBody.email());
+		return ResponseEntity.ok(CommonResponse.success(null, "비밀번호 초기화 이메일 발송 성공"));
+	}
+
+	@PostMapping("/password/reset")
+	public ResponseEntity<CommonResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetReqBody reqBody) {
+
+		mailService.verifyCode(new MailVerifyReqBody(reqBody.email(), reqBody.code()));
+
+		memberService.resetPassword(reqBody.email(), reqBody.newPassword());
+		return ResponseEntity.ok(CommonResponse.success(null, "비밀번호 초기화 성공"));
 	}
 
 	@GetMapping("/me")
