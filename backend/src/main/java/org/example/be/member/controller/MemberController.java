@@ -102,6 +102,7 @@ public class MemberController {
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(null, "회원 탈퇴 성공"));
 	}
 
+	//타인 회원의 이름과 프로필 이미지 조회 (일단 구현되어 있어서 만들었습니답)
 	@GetMapping("/{memberId}/profile")
 	public ResponseEntity<CommonResponse<MemberProfileResBody>> getNameAndImage(@PathVariable Long memberId) {
 		MemberProfileResBody resBody = memberService.getMemberProfile(memberId);
