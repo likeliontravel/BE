@@ -83,4 +83,24 @@ public class MailService {
 
 		return String.valueOf(code);
 	}
+
+	public void sendPasswordResetMail(String email) {
+		if (!memberRepository.existsByEmail(email)) {
+			throw new EmailAlreadyRegisteredException("가입되지 않은 이메일입니다.");
+		}
+		String verificationCode = generateVerificationCode();
+		try {
+			stringRedisTemplate.opsForValue().set(email, verificationCode, CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+			SimpleMailMessage message = new SimpleMailMessage();
+			message.setFrom(fromEmail);
+			message.setTo(email);
+			message.setSubject("비밀번호 재설정 인증 코드 요청");
+			message.setText("요청하신 비밀번호 재설정 인증 코드는 : " + verificationCode + " 입니다.\n" +
+				"\n" +
+				"인증 코드 유효시간은 5분 입니다.");
+			mailSender.send(message);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 }
