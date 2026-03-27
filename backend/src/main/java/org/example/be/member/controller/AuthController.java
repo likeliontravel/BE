@@ -68,7 +68,7 @@ public class AuthController {
 			}
 		}
 
-		MemberDto memberDto = MemberDto.from(member);
+		MemberDto memberDto = MemberDto.from(member, false);
 		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(memberDto, "회원가입 성공"));
 	}
 
@@ -95,7 +95,8 @@ public class AuthController {
 			}
 		}
 
-		MemberDto memberDto = MemberDto.from(member);
+		boolean shouldChangePassword = memberService.isPasswordExpired(member);
+		MemberDto memberDto = MemberDto.from(member, shouldChangePassword);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "로그인 성공"));
 	}
 

@@ -1,6 +1,7 @@
 package org.example.be.member.service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.example.be.gcs.GCSService;
@@ -9,6 +10,7 @@ import org.example.be.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.member.dto.response.MemberProfileResBody;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
+import org.example.be.member.type.OauthProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -140,6 +142,14 @@ public class MemberService {
 	public Member getById(long id) {
 		return memberRepository.findById(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+	}
+
+	public boolean isPasswordExpired(Member member) {
+		if (member.getOauthProvider() != OauthProvider.General) {
+			return false; // 일반 회원이 아닌 경우(소셜 로그인) 비밀번호 변경 권장 대상 아님
+		}
+
+		return member.getPasswordChangedAt().isBefore(LocalDateTime.now().minusDays(30));
 	}
 
 }

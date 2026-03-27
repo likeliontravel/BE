@@ -45,7 +45,8 @@ public class MemberController {
 	@GetMapping("/me")
 	public ResponseEntity<CommonResponse<MemberDto>> me(@AuthenticationPrincipal SecurityUser user) {
 		Member member = memberService.getById(user.getId());
-		MemberDto memberDto = MemberDto.from(member);
+		boolean shouldChangePassword = memberService.isPasswordExpired(member);
+		MemberDto memberDto = MemberDto.from(member, shouldChangePassword);
 		return ResponseEntity.ok(CommonResponse.success(memberDto, "회원 프로필 조회 성공"));
 	}
 
