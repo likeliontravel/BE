@@ -29,13 +29,13 @@ public class GCSService {
 
 	/**
 	 * 프로필 사진 GCS 업로드 메서드
-	 * param : 저장할 이미지파일, userIdentifier
+	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
 	 * @return : 저장 성공 후 반환받은 public URL
 	 */
-	public String uploadProfileImage(MultipartFile file, String userIdentifier) throws IOException {
+	public String uploadProfileImage(MultipartFile file, Long memberId) throws IOException {
 		try {
 			validateImageFile(file);
-			String fileName = "profile_" + userIdentifier + "_" + UUID.randomUUID();
+			String fileName = "profile_" + memberId + "_" + UUID.randomUUID();
 			BlobId blobId = BlobId.of(profileBucketName, fileName);
 			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
 			storage.create(blobInfo, file.getBytes());

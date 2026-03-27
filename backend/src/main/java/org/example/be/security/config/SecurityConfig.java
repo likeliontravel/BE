@@ -49,9 +49,8 @@ public class SecurityConfig {
 		http
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.requestMatchers("/general-user/signup").permitAll()
-				.requestMatchers(HttpMethod.POST, "/members").permitAll()
-				.requestMatchers(HttpMethod.POST, "/members/login").permitAll()
+				.requestMatchers(HttpMethod.POST, "/auth/join", "/auth/login", "/auth/password/reset/request",
+					"/auth/password/reset/").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
