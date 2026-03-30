@@ -54,7 +54,6 @@ public class SchedulePlace extends Base {
 	public static SchedulePlace create(Schedule schedule, String contentId, PlaceType placeType,
 		LocalDateTime visitStart, LocalDateTime visitedEnd, Integer dayOrder, Integer orderInDay) {
 		SchedulePlace place = new SchedulePlace();
-		place.schedule = schedule;
 		place.contentId = contentId;
 		place.placeType = placeType;
 		place.visitStart = visitStart;
