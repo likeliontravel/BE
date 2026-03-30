@@ -24,46 +24,48 @@ public class SchedulePlaceService {
 	private final PlaceValidationService placeValidationService;
 
 	@Transactional
-	public SchedulePlaceResBody createSchedulePlace(SchedulePlaceReqBody dto) {
-		var schedule = scheduleRepository.findById(dto.getScheduleId())
+	public SchedulePlaceResBody createSchedulePlace(SchedulePlaceReqBody reqBody) {
+		var schedule = scheduleRepository.findById(reqBody.scheduleId())
 			.orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
 
-		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());  // 변경
 
-		SchedulePlace schedulePlace = SchedulePlace.builder()
-			.schedule(schedule)
-			.contentId(dto.getContentId())
-			.placeType(dto.getPlaceType())
-			.visitStart(dto.getVisitStart())
-			.visitedEnd(dto.getVisitedEnd())
-			.dayOrder(dto.getDayOrder())
-			.orderInDay(dto.getOrderInDay())
-			.build();
+		SchedulePlace schedulePlace = SchedulePlace.create(
+			schedule,
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
 		try {
 			var saved = schedulePlaceRepository.save(schedulePlace);
-			return toResponseDTO(saved);
+			return SchedulePlaceResBody.from(saved);
 		} catch (Exception e) {
 			throw new ResourceCreationException("세부 일정 생성에 실패했습니다.", e);
 		}
 	}
 
 	@Transactional
-	public SchedulePlaceResBody updateSchedulePlace(Long placeId, SchedulePlaceReqBody dto) {
+	public SchedulePlaceResBody updateSchedulePlace(Long placeId, SchedulePlaceReqBody reqBody) {
 		var place = schedulePlaceRepository.findById(placeId)
 			.orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
 
-		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());  // 변경
 
-		place.setContentId(dto.getContentId());
-		place.setPlaceType(dto.getPlaceType());
-		place.setVisitStart(dto.getVisitStart());
-		place.setVisitedEnd(dto.getVisitedEnd());
-		place.setDayOrder(dto.getDayOrder());
-		place.setOrderInDay(dto.getOrderInDay());
+		place.update(
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
 		try {
-			return toResponseDTO(schedulePlaceRepository.save(place));
+			return SchedulePlaceResBody.from(schedulePlaceRepository.save(place));
 		} catch (Exception e) {
 			throw new ResourceUpdateException("세부 일정 수정에 실패했습니다.", e);
 		}
@@ -78,17 +80,5 @@ public class SchedulePlaceService {
 		} catch (Exception e) {
 			throw new ResourceDeletionException("세부 일정 삭제에 실패했습니다.", e);
 		}
-	}
-
-	private SchedulePlaceResBody toResponseDTO(SchedulePlace place) {
-		return SchedulePlaceResBody.builder()
-			.id(place.getId())
-			.contentId(place.getContentId())
-			.placeType(place.getPlaceType())
-			.visitStart(place.getVisitStart())
-			.visitedEnd(place.getVisitedEnd())
-			.dayOrder(place.getDayOrder())
-			.orderInDay(place.getOrderInDay())
-			.build();
 	}
 }

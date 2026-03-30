@@ -26,7 +26,6 @@ import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
 import org.example.be.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.schedule.dto.request.ScheduleReqBody;
-import org.example.be.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.schedule.dto.response.ScheduleResBody;
 import org.example.be.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.schedule.entity.Schedule;
@@ -57,8 +56,8 @@ public class ScheduleService {
 
 	// 일정 생성
 	@Transactional
-	public ScheduleResBody createSchedule(ScheduleReqBody requestDTO) {
-		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
+	public ScheduleResBody createSchedule(ScheduleReqBody reqBody) {
+		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
 		// 그룹 창설자인지 검증
@@ -73,40 +72,24 @@ public class ScheduleService {
 			throw new IllegalStateException("해당 그룹에 이미 일정이 존재합니다.");
 		});
 
-		Schedule schedule = Schedule.builder()
-			.startSchedule(requestDTO.getStartSchedule())
-			.endSchedule(requestDTO.getEndSchedule())
-			.group(group)
-			.build();
+		Schedule schedule = Schedule.create(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		for (SchedulePlaceReqBody places : requestDTO.getSchedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId()); // 변경됨
+		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
+			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId()); // 변경됨
 
-			SchedulePlace schedulePlace = SchedulePlace.builder()
-				.schedule(schedule)
-				.contentId(places.getContentId())
-				.placeType(places.getPlaceType())
-				.visitStart(places.getVisitStart())
-				.visitedEnd(places.getVisitedEnd())
-				.dayOrder(places.getDayOrder())
-				.orderInDay(places.getOrderInDay())
-				.build();
-
-			schedule.getSchedulePlaces().add(schedulePlace);
+			SchedulePlace.create(schedule,
+				places.contentId(),
+				places.placeType(),
+				places.visitStart(),
+				places.visitedEnd(),
+				places.dayOrder(),
+				places.orderInDay()
+			);
 		}
 
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.builder()
-				.scheduleId(savedSchedule.getId())
-				.startSchedule(savedSchedule.getStartSchedule())
-				.endSchedule(savedSchedule.getEndSchedule())
-				.schedulePlaces(
-					savedSchedule.getSchedulePlaces().stream()
-						.map(this::toResponseDTO)
-						.toList()
-				)
-				.build();
+			return ScheduleResBody.from(savedSchedule);
 		} catch (Exception e) {
 			throw new ResourceCreationException("일정 생성에 실패했습니다.", e);
 		}
@@ -121,17 +104,7 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹에 일정이 존재하지 않습니다."));
 
-		List<SchedulePlaceResBody> placeDTOs = schedule.getSchedulePlaces().stream()
-			.map(this::toResponseDTO)
-			.toList();
-
-		return ScheduleResBody.builder()
-			.scheduleId(schedule.getId())
-			.startSchedule(schedule.getStartSchedule())
-			.endSchedule(schedule.getEndSchedule())
-			.groupName(schedule.getGroup().getGroupName())
-			.schedulePlaces(placeDTOs)
-			.build();
+		return ScheduleResBody.from(schedule);
 	}
 
 	// 일정 요약 목록 조회
@@ -157,13 +130,7 @@ public class ScheduleService {
 			// 스케줄이 없으면 안내문구만 반환
 			if (scheduleOpt.isEmpty()) {
 				scheduleSummaryList.add(
-					ScheduleSummaryResBody.builder()
-						.groupName(group.getGroupName())
-						.scheduleFirstRegion("아직 일정이 생성되지 않았습니다.")
-						.scheduleFirstTheme(null)
-						.startSchedule(null)
-						.endSchedule(null)
-						.build()
+					ScheduleSummaryResBody.empty(group.getGroupName())
 				);
 				continue;
 			}
@@ -185,13 +152,9 @@ public class ScheduleService {
 			String firstTheme = resolveThemeFromTouristSpot(firstTouristSpotPlace);
 
 			scheduleSummaryList.add(
-				ScheduleSummaryResBody.builder()
-					.groupName(group.getGroupName())
-					.scheduleFirstRegion(firstRegionName)
-					.scheduleFirstTheme(firstTheme)
-					.startSchedule(schedule.getStartSchedule())
-					.endSchedule(schedule.getEndSchedule())
-					.build()
+				ScheduleSummaryResBody.from(group.getGroupName(), firstRegionName, firstTheme,
+					schedule.getStartSchedule(),
+					schedule.getEndSchedule())
 			);
 		}
 
@@ -200,11 +163,11 @@ public class ScheduleService {
 
 	// 일정 수정
 	@Transactional
-	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody requestDTO) {
+	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
-		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
+		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다."));
 
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
@@ -214,39 +177,25 @@ public class ScheduleService {
 			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
 		groupService.validateGroupCreator(group.getGroupName(), user.getId());
 
-		schedule.setStartSchedule(requestDTO.getStartSchedule());
-		schedule.setEndSchedule(requestDTO.getEndSchedule());
-		schedule.setGroup(group);
+		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
 		schedule.getSchedulePlaces().clear();
 
-		for (SchedulePlaceReqBody places : requestDTO.getSchedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());  // 변경됨
-
-			SchedulePlace schedulePlace = SchedulePlace.builder()
-				.schedule(schedule)
-				.contentId(places.getContentId())
-				.placeType(places.getPlaceType())
-				.visitStart(places.getVisitStart())
-				.visitedEnd(places.getVisitedEnd())
-				.dayOrder(places.getDayOrder())
-				.orderInDay(places.getOrderInDay())
-				.build();
-
-			schedule.getSchedulePlaces().add(schedulePlace);
+		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
+			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
+			// 변경됨
+			SchedulePlace.create(schedule,
+				places.contentId(),
+				places.placeType(),
+				places.visitStart(),
+				places.visitedEnd(),
+				places.dayOrder(),
+				places.orderInDay()
+			);
 		}
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.builder()
-				.scheduleId(updatedSchedule.getId())
-				.startSchedule(updatedSchedule.getStartSchedule())
-				.endSchedule(updatedSchedule.getEndSchedule())
-				.schedulePlaces(
-					updatedSchedule.getSchedulePlaces().stream()
-						.map(this::toResponseDTO)
-						.toList()
-				)
-				.build();
+			return ScheduleResBody.from(updatedSchedule);
 		} catch (Exception e) {
 			throw new ResourceUpdateException("일정 수정에 실패했습니다.", e);
 		}
@@ -271,20 +220,6 @@ public class ScheduleService {
 		} catch (Exception e) {
 			throw new ResourceDeletionException("일정 삭제에 실패했습니다.", e);
 		}
-	}
-
-	// ----------------------------- 내부 헬퍼 메서드 ---------------------------
-	// 조회에 사용할 응답DTO 매퍼 ( SchedulePlace )
-	private SchedulePlaceResBody toResponseDTO(SchedulePlace place) {
-		return SchedulePlaceResBody.builder()
-			.id(place.getId())
-			.contentId(place.getContentId())
-			.placeType(place.getPlaceType())
-			.visitStart(place.getVisitStart())
-			.visitedEnd(place.getVisitedEnd())
-			.dayOrder(place.getDayOrder())
-			.orderInDay(place.getOrderInDay())
-			.build();
 	}
 
 	/**
