@@ -24,11 +24,11 @@ import org.example.be.place.theme.PlaceCategory;
 import org.example.be.place.theme.PlaceCategoryRepository;
 import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
-import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
-import org.example.be.schedule.dto.SchedulePlaceResponseDTO;
-import org.example.be.schedule.dto.ScheduleRequestDTO;
-import org.example.be.schedule.dto.ScheduleResponseDTO;
-import org.example.be.schedule.dto.ScheduleSummaryDTO;
+import org.example.be.schedule.dto.request.SchedulePlaceReqBody;
+import org.example.be.schedule.dto.request.ScheduleReqBody;
+import org.example.be.schedule.dto.response.SchedulePlaceResBody;
+import org.example.be.schedule.dto.response.ScheduleResBody;
+import org.example.be.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.schedule.entity.Schedule;
 import org.example.be.schedule.entity.SchedulePlace;
 import org.example.be.schedule.repository.SchedulePlaceRepository;
@@ -57,7 +57,7 @@ public class ScheduleService {
 
 	// 일정 생성
 	@Transactional
-	public ScheduleResponseDTO createSchedule(ScheduleRequestDTO requestDTO) {
+	public ScheduleResBody createSchedule(ScheduleReqBody requestDTO) {
 		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
@@ -79,7 +79,7 @@ public class ScheduleService {
 			.group(group)
 			.build();
 
-		for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
+		for (SchedulePlaceReqBody places : requestDTO.getSchedulePlaces()) {
 			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId()); // 변경됨
 
 			SchedulePlace schedulePlace = SchedulePlace.builder()
@@ -97,7 +97,7 @@ public class ScheduleService {
 
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResponseDTO.builder()
+			return ScheduleResBody.builder()
 				.scheduleId(savedSchedule.getId())
 				.startSchedule(savedSchedule.getStartSchedule())
 				.endSchedule(savedSchedule.getEndSchedule())
@@ -114,18 +114,18 @@ public class ScheduleService {
 
 	// 일정 조회
 	@Transactional(readOnly = true)
-	public ScheduleResponseDTO getScheduleByGroupName(String groupName) {
+	public ScheduleResBody getScheduleByGroupName(String groupName) {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹이 존재하지 않습니다."));
 
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹에 일정이 존재하지 않습니다."));
 
-		List<SchedulePlaceResponseDTO> placeDTOs = schedule.getSchedulePlaces().stream()
+		List<SchedulePlaceResBody> placeDTOs = schedule.getSchedulePlaces().stream()
 			.map(this::toResponseDTO)
 			.toList();
 
-		return ScheduleResponseDTO.builder()
+		return ScheduleResBody.builder()
 			.scheduleId(schedule.getId())
 			.startSchedule(schedule.getStartSchedule())
 			.endSchedule(schedule.getEndSchedule())
@@ -138,7 +138,7 @@ public class ScheduleService {
 	// 요청자의 가입된 그룹을 찾아 해당 그룹의 존재 일정 정보를 그룹별로 묶어 반환
 	// 만약 그룹은 존재하나 일정이 없는 경우 scheduleFirstRegion값으로 "아직 일정이 생성되지 않았습니다" 전달 및 나머지값 null 반환
 	@Transactional(readOnly = true)
-	public List<ScheduleSummaryDTO> getScheduleList() {
+	public List<ScheduleSummaryResBody> getScheduleList() {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		Member user = memberService.findByEmail(userIdentifier.substring(4))
@@ -149,7 +149,7 @@ public class ScheduleService {
 			return Collections.emptyList();
 		}
 
-		List<ScheduleSummaryDTO> scheduleSummaryList = new ArrayList<>();
+		List<ScheduleSummaryResBody> scheduleSummaryList = new ArrayList<>();
 
 		for (Group group : groups) {
 			Optional<Schedule> scheduleOpt = scheduleRepository.findByGroup(group);
@@ -157,7 +157,7 @@ public class ScheduleService {
 			// 스케줄이 없으면 안내문구만 반환
 			if (scheduleOpt.isEmpty()) {
 				scheduleSummaryList.add(
-					ScheduleSummaryDTO.builder()
+					ScheduleSummaryResBody.builder()
 						.groupName(group.getGroupName())
 						.scheduleFirstRegion("아직 일정이 생성되지 않았습니다.")
 						.scheduleFirstTheme(null)
@@ -185,7 +185,7 @@ public class ScheduleService {
 			String firstTheme = resolveThemeFromTouristSpot(firstTouristSpotPlace);
 
 			scheduleSummaryList.add(
-				ScheduleSummaryDTO.builder()
+				ScheduleSummaryResBody.builder()
 					.groupName(group.getGroupName())
 					.scheduleFirstRegion(firstRegionName)
 					.scheduleFirstTheme(firstTheme)
@@ -200,7 +200,7 @@ public class ScheduleService {
 
 	// 일정 수정
 	@Transactional
-	public ScheduleResponseDTO updateSchedule(Long scheduleId, ScheduleRequestDTO requestDTO) {
+	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody requestDTO) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
@@ -220,7 +220,7 @@ public class ScheduleService {
 
 		schedule.getSchedulePlaces().clear();
 
-		for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
+		for (SchedulePlaceReqBody places : requestDTO.getSchedulePlaces()) {
 			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());  // 변경됨
 
 			SchedulePlace schedulePlace = SchedulePlace.builder()
@@ -237,7 +237,7 @@ public class ScheduleService {
 		}
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResponseDTO.builder()
+			return ScheduleResBody.builder()
 				.scheduleId(updatedSchedule.getId())
 				.startSchedule(updatedSchedule.getStartSchedule())
 				.endSchedule(updatedSchedule.getEndSchedule())
@@ -275,8 +275,8 @@ public class ScheduleService {
 
 	// ----------------------------- 내부 헬퍼 메서드 ---------------------------
 	// 조회에 사용할 응답DTO 매퍼 ( SchedulePlace )
-	private SchedulePlaceResponseDTO toResponseDTO(SchedulePlace place) {
-		return SchedulePlaceResponseDTO.builder()
+	private SchedulePlaceResBody toResponseDTO(SchedulePlace place) {
+		return SchedulePlaceResBody.builder()
 			.id(place.getId())
 			.contentId(place.getContentId())
 			.placeType(place.getPlaceType())
