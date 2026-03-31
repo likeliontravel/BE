@@ -32,7 +32,6 @@ import org.example.be.schedule.entity.Schedule;
 import org.example.be.schedule.entity.SchedulePlace;
 import org.example.be.schedule.repository.SchedulePlaceRepository;
 import org.example.be.schedule.repository.ScheduleRepository;
-import org.example.be.security.util.SecurityUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,16 +55,12 @@ public class ScheduleService {
 
 	// 일정 생성
 	@Transactional
-	public ScheduleResBody createSchedule(ScheduleReqBody reqBody) {
+	public ScheduleResBody createSchedule(ScheduleReqBody reqBody, Long userId) {
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
 		// 그룹 창설자인지 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		Member member = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
-		groupService.validateGroupCreator(group.getGroupName(), member.getId());
+		groupService.validateGroupCreator(group.getGroupName(), userId);
 
 		// 이미 일정이 존재하는지 검사
 		scheduleRepository.findByGroup(group).ifPresent(existingSchedule -> {
@@ -111,11 +106,8 @@ public class ScheduleService {
 	// 요청자의 가입된 그룹을 찾아 해당 그룹의 존재 일정 정보를 그룹별로 묶어 반환
 	// 만약 그룹은 존재하나 일정이 없는 경우 scheduleFirstRegion값으로 "아직 일정이 생성되지 않았습니다" 전달 및 나머지값 null 반환
 	@Transactional(readOnly = true)
-	public List<ScheduleSummaryResBody> getScheduleList() {
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+	public List<ScheduleSummaryResBody> getScheduleList(Long userId) {
+		Member user = memberService.getById(userId);
 
 		List<Group> groups = groupRepository.findByMembersContaining(user);
 		if (groups.isEmpty()) {
@@ -163,19 +155,15 @@ public class ScheduleService {
 
 	// 일정 수정
 	@Transactional
-	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody) {
+	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다."));
 
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		// 그룹 창설자 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
-		groupService.validateGroupCreator(group.getGroupName(), user.getId());
+		groupService.validateGroupCreator(group.getGroupName(), userId);
 
 		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
@@ -203,17 +191,11 @@ public class ScheduleService {
 
 	// 일정 삭제
 	@Transactional
-	public void deleteSchedule(Long scheduleId) {
+	public void deleteSchedule(Long scheduleId, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		// 그룹 창설자 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
-
-		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), user.getId());
+		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
 		try {
 			scheduleRepository.delete(schedule);
