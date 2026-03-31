@@ -26,8 +26,8 @@ public class SchedulePlaceService {
 	private final GroupService groupService;
 
 	@Transactional
-	public SchedulePlaceResBody createSchedulePlace(SchedulePlaceReqBody reqBody, Long userId) {
-		var schedule = scheduleRepository.findById(reqBody.scheduleId())
+	public SchedulePlaceResBody createSchedulePlace(Long scheduleId, SchedulePlaceReqBody reqBody, Long userId) {
+		var schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 추가할 수 있음

@@ -9,9 +9,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record SchedulePlaceReqBody(
-	@NotNull(message = "일정 ID를 입력해주세요.")
-	Long scheduleId,
-
 	@NotBlank(message = "장소 ID를 입력해주세요.")
 	String contentId,
 

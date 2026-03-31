@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.example.be.exception.custom.ForbiddenResourceAccessException;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
@@ -92,7 +93,12 @@ public class ScheduleService {
 
 	// 일정 조회
 	@Transactional(readOnly = true)
-	public ScheduleResBody getScheduleByGroupName(String groupName) {
+	public ScheduleResBody getScheduleByGroupName(String groupName, Long userId) {
+		// 그룹 멤버인지 검증
+		if (!groupService.isContains(groupName, userId)) {
+			throw new ForbiddenResourceAccessException("그룹 멤버만 일정을 조회할 수 있습니다.");
+		}
+
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹이 존재하지 않습니다."));
 

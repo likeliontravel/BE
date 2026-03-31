@@ -19,21 +19,25 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/schedule/detail")
+@RequestMapping("/schedule")
 @RequiredArgsConstructor
 public class SchedulePlaceController {
 
 	private final SchedulePlaceService schedulePlaceService;
 
-	@PostMapping
+	// 특정 일정(scheduleId)에 세부 장소 추가
+	@PostMapping("/detail/{scheduleId}")
 	public ResponseEntity<CommonResponse<SchedulePlaceResBody>> createSchedulePlace(
+		@PathVariable Long scheduleId,
 		@Valid @RequestBody SchedulePlaceReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser securityUser) {
-		SchedulePlaceResBody response = schedulePlaceService.createSchedulePlace(reqBody, securityUser.getId());
+		SchedulePlaceResBody response = schedulePlaceService.createSchedulePlace(scheduleId, reqBody,
+			securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 생성 성공"));
 	}
 
-	@PutMapping("/{schedulePlaceId}")
+	// 특정 세부 장소(schedulePlaceId) 수정
+	@PutMapping("/detail/{schedulePlaceId}")
 	public ResponseEntity<CommonResponse<SchedulePlaceResBody>> updateSchedulePlace(
 		@PathVariable Long schedulePlaceId,
 		@Valid @RequestBody SchedulePlaceReqBody reqBody,
@@ -43,7 +47,8 @@ public class SchedulePlaceController {
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 수정 성공"));
 	}
 
-	@DeleteMapping("/{schedulePlaceId}")
+	// 특정 세부 장소(schedulePlaceId) 삭제
+	@DeleteMapping("/detail/{schedulePlaceId}")
 	public ResponseEntity<CommonResponse<Void>> deleteSchedulePlace(
 		@PathVariable Long schedulePlaceId,
 		@AuthenticationPrincipal SecurityUser securityUser) {
