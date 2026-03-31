@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,8 +31,8 @@ public class ScheduleController {
 
 	// 일정 생성하기
 	@PostMapping
-	public ResponseEntity<CommonResponse<ScheduleResBody>> createSchedule(@RequestBody ScheduleReqBody requestDTO) {
-		ScheduleResBody response = scheduleService.createSchedule(requestDTO);
+	public ResponseEntity<CommonResponse<ScheduleResBody>> createSchedule(@Valid @RequestBody ScheduleReqBody reqBody) {
+		ScheduleResBody response = scheduleService.createSchedule(reqBody);
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 생성 성공"));
 	}
 
@@ -54,9 +55,9 @@ public class ScheduleController {
 	@PutMapping("/{scheduleId}")
 	public ResponseEntity<CommonResponse<ScheduleResBody>> updateSchedule(
 		@PathVariable Long scheduleId,
-		@RequestBody ScheduleReqBody requestDTO
+		@Valid @RequestBody ScheduleReqBody reqBody
 	) {
-		ScheduleResBody response = scheduleService.updateSchedule(scheduleId, requestDTO);
+		ScheduleResBody response = scheduleService.updateSchedule(scheduleId, reqBody);
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 수정 성공"));
 	}
 

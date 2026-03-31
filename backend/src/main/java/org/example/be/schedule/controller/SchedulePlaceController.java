@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,7 +25,7 @@ public class SchedulePlaceController {
 
 	@PostMapping
 	public ResponseEntity<CommonResponse<SchedulePlaceResBody>> createSchedulePlace(
-		@RequestBody SchedulePlaceReqBody requestDTO) {
+		@Valid @RequestBody SchedulePlaceReqBody requestDTO) {
 		SchedulePlaceResBody response = schedulePlaceService.createSchedulePlace(requestDTO);
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 생성 성공"));
 	}
@@ -32,7 +33,7 @@ public class SchedulePlaceController {
 	@PutMapping("/{schedulePlaceId}")
 	public ResponseEntity<CommonResponse<SchedulePlaceResBody>> updateSchedulePlace(
 		@PathVariable Long schedulePlaceId,
-		@RequestBody SchedulePlaceReqBody requestDTO) {
+		@Valid @RequestBody SchedulePlaceReqBody requestDTO) {
 		SchedulePlaceResBody response = schedulePlaceService.updateSchedulePlace(schedulePlaceId, requestDTO);
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 수정 성공"));
 	}
