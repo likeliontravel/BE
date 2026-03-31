@@ -1,0 +1,59 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+.DS_Store
+
+### 인증 파일 무시 ###
+src/main/resources/toleave-b9a7b3a17267.json
+**/toleave-b9a7b3a17267.json
+
+## local TSL/SSL key ##
+*.p12
+
+## Environment Variables & Secrets ##
+.env
+.env.prod
+## Claude testing is in progress...
+CLAUDE.md
+PROGRESS.md
+MEMORY.md
+.claude/
+
+## Gemini testing is in progress...
+HISTORY.md
+GEMINI.md
+.gemini/

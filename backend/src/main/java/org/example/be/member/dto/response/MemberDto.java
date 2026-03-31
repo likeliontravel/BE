@@ -1,4 +1,4 @@
-package org.example.be.member.dto;
+package org.example.be.member.dto.response;
 
 import org.example.be.member.entity.Member;
 
@@ -10,9 +10,10 @@ public record MemberDto(
 	String role,
 	boolean policyAgreed,
 	boolean subscribed,
-	String oauthProvider
+	String oauthProvider,
+	boolean shouldChangePassword
 ) {
-	public static MemberDto from(Member member) {
+	public static MemberDto from(Member member, boolean shouldChangePassword) {
 		return new MemberDto(
 			member.getId(),
 			member.getEmail(),
@@ -23,7 +24,8 @@ public record MemberDto(
 			Boolean.TRUE.equals(member.getSubscribed()),
 			member.getOauthProvider() != null
 				? member.getOauthProvider().name()
-				: null
+				: null,
+			shouldChangePassword
 		);
 	}
 }
