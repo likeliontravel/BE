@@ -44,10 +44,8 @@ public class ScheduleController {
 	// 일정 조회하기
 	@GetMapping("/get/{groupName}")
 	public ResponseEntity<CommonResponse<ScheduleResBody>> getScheduleByGroupName(
-		@DecodedPathVariable String groupName,
-		@AuthenticationPrincipal SecurityUser securityUser
-	) {
-		ScheduleResBody response = scheduleService.getScheduleByGroupName(groupName, securityUser.getId());
+		@DecodedPathVariable String groupName) {
+		ScheduleResBody response = scheduleService.getScheduleByGroupName(groupName);
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 조회 성공"));
 	}
 
