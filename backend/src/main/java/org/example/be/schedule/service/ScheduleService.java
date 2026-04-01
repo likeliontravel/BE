@@ -1,11 +1,12 @@
 package org.example.be.schedule.service;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
@@ -114,43 +115,43 @@ public class ScheduleService {
 			return Collections.emptyList();
 		}
 
-		List<ScheduleSummaryResBody> scheduleSummaryList = new ArrayList<>();
+		// 사용자의 모든 그룹에 대한 일정을 한 번에 Fetch Join으로 가져옴 (N+1 방지)
+		List<Schedule> schedules = scheduleRepository.findAllByGroupsFetchJoin(groups);
 
-		for (Group group : groups) {
-			Optional<Schedule> scheduleOpt = scheduleRepository.findByGroup(group);
+		Map<Long, Schedule> scheduleMap = schedules.stream()
+			.collect(Collectors.toMap(s -> s.getGroup().getId(), Function.identity()));
 
-			// 스케줄이 없으면 안내문구만 반환
-			if (scheduleOpt.isEmpty()) {
-				scheduleSummaryList.add(
-					ScheduleSummaryResBody.empty(group.getGroupName())
-				);
-				continue;
-			}
+		return groups.stream()
+			.map(group -> {
+				Schedule schedule = scheduleMap.get(group.getId());
 
-			Schedule schedule = scheduleOpt.get();
-			List<SchedulePlace> places = schedulePlaceRepository.findBySchedule(schedule);
+				if (schedule == null) {
+					return ScheduleSummaryResBody.empty(group.getGroupName());
+				}
 
-			// 1) region: 타입 무관, 가장 이른 visitStart
-			SchedulePlace firstAnyPlace = places.stream()
-				.min(Comparator.comparing(SchedulePlace::getVisitStart))
-				.orElse(null);
-			String firstRegionName = resolveRegion(firstAnyPlace); // TouristSpot/Restaurant/Accommodation 모두 처리
+				List<SchedulePlace> places = schedule.getSchedulePlaces();
 
-			// 2) theme: TouristSpot 중 가장 이른 visitStart가 있을 때만, 없으면 "기타"
-			SchedulePlace firstTouristSpotPlace = places.stream()
-				.filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
-				.min(Comparator.comparing(SchedulePlace::getVisitStart))
-				.orElse(null);
-			String firstTheme = resolveThemeFromTouristSpot(firstTouristSpotPlace);
+				// 1) region: 타입 무관, 가장 이른 visitStart
+				SchedulePlace firstAnyPlace = places.stream()
+					.min(Comparator.comparing(SchedulePlace::getVisitStart))
+					.orElse(null);
 
-			scheduleSummaryList.add(
-				ScheduleSummaryResBody.from(group.getGroupName(), firstRegionName, firstTheme,
+				// 2) theme: TouristSpot 중 가장 이른 visitStart
+				SchedulePlace firstTouristSpotPlace = places.stream()
+					.filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
+					.min(Comparator.comparing(SchedulePlace::getVisitStart))
+					.orElse(null);
+
+				return ScheduleSummaryResBody.from(
+					group.getGroupName(),
+					resolveRegion(firstAnyPlace),
+					resolveThemeFromTouristSpot(firstTouristSpotPlace),
 					schedule.getStartSchedule(),
-					schedule.getEndSchedule())
-			);
-		}
+					schedule.getEndSchedule()
+				);
 
-		return scheduleSummaryList;
+			})
+			.toList();
 	}
 
 	// 일정 수정
