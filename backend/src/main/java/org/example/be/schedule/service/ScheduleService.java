@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.example.be.exception.custom.ResourceCreationException;
-import org.example.be.exception.custom.ResourceDeletionException;
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
 import org.example.be.group.service.GroupService;
@@ -59,18 +58,21 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResponseDTO createSchedule(ScheduleRequestDTO requestDTO) {
 		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
-			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND,
+				"일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + requestDTO.getGroupName()));
 
 		// 그룹 창설자인지 검증
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		Member member = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND,
+				"일정 생성 실패 - 유저 찾을 수 없음 memberId: " + userIdentifier));
 		groupService.validateGroupCreator(group.getGroupName(), member.getId());
 
 		// 이미 일정이 존재하는지 검사
 		scheduleRepository.findByGroup(group).ifPresent(existingSchedule -> {
-			throw new IllegalStateException("해당 그룹에 이미 일정이 존재합니다.");
+			throw new BusinessException(ErrorCode.SCHEDULE_ALREADY_EXIST,
+				"일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + requestDTO.getGroupName());
 		});
 
 		Schedule schedule = Schedule.builder()
@@ -108,7 +110,7 @@ public class ScheduleService {
 				)
 				.build();
 		} catch (Exception e) {
-			throw new ResourceCreationException("일정 생성에 실패했습니다.", e);
+			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -248,7 +250,7 @@ public class ScheduleService {
 				)
 				.build();
 		} catch (Exception e) {
-			throw new ResourceUpdateException("일정 수정에 실패했습니다.", e);
+			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -269,7 +271,7 @@ public class ScheduleService {
 		try {
 			scheduleRepository.delete(schedule);
 		} catch (Exception e) {
-			throw new ResourceDeletionException("일정 삭제에 실패했습니다.", e);
+			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "일정 삭제 실패 - message: " + e.getMessage());
 		}
 	}
 

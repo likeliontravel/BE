@@ -8,7 +8,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.announcement.dto.GroupAnnouncementCreateReqBody;
 import org.example.be.group.announcement.dto.GroupAnnouncementDeleteReqBody;
 import org.example.be.group.announcement.dto.GroupAnnouncementDeleteResBody;
@@ -47,7 +48,7 @@ public class GroupAnnouncementService {
 			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND, " groupName: " + groupName);
 		}
 
 		GroupAnnouncement newAnnouncement = new GroupAnnouncement();
@@ -67,7 +68,8 @@ public class GroupAnnouncementService {
 			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		Optional<GroupAnnouncement> latestAnnouncementOptional = groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(
@@ -85,7 +87,8 @@ public class GroupAnnouncementService {
 	public List<GroupAnnouncementResBody> getAllGroupAnnouncements(String groupName, Long memberId) {
 		// 요청자가 그룹 멤버인지 검증
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new ForbiddenResourceAccessException("요청자가 해당 그룹의 멤버가 아닙니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
@@ -114,13 +117,15 @@ public class GroupAnnouncementService {
 
 		// 요청한 그룹이 공지의 그룹과 일치하는지 확인
 		if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {
-			throw new IllegalArgumentException("삭제하려는 공지가 요청한 그룹의 공지가 아닙니다. 요청한 groupName: " + groupName
-				+ ", 삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());
+			throw new BusinessException(ErrorCode.FORBIDDEN, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
+				+ "\n요청한 groupName: " + groupName
+				+ "\n삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());
 		}
 
 		// 요청자가 해당 그룹의 멤버인지 확인
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new IllegalArgumentException("요청자가 해당 그룹의 멤버가 아닙니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		GroupAnnouncementDeleteResBody deletedInfo = new GroupAnnouncementDeleteResBody(

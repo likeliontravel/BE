@@ -11,10 +11,8 @@ import org.example.be.board.dto.BoardUpdateReqBody;
 import org.example.be.board.dto.SimplePageableReqBody;
 import org.example.be.board.entity.Board;
 import org.example.be.board.repository.BoardRepository;
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.exception.custom.ResourceCreationException;
-import org.example.be.exception.custom.ResourceDeletionException;
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.example.be.member.service.MemberService;
@@ -106,7 +104,7 @@ public class BoardService {
 			return BoardResBody.from(savedBoard, member.getProfileImageUrl());
 
 		} catch (Exception e) {
-			throw new ResourceCreationException("게시글 저장 실패. : \n" + e.getMessage());
+			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "게시글 저장 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -119,7 +117,7 @@ public class BoardService {
 			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		if (!memberId.equals(originalBoard.getWriter().getId())) {
-			throw new ForbiddenResourceAccessException("이 글의 작성자만 이 게시글을 수정할 수 있습니다.");
+			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
 		}
 		// 들어온 수정데이터 유효성 확인
 		validateBoardUpdate(reqBody);
@@ -131,7 +129,7 @@ public class BoardService {
 
 			return BoardResBody.from(originalBoard, originalBoard.getWriter().getProfileImageUrl());
 		} catch (Exception e) {
-			throw new ResourceUpdateException("게시글 수정 실패. : \n" + e.getMessage());
+			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "게시글 수정 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -141,7 +139,7 @@ public class BoardService {
 		Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
 
 		if (!memberId.equals(board.getWriter().getId())) {
-			throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
+			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
 		}
 		// Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
 		// 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
@@ -152,7 +150,7 @@ public class BoardService {
 			// 실제 삭제 쿼리 강제 실행
 			boardRepository.flush();
 		} catch (Exception e) {
-			throw new ResourceDeletionException("게시글 삭제 실패. : \n" + e.getMessage());
+			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "게시글 삭제 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -179,24 +177,25 @@ public class BoardService {
 			validateRegion(req.region());
 		}
 
+		// TODO: Valid 이용 여부 판단 후 예외처리 수정
 		if (req.title() != null && req.title().isBlank()) {
-			throw new IllegalArgumentException("제목은 비어 있을 수 없습니다.");
+			throw new BusinessException(ErrorCode.BOARD_TITLE_BLANK);
 		}
 
 		if (req.content() != null && req.content().isBlank()) {
-			throw new IllegalArgumentException("내용은 비어 있을 수 없습니다.");
+			throw new BusinessException(ErrorCode.BOARD_CONTENT_BLANK);
 		}
 	}
 
 	private void validateTheme(String theme) {
 		if (!placeCategoryService.existsByTheme(theme)) {
-			throw new IllegalArgumentException("해당 테마는 지원하지 않는 테마입니다.");
+			throw new BusinessException(ErrorCode.INVALID_THEME, "theme: " + theme);
 		}
 	}
 
 	private void validateRegion(String region) {
 		if (!tourRegionService.existsByRegion(region)) {
-			throw new IllegalArgumentException("해당 지역은 지원하지 않는 지역입니다.");
+			throw new BusinessException(ErrorCode.INVALID_REGION, "region: " + region);
 		}
 	}
 }

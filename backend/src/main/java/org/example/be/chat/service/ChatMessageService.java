@@ -1,6 +1,5 @@
 package org.example.be.chat.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,10 +16,9 @@ import org.example.be.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.chat.type.MessageType;
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.exception.custom.GCSUploadFailedException;
-import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.gcs.GCSService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
 import org.example.be.member.dto.response.MemberDto;
@@ -151,15 +149,8 @@ public class ChatMessageService {
 
 	// GCS에 이미지 업로드 수행, public URL 반환
 	public String uploadAndGetPreview(MultipartFile image, String groupName, Long memberId) {
-		try {
-			validateImageFile(image);
-			String senderIdentifier = String.valueOf(memberId);
-			return gcsService.uploadChatImage(image, senderIdentifier, groupName);
-		} catch (IOException e) {
-			throw new GCSUploadFailedException("이미지 업로드 중 오류가 발생했습니다.", e);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(e.getMessage());
-		}
+		String senderIdentifier = String.valueOf(memberId);
+		return gcsService.uploadChatImage(image, senderIdentifier, groupName);
 	}
 
 	// 메시지 저장 ( TEXT / IMAGE ) - WebSocket에서 호출
@@ -178,24 +169,17 @@ public class ChatMessageService {
 		try {
 			return chatMessageRepository.save(chatMessage);
 		} catch (Exception e) {
-			throw new ResourceCreationException("메시지 저장에 실패했습니다.");
+			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
 		}
 
 	}
 
 	// ==================== 내부 사용 메서드 ====================
-	// 들어온 MultipartFile이 이미지인지 검증하는 메서드 - 이미지가 아닐 경우 예외 발생
-	private void validateImageFile(MultipartFile image) {
-		String contentType = image.getContentType();
-		if (contentType == null || !contentType.startsWith("image/")) {
-			throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
-		}
-	}
 
 	// 그룹 존재 여부와 요청자가 그룹 내 멤버인지 검증하는 메서드
 	private Group findGroupAndValidateMember(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new IllegalArgumentException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		System.out.println("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
 		System.out.println("[검증 로그] 요청자 userIdentifier: " + memberId);
@@ -208,7 +192,8 @@ public class ChatMessageService {
 			.anyMatch(member -> member.getId().equals(memberId));
 
 		if (!isMember) {
-			throw new ForbiddenResourceAccessException("해당 그룹에 가입되어 있지 않습니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
 	}

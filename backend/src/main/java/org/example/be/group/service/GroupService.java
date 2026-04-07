@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.announcement.dto.GroupAnnouncementSummaryDTO;
 import org.example.be.group.announcement.repository.GroupAnnouncementRepository;
 import org.example.be.group.dto.GroupAddMemberResBody;
@@ -56,7 +57,7 @@ public class GroupService {
 		String groupName = request.groupName();
 
 		groupRepository.findByGroupName(groupName).ifPresent(group -> {
-			throw new IllegalArgumentException("이미 존재하는 그룹 이름입니다: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_NAME_ALREADY_EXIST, "groupName: " + groupName);
 		});
 
 		Member creator = memberService.getById(memberId);
@@ -82,7 +83,8 @@ public class GroupService {
 
 		// 그룹 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new ForbiddenResourceAccessException("그룹의 멤버만 그룹 정보를 조회할 수 있습니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		List<GroupMemberDTO> members = mapToMemberResBodyList(group);
@@ -107,7 +109,8 @@ public class GroupService {
 		Member user = memberService.getById(memberId);
 
 		if (group.getMembers().contains(user)) {
-			throw new IllegalArgumentException("이미 그룹에 가입된 사용자입니다.");
+			throw new BusinessException(ErrorCode.GROUP_ALREADY_MEMBER,
+				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		group.addMember(user);
@@ -124,7 +127,8 @@ public class GroupService {
 
 		// 그룹 내 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new ForbiddenResourceAccessException("이 그룹에 포함되어 있지 않은 멤버입니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		Group group = getGroupByName(groupName);
@@ -144,11 +148,12 @@ public class GroupService {
 		Member user = memberService.getById(memberId);
 
 		if (!group.getMembers().contains(user)) {
-			throw new ForbiddenResourceAccessException("이 그룹에 포함되어 있지 않은 멤버입니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		if (memberId.equals(group.getCreatedBy().getId())) {
-			throw new IllegalArgumentException("그룹의 창설자는 그룹을 나갈 수 없습니다. 그룹을 삭제하세요.");
+			throw new BusinessException(ErrorCode.GROUP_CREATOR_CANNOT_EXIT);
 		}
 
 		group.removeMember(user);
@@ -218,7 +223,8 @@ public class GroupService {
 			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
 
 		if (!group.getCreatedBy().getId().equals(memberId)) {
-			throw new ForbiddenResourceAccessException("해당 그룹의 창설자만 접근할 수 있습니다.");
+			throw new BusinessException(ErrorCode.GROUP_NOT_CREATOR,
+				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
 	}

@@ -1,7 +1,7 @@
 package org.example.be.security.util;
 
-import org.example.be.exception.custom.SecurityAuthenticationException;
-import org.example.be.exception.custom.UserAuthenticationNotFoundException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.oauth.dto.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +14,7 @@ public class SecurityUtil {
 
 		if (authentication == null || !authentication.isAuthenticated()) {
 			System.out.println("[SecurityUtil] 인증 실패 - 인증 객체가 없거나 인증되지 않음");
-			throw new SecurityAuthenticationException("인증되지 않은 사용자입니다.");
+			throw new BusinessException(ErrorCode.USER_NOT_AUTHENTICATED, "임시");
 		}
 
 		Object principal = authentication.getPrincipal();
@@ -29,7 +29,7 @@ public class SecurityUtil {
 
 		if (userIdentifier == null) {
 			System.out.println("[SecurityUtil] 인증 객체에서 userIdentifier 추출 실패");
-			throw new UserAuthenticationNotFoundException("인증 객체로부터 userIdentifier를 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.USER_NOT_AUTHENTICATED, "SecurityUtil 이 클래스 삭제 예정");
 		}
 
 		System.out.println("[SecurityUtil] 추출된 userIdentifier: " + userIdentifier);

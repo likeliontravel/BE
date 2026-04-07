@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import org.example.be.gcs.GCSService;
 import org.example.be.generaluser.repository.GeneralUserRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.oauth.repository.SocialUserRepository;
 import org.example.be.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.ModifyNameDTO;
@@ -108,7 +110,7 @@ public class UnifiedUserService {
 		String name = dto.getName();
 
 		UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new IllegalArgumentException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Legacy Code - 삭제 예정"));
 
 		unifiedUser.setName(name);
 		unifiedUserRepository.save(unifiedUser);
@@ -125,8 +127,7 @@ public class UnifiedUserService {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Legacy Code - 삭제 예정"));
 
 		UnifiedUserDTO unifiedUserDTO = new UnifiedUserDTO();
 		unifiedUserDTO.setId(unifiedUser.getId());
@@ -165,7 +166,7 @@ public class UnifiedUserService {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new IllegalArgumentException("요청자의 정보를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Legacy Code - 삭제 예정"));
 
 		if (user.getProfileImageUrl() != null) {
 			gcsService.deleteProfileImage(user.getProfileImageUrl());
@@ -177,8 +178,7 @@ public class UnifiedUserService {
 	// userIdentifier로 이름 가져오기
 	public String getNameByUserIdentifier(String userIdentifier) {
 		UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Legacy Code - 삭제 예정"));
 
 		return user.getName();
 	}
@@ -186,8 +186,7 @@ public class UnifiedUserService {
 	// userIdentifier로 이름, 프로필 사진만 가져오기 ( 그룹 채팅에서만 이용 용도, 가독성 및 안정성 상 불필요시 삭제 예정 )
 	public UnifiedUsersNameAndProfileImageUrl getNameAndProfileImageUrlByUserIdentifier(String userIdentifier) {
 		UnifiedUser user = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new IllegalArgumentException(
-				"이 userIdentifier의 유저를 찾을 수 없습니다. userIdentifier: " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Legacy Code - 삭제 예정"));
 
 		UnifiedUsersNameAndProfileImageUrl dto = new UnifiedUsersNameAndProfileImageUrl();
 		dto.setName(user.getName());

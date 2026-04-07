@@ -13,10 +13,8 @@ import org.example.be.board.entity.Board;
 import org.example.be.board.entity.Comment;
 import org.example.be.board.repository.BoardRepository;
 import org.example.be.board.repository.CommentRepository;
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.exception.custom.ResourceCreationException;
-import org.example.be.exception.custom.ResourceDeletionException;
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.member.entity.Member;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
@@ -82,14 +80,14 @@ public class CommentService {
 					"이 자식 댓글의 부모 댓글이 존재하지 않습니다. parentCommentId: " + reqBody.parentCommentId()));
 
 			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
-				throw new IllegalArgumentException("다른 게시글의 댓글에 대댓글을 달 수 없습니다.");
+				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT);
 			}
 		}
 		try {
 			Comment comment = Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment);
 			return CommentResBody.from(commentRepository.save(comment));
 		} catch (Exception e) {
-			throw new ResourceCreationException("댓글 작성 실패", e);
+			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "댓글 작성 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -100,14 +98,15 @@ public class CommentService {
 			.orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentId));
 
 		if (!comment.getWriter().getId().equals(userId)) {
-			throw new ForbiddenResourceAccessException("작성자 본인만 수정할 수 있습니다.");
+			///  TODO: 1. BOARD_NOT_WRITER라는 이름의 예외로 댓글, 게시글 다 처리했음 | 2. userId로 사용했는데, 실제로 memberId가져오는건 똑같아서 로그에 memberId라는 이름으로 남게 했음 | 이 두가지 안내.
+			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
 		}
 
 		try {
 			comment.toUpdateEntity(reqBody);
 			return CommentResBody.from(comment);
 		} catch (Exception e) {
-			throw new ResourceUpdateException("댓글 수정 실패", e);
+			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "댓글 수정 실패 - message: " + e.getMessage());
 		}
 	}
 
@@ -117,13 +116,13 @@ public class CommentService {
 			.orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
 
 		if (!comment.getWriter().getId().equals(userId)) {
-			throw new ForbiddenResourceAccessException("작성자 본인만 삭제할 수 있습니다.");
+			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
 		}
 		try {
 			commentRepository.delete(comment);
 			commentRepository.flush();
 		} catch (Exception e) {
-			throw new ResourceDeletionException("댓글 삭제 실패", e);
+			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "댓글 삭제 실패 - message: " + e.getMessage());
 		}
 	}
 }

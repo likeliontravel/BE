@@ -66,7 +66,13 @@ public class AuthTokenService {
 		if (payload == null)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
 
-		Map<String, Object> payloadMap = JsonUt.parse(payload, Map.class);
+		Map<String, Object> payloadMap;
+		try {
+			payloadMap = JsonUt.parse(payload, Map.class);
+		} catch (IllegalArgumentException e) {
+			// 파싱 실패한 jti를 메시지에 추가하고 JsonUt.parse()에서 던져진 cause 체인 유지
+			throw new IllegalArgumentException("rotateRefresh payload 파싱 실패. jti=" + oldJti, e);
+		}
 		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
 		}
@@ -88,7 +94,13 @@ public class AuthTokenService {
 		if (payload == null)
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
 
-		Map<String, Object> payloadMap = JsonUt.parse(payload, Map.class);
+		Map<String, Object> payloadMap;
+		try {
+			payloadMap = JsonUt.parse(payload, Map.class);
+		} catch (IllegalArgumentException e) {
+			// 파싱 실패한 jti를 메시지에 추가하고 JsonUt.parse()에서 던져진 cause 체인 유지
+			throw new IllegalArgumentException("findRefreshOwner payload 파싱 실패. jti=" + jti, e);
+		}
 		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
 			log.error("Refresh token payload is missing userId: {}", payload);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
