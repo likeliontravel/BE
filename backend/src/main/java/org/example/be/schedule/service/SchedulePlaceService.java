@@ -1,93 +1,96 @@
 package org.example.be.schedule.service;
 
-import lombok.RequiredArgsConstructor;
+import java.util.NoSuchElementException;
+
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
-import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
-import org.example.be.schedule.dto.SchedulePlaceResponseDTO;
+import org.example.be.group.service.GroupService;
+import org.example.be.schedule.dto.request.SchedulePlaceReqBody;
+import org.example.be.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.schedule.entity.SchedulePlace;
 import org.example.be.schedule.repository.SchedulePlaceRepository;
 import org.example.be.schedule.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.NoSuchElementException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class SchedulePlaceService {
 
-    private final SchedulePlaceRepository schedulePlaceRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final PlaceValidationService placeValidationService;
+	private final SchedulePlaceRepository schedulePlaceRepository;
+	private final ScheduleRepository scheduleRepository;
+	private final PlaceValidationService placeValidationService;
+	private final GroupService groupService;
 
-    @Transactional
-    public SchedulePlaceResponseDTO createSchedulePlace(SchedulePlaceRequestDTO dto) {
-        var schedule = scheduleRepository.findById(dto.getScheduleId())
-                .orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
+	@Transactional
+	public SchedulePlaceResBody createSchedulePlace(Long scheduleId, SchedulePlaceReqBody reqBody, Long userId) {
+		var schedule = scheduleRepository.findById(scheduleId)
+			.orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
 
-        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+		// 권한 검증: 그룹 창설자만 세부 일정을 추가할 수 있음
+		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
-        SchedulePlace schedulePlace = SchedulePlace.builder()
-                .schedule(schedule)
-                .contentId(dto.getContentId())
-                .placeType(dto.getPlaceType())
-                .visitStart(dto.getVisitStart())
-                .visitedEnd(dto.getVisitedEnd())
-                .dayOrder(dto.getDayOrder())
-                .orderInDay(dto.getOrderInDay())
-                .build();
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
 
-        try {
-            var saved = schedulePlaceRepository.save(schedulePlace);
-            return toResponseDTO(saved);
-        } catch (Exception e) {
-            throw new ResourceCreationException("세부 일정 생성에 실패했습니다.", e);
-        }
-    }
+		SchedulePlace schedulePlace = SchedulePlace.create(
+			schedule,
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
-    @Transactional
-    public SchedulePlaceResponseDTO updateSchedulePlace(Long placeId, SchedulePlaceRequestDTO dto) {
-        var place = schedulePlaceRepository.findById(placeId)
-                .orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
+		try {
+			var saved = schedulePlaceRepository.save(schedulePlace);
+			return SchedulePlaceResBody.from(saved);
+		} catch (Exception e) {
+			throw new ResourceCreationException("세부 일정 생성에 실패했습니다.", e);
+		}
+	}
 
-        placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+	@Transactional
+	public SchedulePlaceResBody updateSchedulePlace(Long placeId, SchedulePlaceReqBody reqBody, Long userId) {
+		var place = schedulePlaceRepository.findById(placeId)
+			.orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
 
-        place.setContentId(dto.getContentId());
-        place.setPlaceType(dto.getPlaceType());
-        place.setVisitStart(dto.getVisitStart());
-        place.setVisitedEnd(dto.getVisitedEnd());
-        place.setDayOrder(dto.getDayOrder());
-        place.setOrderInDay(dto.getOrderInDay());
+		// 권한 검증: 그룹 창설자만 세부 일정을 수정할 수 있음
+		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
 
-        try {
-            return toResponseDTO(schedulePlaceRepository.save(place));
-        } catch (Exception e) {
-            throw new ResourceUpdateException("세부 일정 수정에 실패했습니다.", e);
-        }
-    }
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
 
-    @Transactional
-    public void deleteSchedulePlace(Long placeId) {
-        var place = schedulePlaceRepository.findById(placeId)
-                .orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
-        try {
-            schedulePlaceRepository.delete(place);
-        } catch (Exception e) {
-            throw new ResourceDeletionException("세부 일정 삭제에 실패했습니다.", e);
-        }
-    }
+		place.update(
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
-    private SchedulePlaceResponseDTO toResponseDTO(SchedulePlace place) {
-        return SchedulePlaceResponseDTO.builder()
-                .id(place.getId())
-                .contentId(place.getContentId())
-                .placeType(place.getPlaceType())
-                .visitStart(place.getVisitStart())
-                .visitedEnd(place.getVisitedEnd())
-                .dayOrder(place.getDayOrder())
-                .orderInDay(place.getOrderInDay())
-                .build();
-    }
+		try {
+			return SchedulePlaceResBody.from(schedulePlaceRepository.save(place));
+		} catch (Exception e) {
+			throw new ResourceUpdateException("세부 일정 수정에 실패했습니다.", e);
+		}
+	}
+
+	@Transactional
+	public void deleteSchedulePlace(Long placeId, Long userId) {
+		var place = schedulePlaceRepository.findById(placeId)
+			.orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
+
+		// 권한 검증: 그룹 창설자만 세부 일정을 삭제할 수 있음
+		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
+
+		try {
+			schedulePlaceRepository.delete(place);
+		} catch (Exception e) {
+			throw new ResourceDeletionException("세부 일정 삭제에 실패했습니다.", e);
+		}
+	}
 }

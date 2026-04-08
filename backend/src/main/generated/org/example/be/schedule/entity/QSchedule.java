@@ -22,15 +22,24 @@ public class QSchedule extends EntityPathBase<Schedule> {
 
     public static final QSchedule schedule = new QSchedule("schedule");
 
+    public final org.example.be.config.QBase _super = new org.example.be.config.QBase(this);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdTime = _super.createdTime;
+
     public final DateTimePath<java.time.LocalDateTime> endSchedule = createDateTime("endSchedule", java.time.LocalDateTime.class);
 
     public final org.example.be.group.entitiy.QGroup group;
 
-    public final NumberPath<Long> id = createNumber("id", Long.class);
+    //inherited
+    public final NumberPath<Long> id = _super.id;
 
     public final ListPath<SchedulePlace, QSchedulePlace> schedulePlaces = this.<SchedulePlace, QSchedulePlace>createList("schedulePlaces", SchedulePlace.class, QSchedulePlace.class, PathInits.DIRECT2);
 
     public final DateTimePath<java.time.LocalDateTime> startSchedule = createDateTime("startSchedule", java.time.LocalDateTime.class);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedTime = _super.updatedTime;
 
     public QSchedule(String variable) {
         this(Schedule.class, forVariable(variable), INITS);

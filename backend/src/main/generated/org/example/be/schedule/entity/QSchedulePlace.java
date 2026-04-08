@@ -22,17 +22,26 @@ public class QSchedulePlace extends EntityPathBase<SchedulePlace> {
 
     public static final QSchedulePlace schedulePlace = new QSchedulePlace("schedulePlace");
 
+    public final org.example.be.config.QBase _super = new org.example.be.config.QBase(this);
+
     public final StringPath contentId = createString("contentId");
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdTime = _super.createdTime;
 
     public final NumberPath<Integer> dayOrder = createNumber("dayOrder", Integer.class);
 
-    public final NumberPath<Long> id = createNumber("id", Long.class);
+    //inherited
+    public final NumberPath<Long> id = _super.id;
 
     public final NumberPath<Integer> orderInDay = createNumber("orderInDay", Integer.class);
 
     public final EnumPath<org.example.be.place.entity.PlaceType> placeType = createEnum("placeType", org.example.be.place.entity.PlaceType.class);
 
     public final QSchedule schedule;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedTime = _super.updatedTime;
 
     public final DateTimePath<java.time.LocalDateTime> visitedEnd = createDateTime("visitedEnd", java.time.LocalDateTime.class);
 
