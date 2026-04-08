@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.example.be.exception.custom.BadParameterException;
 import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.exception.custom.ResourceDeletionException;
 import org.example.be.exception.custom.ResourceUpdateException;
@@ -57,6 +58,10 @@ public class ScheduleService {
 	// 일정 생성
 	@Transactional
 	public ScheduleResBody createSchedule(ScheduleReqBody reqBody, Long userId) {
+		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
+			throw new BadParameterException("일정 시작일은 종료일보다 늦을 수 없습니다.");
+		}
+
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
@@ -95,7 +100,7 @@ public class ScheduleService {
 	@Transactional(readOnly = true)
 	public ScheduleResBody getScheduleByGroupName(String groupName) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹이 존재하지 않습니다."));
+			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new NoSuchElementException("해당 그룹에 일정이 존재하지 않습니다."));
@@ -157,11 +162,15 @@ public class ScheduleService {
 	// 일정 수정
 	@Transactional
 	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody, Long userId) {
+		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
+			throw new BadParameterException("일정 시작일은 종료일보다 늦을 수 없습니다.");
+		}
+
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
 
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
-			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다."));
+			.orElseThrow(() -> new NoSuchElementException("해당 그룹을 찾을 수 없습니다."));
 
 		// 그룹 창설자 검증
 		groupService.validateGroupCreator(group.getGroupName(), userId);
