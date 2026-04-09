@@ -1,13 +1,13 @@
 package org.example.be.schedule.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.place.entity.PlaceType;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class PlaceValidationService {
         };
 
         if (!exists) {
-            throw new NoSuchElementException("존재하지 않는 장소입니다.");
+            throw new BusinessException(ErrorCode.PLACE_NOT_FOUND, "placeType: " + placeType + ", contentId: " + contentId);
         }
     }
 }

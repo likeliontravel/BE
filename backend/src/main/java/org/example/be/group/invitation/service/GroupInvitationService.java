@@ -1,11 +1,11 @@
 package org.example.be.group.invitation.service;
 
 import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.example.be.exception.custom.InvalidInvitationException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.repository.GroupInvitationRepository;
@@ -47,9 +47,9 @@ public class GroupInvitationService {
 		});
 
 		if (expiredOptional.isPresent()) {
-			throw new InvalidInvitationException("초대 링크가 만료되었습니다. 새로 생성하세요.");
+			throw new BusinessException(ErrorCode.INVITATION_EXPIRED, "새 초대 코드 발급 필요");
 		} else {
-			throw new NoSuchElementException("초대 링크가 없습니다. 초대 링크를 생성하세요.");
+			throw new BusinessException(ErrorCode.INVITATION_NOT_FOUND, "초대 코드 없음. 초대 코드 발급 필요");
 		}
 	}
 
@@ -79,7 +79,7 @@ public class GroupInvitationService {
 	public GroupInvitation getValidInvitation(String invitationCode) {
 		LocalDateTime now = LocalDateTime.now();
 		return invitationRepository.findByInvitationCodeAndActiveTrueAndExpiresAtAfter(invitationCode, now)
-			.orElseThrow(() -> new InvalidInvitationException("초대 링크가 유효하지 않거나 만료되었습니다. 초대 코드: " + invitationCode));
+			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION, "입력된 초대코드: " + invitationCode));
 	}
 
 }

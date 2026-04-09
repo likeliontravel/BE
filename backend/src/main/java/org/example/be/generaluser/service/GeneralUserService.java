@@ -1,11 +1,10 @@
 package org.example.be.generaluser.service;
 
-import java.util.NoSuchElementException;
-
-import org.example.be.exception.custom.InvalidInvitationException;
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.repository.GeneralUserRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.invitation.entity.GroupInvitation;
 import org.example.be.group.invitation.service.GroupInvitationService;
 import org.example.be.group.service.GroupService;
@@ -43,7 +42,7 @@ public class GeneralUserService {
 		generalUser.setEmail(generalUserDTO.getEmail());
 
 		if (generalUserDTO.getPassword() == null || generalUserDTO.getPassword().isBlank()) {
-			throw new IllegalArgumentException("비밀번호가 비어있습니다.");
+			throw new BusinessException(ErrorCode.BAD_REQUEST, "Legacy Code - 삭제 예정");
 		}
 
 		generalUser.setPassword(passwordEncoder.encode(generalUserDTO.getPassword()));
@@ -69,12 +68,12 @@ public class GeneralUserService {
 		if (invitationCode != null && !invitationCode.isBlank()) {
 			GroupInvitation invitation = groupInvitationService.getValidInvitation(invitationCode);
 			if (invitation == null || invitation.getGroup() == null) {
-				throw new InvalidInvitationException("유효하지 않은 초대 코드입니다.");
+				throw new BusinessException(ErrorCode.INVALID_INVITATION, "자동가입에 입력된 초대코드: " + invitationCode);
 			}
 
 			try {
 				Member user = memberRepository.findByEmail(generalUserDTO.getEmail())
-					.orElseThrow(() -> new NoSuchElementException("Member 정보 없음"));
+					.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Member 정보 없음"));
 				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), user.getId());
 			} catch (Exception e) {
 				// TODO: GeneralUser 회원가입이 Member시스템에서 완성되면 제거
@@ -88,7 +87,7 @@ public class GeneralUserService {
 	@Transactional(readOnly = true)
 	public GeneralUserDTO getProfile(String email) {
 		GeneralUser generalUser = generalUserRepository.findByUserIdentifier("gen_" + email)
-			.orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "회원을 찾을 수 없습니다. "));
 
 		// GeneralUser를 DTO로 변환 후 반환
 		GeneralUserDTO generalUserDTO = new GeneralUserDTO();

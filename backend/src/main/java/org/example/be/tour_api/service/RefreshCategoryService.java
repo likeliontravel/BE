@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.place.theme.PlaceCategory;
 import org.example.be.place.theme.PlaceCategoryRepository;
 import org.example.be.tour_api.dto.CategoryCodeDTO;
@@ -103,7 +104,8 @@ public class RefreshCategoryService {
 
 		} catch (Exception e) {
 			log.error("[RefreshCategory] 카테고리 갱신 실패", e);
-			throw new ResourceUpdateException("카테고리 정보 갱신 중 오류 발생", e);
+			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
+				"Place 카테고리 갱신 실패 - message: " + e.getMessage());
 		}
 	}
 

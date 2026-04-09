@@ -16,9 +16,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.util.UriUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ChatMessageSocketController {
 
 	private final ChatMessageService chatMessageService;
@@ -36,13 +38,16 @@ public class ChatMessageSocketController {
 		@Payload ChatMessageResBody incomingMessage,
 		Principal principal
 	) {
+
+		// principal 자체를 먼저 체크 (user가 아닌 principal이 null 가능성 있음)
+		if (principal == null) {
+			log.warn("[WebSocket 인증 실패] principal이 null입니다. groupName: {}", groupName);
+			return;  // 예외를 던지는 대신 early return
+		}
+
 		SecurityUser user = (SecurityUser)((UsernamePasswordAuthenticationToken)principal).getPrincipal();
 		// URI 인코딩된 그룹 명 디코딩하기
 		String decodedGroupName = UriUtils.decode(groupName, StandardCharsets.UTF_8);
-
-		if (user == null) {
-			throw new IllegalArgumentException("WebSocket 세션에 사용자 정보가 없습니다.");
-		}
 
 		// 메시지를 DB에 저장
 		ChatMessage savedMessage = chatMessageService.saveMessage(

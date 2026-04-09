@@ -2,6 +2,8 @@ package org.example.be.tour_api.controller;
 
 import java.util.List;
 
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.place.accommodation.dto.AccommodationDTO;
 import org.example.be.place.restaurant.dto.RestaurantDTO;
 import org.example.be.place.touristSpot.dto.TouristSpotDTO;
@@ -43,7 +45,7 @@ public class TourismController {
 		int code = Integer.parseInt(areaCode);
 		String state = areaCodeResolver.getState(code);
 		if (state == null) {
-			throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
+			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 
 		List<TouristSpotDTO> result = touristSpotFetchService.getTouristSpots(
@@ -61,7 +63,7 @@ public class TourismController {
 		int code = Integer.parseInt(areaCode);
 		String state = areaCodeResolver.getState(code);
 		if (state == null) {
-			throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
+			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 		List<AccommodationDTO> result = accommodationFetchService.getAccommodations(
 			code, state, 1000, pageNo
@@ -80,7 +82,7 @@ public class TourismController {
 		String state = areaCodeResolver.getState(code);
 
 		if (state == null) {
-			throw new IllegalArgumentException("유효하지 않은 지역 코드입니다. areaCode: " + areaCode);
+			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 		List<RestaurantDTO> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
 		return ResponseEntity.ok(result);

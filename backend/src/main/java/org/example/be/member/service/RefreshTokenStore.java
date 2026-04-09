@@ -56,9 +56,11 @@ public class RefreshTokenStore {
 			Map<String, Object> payloadMap = null;
 			try {
 				payloadMap = JsonUt.parse(payloadJson, Map.class);
-			} catch (Exception e) {
+			} catch (IllegalArgumentException e) {
+				// JsonUt.parse()의 cause 체인 포함 로깅으로 3레이어 깊이의 원본 파싱, 받은 revokeRefresh에서도 체이닝 유지, 이걸 받을 필터(CustomAuthenticationFilter)에서 체인 전체 출력
+				log.warn("[revokeRefresh] payload 파싱 실패 - user:sessions 정리 불가, jti={}", jti, e);
 				return;
-			}
+			} // 그 외 Exception 추가 필요 판단 시 사용할 때 자유롭게 추가해서 쓰셔요. (원래 Exception 크기로 잡던 걸 그대로 두면 NullPointerException까지 파싱 실패로 오인될 수 있어 명확히 앞에서 던질 수 있는 예외들로만 나눠뒀습니다.)
 
 			if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
 				return;
