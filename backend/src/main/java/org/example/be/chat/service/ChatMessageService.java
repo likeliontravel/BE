@@ -63,7 +63,8 @@ public class ChatMessageService {
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
 			lastMessageId);
 		if (messages.isEmpty()) {
-			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND, "groupName: " + groupName + ", messageId: " + lastMessageId);
+			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
+				"groupName: " + groupName + ", messageId: " + lastMessageId);
 		}
 		return buildMessageWithProfiles(messages);
 	}
@@ -75,6 +76,7 @@ public class ChatMessageService {
 
 		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
 			group, keyword);
+		
 		return buildMessageWithProfiles(messages);
 	}
 
