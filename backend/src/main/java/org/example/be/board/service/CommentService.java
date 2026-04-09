@@ -75,7 +75,8 @@ public class CommentService {
 
 		if (reqBody.parentCommentId() != null) {
 			parentComment = commentRepository.findById(reqBody.parentCommentId())
-				.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PARENT_COMMENT, "parentCommentId: " + reqBody.parentCommentId()));
+				.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PARENT_COMMENT,
+					"parentCommentId: " + reqBody.parentCommentId()));
 
 			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
 				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
@@ -97,7 +98,7 @@ public class CommentService {
 
 		if (!comment.getWriter().getId().equals(userId)) {
 			///  TODO: 1. BOARD_NOT_WRITER라는 이름의 예외로 댓글, 게시글 다 처리했음 | 2. userId로 사용했는데, 실제로 memberId가져오는건 똑같아서 로그에 memberId라는 이름으로 남게 했음 | 이 두가지 안내.
-			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
+			throw new BusinessException(ErrorCode.COMMENT_NOT_WRITER, "memberId: " + userId);
 		}
 
 		try {

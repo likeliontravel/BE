@@ -63,7 +63,8 @@ public enum ErrorCode {
 	// --- 게시판 (Board) ---
 	BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),
 	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
-	BOARD_NOT_WRITER(HttpStatus.FORBIDDEN, "글의 작성자만 접근할 수 있습니다."),
+	BOARD_NOT_WRITER(HttpStatus.FORBIDDEN, "게시글의 작성자만 접근할 수 있습니다."),
+	COMMENT_NOT_WRITER(HttpStatus.FORBIDDEN, "댓글의 작성자만 접근할 수 있습니다."),
 	INVALID_PARENT_COMMENT_OF_BOARD(HttpStatus.BAD_REQUEST, "다른 게시물의 댓글에는 대댓글을 달 수 없습니다."),
 	INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "부모 댓글을 찾을 수 없습니다."),
 	BOARD_TITLE_BLANK(HttpStatus.BAD_REQUEST, "게시글 제목은 비어있을 수 없습니다."),
