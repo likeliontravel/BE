@@ -1,6 +1,5 @@
 package org.example.be.unifieduser.service;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.example.be.gcs.GCSService;
@@ -60,7 +59,7 @@ public class UnifiedUserService {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 
 		UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "해당 통합 유저를 찾을 수 없습니다."));
 
 		// unified user 삭제. Cascade와 OrphanRemoval옵션으로 연결된 데이터(소셜 또는 일반) 자동삭제.
 		unifiedUserRepository.delete(unifiedUser);
@@ -83,7 +82,7 @@ public class UnifiedUserService {
 		Boolean policyAgreed = dto.getPolicyAgreed();
 
 		UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "해당 통합 유저를 찾을 수 없습니다."));
 
 		unifiedUser.setPolicyAgreed(policyAgreed);
 		unifiedUserRepository.save(unifiedUser);
@@ -96,7 +95,7 @@ public class UnifiedUserService {
 		Boolean subscribed = dto.getSubscribed();
 
 		UnifiedUser unifiedUser = unifiedUserRepository.findByUserIdentifier(userIdentifier)
-			.orElseThrow(() -> new NoSuchElementException("해당 통합 유저를 찾을 수 없습니다. userIdentifier : " + userIdentifier));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "해당 통합 유저를 찾을 수 없습니다."));
 
 		unifiedUser.setSubscribed(subscribed);
 		unifiedUserRepository.save(unifiedUser);

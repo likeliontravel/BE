@@ -3,7 +3,6 @@ package org.example.be.board.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.example.be.board.dto.CommentCreateReqBody;
@@ -37,7 +36,7 @@ public class CommentService {
 	@Transactional
 	public Page<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
 		boardRepository.findById(boardId)
-			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. boardId: " + boardId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
 
 		Page<Comment> rootPage = commentRepository.findRootComments(boardId, pageable);
 		List<Comment> rootComments = rootPage.getContent();
@@ -67,20 +66,19 @@ public class CommentService {
 	@Transactional
 	public CommentResBody writeComment(Long boardId, CommentCreateReqBody reqBody, Long userId) {
 		Member writer = memberRepository.findById(userId)
-			.orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다. userId: " + userId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + userId));
 
 		Board boardEntity = boardRepository.findById(boardId)
-			.orElseThrow(() -> new NoSuchElementException("해당 게시글이 존재하지 않습니다. boardId: " + boardId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
 
 		Comment parentComment = null;
 
 		if (reqBody.parentCommentId() != null) {
 			parentComment = commentRepository.findById(reqBody.parentCommentId())
-				.orElseThrow(() -> new NoSuchElementException(
-					"이 자식 댓글의 부모 댓글이 존재하지 않습니다. parentCommentId: " + reqBody.parentCommentId()));
+				.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PARENT_COMMENT, "parentCommentId: " + reqBody.parentCommentId()));
 
 			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
-				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT);
+				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
 			}
 		}
 		try {
@@ -95,7 +93,7 @@ public class CommentService {
 	@Transactional
 	public CommentResBody updateComment(Long commentId, CommentUpdateReqBody reqBody, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
-			.orElseThrow(() -> new NoSuchElementException("해당 댓글이 존재하지 않습니다. id: " + commentId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
 
 		if (!comment.getWriter().getId().equals(userId)) {
 			///  TODO: 1. BOARD_NOT_WRITER라는 이름의 예외로 댓글, 게시글 다 처리했음 | 2. userId로 사용했는데, 실제로 memberId가져오는건 똑같아서 로그에 memberId라는 이름으로 남게 했음 | 이 두가지 안내.
@@ -113,7 +111,7 @@ public class CommentService {
 	@Transactional
 	public void deleteComment(Long commentId, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
-			.orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
 
 		if (!comment.getWriter().getId().equals(userId)) {
 			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);

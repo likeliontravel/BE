@@ -1,7 +1,6 @@
 package org.example.be.group.service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.example.be.global.exception.BusinessException;
@@ -79,7 +78,7 @@ public class GroupService {
 	public GroupDetailResBody getGroupDetail(String groupName, Long memberId) {
 		// 그룹과 함께 멤버도 같이 패치 조인 셀렉트
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		// 그룹 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
@@ -179,12 +178,7 @@ public class GroupService {
 	@Transactional(readOnly = true)
 	public List<GroupResBody> getAllGroups(Long memberId) {
 		Member user = memberService.getById(memberId);
-
 		List<Group> groups = groupRepository.findByMembersContaining(user);
-
-		if (groups.isEmpty()) {
-			throw new NoSuchElementException("해당 유저가 가입한 그룹을 찾을 수 없습니다. memberId: " + memberId);
-		}
 
 		return groups.stream()
 			.map(this::toResBody)
@@ -195,7 +189,7 @@ public class GroupService {
 	@Transactional(readOnly = true)
 	public Boolean isContains(String groupName, Long memberId) {
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		System.out.println("[GroupService에서 검증 로그] 그룹 이름: " + groupName);
 		System.out.println("[검증 로그] 요청자 memberId: " + memberId);
@@ -220,7 +214,7 @@ public class GroupService {
 	// 그룹 창설자 검증
 	public Group validateGroupCreator(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!group.getCreatedBy().getId().equals(memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_NOT_CREATOR,
@@ -233,7 +227,7 @@ public class GroupService {
 	@Transactional
 	public Group getGroupByName(String groupName) {
 		return groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 	}
 
 	// ==================== 그룹 상세 조회 이용 내부메서드 ====================

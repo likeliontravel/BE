@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.example.be.global.exception.BusinessException;
@@ -118,10 +117,10 @@ public class ScheduleService {
 	@Transactional(readOnly = true)
 	public ScheduleResponseDTO getScheduleByGroupName(String groupName) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("해당 이름의 그룹이 존재하지 않습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		Schedule schedule = scheduleRepository.findByGroup(group)
-			.orElseThrow(() -> new NoSuchElementException("해당 그룹에 일정이 존재하지 않습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
 		List<SchedulePlaceResponseDTO> placeDTOs = schedule.getSchedulePlaces().stream()
 			.map(this::toResponseDTO)
@@ -144,7 +143,7 @@ public class ScheduleService {
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
 
 		List<Group> groups = groupRepository.findByMembersContaining(user);
 		if (groups.isEmpty()) {
@@ -204,16 +203,16 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResponseDTO updateSchedule(Long scheduleId, ScheduleRequestDTO requestDTO) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
-			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 그룹입니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + requestDTO.getGroupName()));
 
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		// 그룹 창설자 검증
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
 		groupService.validateGroupCreator(group.getGroupName(), user.getId());
 
 		schedule.setStartSchedule(requestDTO.getStartSchedule());
@@ -258,13 +257,13 @@ public class ScheduleService {
 	@Transactional
 	public void deleteSchedule(Long scheduleId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new NoSuchElementException("존재하지 않는 일정입니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		// 그룹 창설자 검증
 		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
 		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
 
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), user.getId());
 

@@ -4,7 +4,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -45,7 +44,7 @@ public class GroupAnnouncementService {
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND, " groupName: " + groupName);
@@ -65,7 +64,7 @@ public class GroupAnnouncementService {
 	@Transactional(readOnly = true)
 	public GroupAnnouncementResBody getLatestAnnouncement(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new NoSuchElementException("그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
@@ -76,7 +75,7 @@ public class GroupAnnouncementService {
 			group);
 
 		if (latestAnnouncementOptional.isEmpty()) {
-			throw new NoSuchElementException("해당 그룹에 등록된 공지가 없습니다.");
+			throw new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND, "groupName: " + groupName);
 		}
 
 		return toResBody(latestAnnouncementOptional.get());
@@ -94,7 +93,7 @@ public class GroupAnnouncementService {
 		Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
 		// 해당 이름의 그룹이 존재하는지 확인
 		if (groupOptional.isEmpty()) {
-			throw new NoSuchElementException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName);
 		}
 
 		Group group = groupOptional.get();
@@ -113,7 +112,7 @@ public class GroupAnnouncementService {
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
 		GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.id())
-			.orElseThrow(() -> new NoSuchElementException("삭제하려는 공지사항을 찾을 수 없습니다. id: " + request.id()));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND, "groupAnnouncementId: " + request.id()));
 
 		// 요청한 그룹이 공지의 그룹과 일치하는지 확인
 		if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {

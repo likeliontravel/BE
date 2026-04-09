@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,7 +50,7 @@ public class ChatMessageService {
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
 		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 그룹에 아직 메시지가 존재하지 않습니다. groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
 		return buildMessageWithProfiles(messages);
 	}
@@ -64,7 +63,7 @@ public class ChatMessageService {
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
 			lastMessageId);
 		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 메시지 이전에 전송된 메시지가 없습니다. messageId: " + lastMessageId);
+			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND, "groupName: " + groupName + ", messageId: " + lastMessageId);
 		}
 		return buildMessageWithProfiles(messages);
 	}
@@ -76,9 +75,6 @@ public class ChatMessageService {
 
 		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
 			group, keyword);
-		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 키워드로 검색된 결과가 없습니다. keyword: " + keyword);
-		}
 		return buildMessageWithProfiles(messages);
 	}
 
@@ -90,7 +86,7 @@ public class ChatMessageService {
 		if (message.isPresent()) {
 			return toDTO(message.get());
 		} else {
-			throw new NoSuchElementException("해당 그룹의 메시지가 없습니다. groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
 	}
 
@@ -100,7 +96,7 @@ public class ChatMessageService {
 		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
 		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
@@ -200,7 +196,7 @@ public class ChatMessageService {
 
 	private Member findMember(Long memberId) {
 		return memberRepository.findById(memberId)
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다. ID: " + memberId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 	}
 
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.

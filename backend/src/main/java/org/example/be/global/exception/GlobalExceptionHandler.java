@@ -39,14 +39,6 @@ public class GlobalExceptionHandler {
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.getMessage()));
 	}
 
-	// // NoSuchElementException - 찾을 수 없음
-	// // 응답 코드 : Not Found 404
-	// @ExceptionHandler(NoSuchElementException.class)
-	// @ResponseBody
-	// public ResponseEntity<CommonResponse<Void>> handleNoSuchElementException(NoSuchElementException e) {
-	// 	log.warn("[요청 관련 리소스 찾을 수 없음] {}", e.getMessage());
-	// 	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CommonResponse.error(404, e.getMessage()));
-	// }
 	//
 	// ## RuntimeException도 확인해보기
 

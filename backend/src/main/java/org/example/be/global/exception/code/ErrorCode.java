@@ -53,18 +53,26 @@ public enum ErrorCode {
 	INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "초대 링크가 만료되었습니다. 새로 생성하세요."),
 	INVITATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "초대 링크가 없습니다. 초대 링크를 생성하세요."),
 	GROUP_CREATOR_CANNOT_EXIT(HttpStatus.UNPROCESSABLE_ENTITY, "그룹 창설자는 그룹을 나갈 수 없습니다. 그룹 삭제 기능을 이용해주세요."),
+	GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없어 최신 그룹 공지가 없습니다."),
+	GROUP_ANNOUNCEMENT_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없습니다."),
+
+	// --- 채팅 (chat) ---
+	GROUP_CHAT_NOT_FOUND(HttpStatus.NO_CONTENT, "해당 그룹에 아직 메시지가 존재하지 않습니다."),
+	CHAT_PREVIOUS_MESSAGE_NOT_FOUND(HttpStatus.NO_CONTENT, "이전 메시지가 더 존재하지 않습니다."),
 
 	// --- 게시판 (Board) ---
 	BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),
 	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
 	BOARD_NOT_WRITER(HttpStatus.FORBIDDEN, "글의 작성자만 접근할 수 있습니다."),
-	INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "다른 게시물의 댓글에는 대댓글을 달 수 없습니다."),
+	INVALID_PARENT_COMMENT_OF_BOARD(HttpStatus.BAD_REQUEST, "다른 게시물의 댓글에는 대댓글을 달 수 없습니다."),
+	INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "부모 댓글을 찾을 수 없습니다."),
 	BOARD_TITLE_BLANK(HttpStatus.BAD_REQUEST, "게시글 제목은 비어있을 수 없습니다."),
 	BOARD_CONTENT_BLANK(HttpStatus.BAD_REQUEST, "게시글 내용은 비어있을 수 없습니다."),
 
 	// --- 일정 (Schedule) ---
-	SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),
+	SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "일정이 존재하지 않습니다."),
 	SCHEDULE_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 그룹에 존재하는 일정이 있습니다."),
+	SCHEDULE_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "세부 일정이 존재하지 않습니다."),
 
 	// --- 장소 (Place) ---
 	PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),

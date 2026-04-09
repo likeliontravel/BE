@@ -1,7 +1,5 @@
 package org.example.be.generaluser.service;
 
-import java.util.NoSuchElementException;
-
 import org.example.be.generaluser.domain.GeneralUser;
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.repository.GeneralUserRepository;
@@ -75,7 +73,7 @@ public class GeneralUserService {
 
 			try {
 				Member user = memberRepository.findByEmail(generalUserDTO.getEmail())
-					.orElseThrow(() -> new NoSuchElementException("Member 정보 없음"));
+					.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "Member 정보 없음"));
 				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), user.getId());
 			} catch (Exception e) {
 				// TODO: GeneralUser 회원가입이 Member시스템에서 완성되면 제거
@@ -89,7 +87,7 @@ public class GeneralUserService {
 	@Transactional(readOnly = true)
 	public GeneralUserDTO getProfile(String email) {
 		GeneralUser generalUser = generalUserRepository.findByUserIdentifier("gen_" + email)
-			.orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "회원을 찾을 수 없습니다. "));
 
 		// GeneralUser를 DTO로 변환 후 반환
 		GeneralUserDTO generalUserDTO = new GeneralUserDTO();

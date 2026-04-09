@@ -1,7 +1,6 @@
 package org.example.be.board.service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.example.be.board.dto.BoardCreateReqBody;
@@ -45,7 +44,7 @@ public class BoardService {
 	@Transactional
 	public BoardResBody getBoard(Long id) {
 		Board board = boardRepository.findById(id)
-			.orElseThrow(() -> new NoSuchElementException("Id 해당 게시글을 찾을 수 없습니다. id: " + id));
+			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		board.increaseHits();
 
@@ -114,7 +113,7 @@ public class BoardService {
 
 		// 기존 게시글 조회 (없으면 예외 발생)
 		Board originalBoard = boardRepository.findById(id)
-			.orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		if (!memberId.equals(originalBoard.getWriter().getId())) {
 			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
@@ -136,7 +135,7 @@ public class BoardService {
 	// 게시글 삭제
 	@Transactional
 	public void deleteBoard(Long id, Long memberId) {
-		Board board = boardRepository.findById(id).orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다."));
+		Board board = boardRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		if (!memberId.equals(board.getWriter().getId())) {
 			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);

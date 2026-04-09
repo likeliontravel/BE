@@ -1,7 +1,5 @@
 package org.example.be.schedule.service;
 
-import java.util.NoSuchElementException;
-
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
@@ -25,7 +23,7 @@ public class SchedulePlaceService {
 	@Transactional
 	public SchedulePlaceResponseDTO createSchedulePlace(SchedulePlaceRequestDTO dto) {
 		var schedule = scheduleRepository.findById(dto.getScheduleId())
-			.orElseThrow(() -> new NoSuchElementException("해당 일정이 존재하지 않습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + dto.getScheduleId().toString()));
 
 		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
 
@@ -50,7 +48,7 @@ public class SchedulePlaceService {
 	@Transactional
 	public SchedulePlaceResponseDTO updateSchedulePlace(Long placeId, SchedulePlaceRequestDTO dto) {
 		var place = schedulePlaceRepository.findById(placeId)
-			.orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
 
 		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
 
@@ -71,7 +69,7 @@ public class SchedulePlaceService {
 	@Transactional
 	public void deleteSchedulePlace(Long placeId) {
 		var place = schedulePlaceRepository.findById(placeId)
-			.orElseThrow(() -> new NoSuchElementException("해당 세부 일정이 존재하지 않습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
 		try {
 			schedulePlaceRepository.delete(place);
 		} catch (Exception e) {
