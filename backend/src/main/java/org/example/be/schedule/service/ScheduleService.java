@@ -56,18 +56,22 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResBody createSchedule(ScheduleReqBody reqBody, Long userId) {
 		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST, "일정 시작일은 종료일보다 늦을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD,
+				"일정 생성 실패 - 시작 날짜가 종료 날짜보다 이후일 수 없음 startSchedule: " + reqBody.startSchedule() + ", endSchedule: "
+					+ reqBody.endSchedule());
 		}
 
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + reqBody.groupName()));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND,
+				"일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + reqBody.groupName()));
 
 		// 그룹 창설자인지 검증
 		groupService.validateGroupCreator(group.getGroupName(), userId);
 
 		// 이미 일정이 존재하는지 검사
 		scheduleRepository.findByGroup(group).ifPresent(existingSchedule -> {
-			throw new BusinessException(ErrorCode.SCHEDULE_ALREADY_EXIST, "일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + reqBody.groupName());
+			throw new BusinessException(ErrorCode.SCHEDULE_ALREADY_EXIST,
+				"일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + reqBody.groupName());
 		});
 
 		Schedule schedule = Schedule.create(reqBody.startSchedule(), reqBody.endSchedule(), group);
@@ -158,7 +162,7 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody, Long userId) {
 		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
-			throw new BusinessException(ErrorCode.BAD_REQUEST, "일정 시작일은 종료일보다 늦을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD);
 		}
 
 		Schedule schedule = scheduleRepository.findById(scheduleId)
