@@ -3,7 +3,8 @@ package org.example.be.mail.service;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.example.be.exception.custom.EmailAlreadyRegisteredException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.mail.dto.MailVerifyReqBody;
 import org.example.be.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,7 @@ public class MailService {
 	// 인증 코드 보내는 로직
 	public void sendMail(String email) {
 		if (memberRepository.existsByEmail(email)) {
-			throw new EmailAlreadyRegisteredException("이미 가입된 이메일입니다.");
+			throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED, "입력된 이메일: " + email);
 		}
 
 		String verificationCode = generateVerificationCode();
@@ -86,7 +87,8 @@ public class MailService {
 
 	public void sendPasswordResetMail(String email) {
 		if (!memberRepository.existsByEmail(email)) {
-			throw new EmailAlreadyRegisteredException("가입되지 않은 이메일입니다.");
+			/// TODO: EmailAlreadyRegisteredException이 이미 가입된 이메일인 경우에도, 가입되지 않은 이메일인 경우에도 사용되고 있었음. 해당 사항 PR에 안내.
+			throw new BusinessException(ErrorCode.EMAIL_NOT_REGISTERED, "입력된 이메일: " + email);
 		}
 		String verificationCode = generateVerificationCode();
 		try {

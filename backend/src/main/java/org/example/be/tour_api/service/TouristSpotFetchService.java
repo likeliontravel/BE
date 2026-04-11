@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.theme.PlaceCategory;
@@ -120,11 +122,12 @@ public class TouristSpotFetchService {
 
 		TourRegion tourRegion = tourRegionRepository
 			.findByAreaCodeAndSiGunGuCode(areaCode, siGunGuCode)
-			.orElseThrow(() -> new IllegalArgumentException("TourRegion 매칭 실패: " + areaCode + " " + siGunGuCode));
+			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REGION,
+				"TourRegion 매칭 실패 - areaCode=" + areaCode + ", siGunGuCode=" + siGunGuCode));
 
 		PlaceCategory placeCategory = placeCategoryRepository
 			.findByCat3(cat3)
-			.orElseThrow(() -> new IllegalArgumentException("PlaceCategory 매칭 실패: " + cat3));
+			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_THEME, "PlaceCategory 매칭 실패 - cat3=" + cat3));
 
 		TouristSpot touristSpot = TouristSpot.builder()
 			.contentId(contentId)

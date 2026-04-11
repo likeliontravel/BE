@@ -23,9 +23,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
 	private final MemberService memberService;
 	private final CookieHelper cookieHelper;
@@ -70,6 +72,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 					return;
 
 				} catch (Exception e) {
+					// 원인 추적용 로그 추가 (Refresh Token 갱신 실패가 JSON 파싱 오류인지, Redis 연결 오류인지, 토큰이 변조된건지 확인용)
+					log.warn("[CustomAuthenticationFilter] Refresh token 갱신 실패", e);
+
 					cookieHelper.deleteCookie("refreshToken");
 					cookieHelper.deleteCookie("accessToken");
 				}

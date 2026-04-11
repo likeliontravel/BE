@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.exception.custom.ResourceUpdateException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.tour_api.dto.AreaDTO;
@@ -105,7 +106,8 @@ public class RefreshRegionService {
 
 		} catch (Exception e) {
 			log.error("[RefreshRegion] 지역코드 갱신 실패", e);
-			throw new ResourceUpdateException("지역 정보 갱신 중 오류 발생", e);
+			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
+				"Place 지역 갱신 실패 - message: " + e.getMessage());
 		}
 	}
 

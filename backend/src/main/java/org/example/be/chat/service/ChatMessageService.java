@@ -1,6 +1,5 @@
 package org.example.be.chat.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,10 +15,9 @@ import org.example.be.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.chat.entity.ChatMessage;
 import org.example.be.chat.repository.ChatMessageRepository;
 import org.example.be.chat.type.MessageType;
-import org.example.be.exception.custom.ForbiddenResourceAccessException;
-import org.example.be.exception.custom.GCSUploadFailedException;
-import org.example.be.exception.custom.ResourceCreationException;
 import org.example.be.gcs.GCSService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.group.entitiy.Group;
 import org.example.be.group.repository.GroupRepository;
 import org.example.be.member.dto.response.MemberDto;
@@ -53,7 +50,7 @@ public class ChatMessageService {
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
 		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 그룹에 아직 메시지가 존재하지 않습니다. groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
 		return buildMessageWithProfiles(messages);
 	}
@@ -66,7 +63,8 @@ public class ChatMessageService {
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
 			lastMessageId);
 		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 메시지 이전에 전송된 메시지가 없습니다. messageId: " + lastMessageId);
+			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
+				"groupName: " + groupName + ", messageId: " + lastMessageId);
 		}
 		return buildMessageWithProfiles(messages);
 	}
@@ -78,9 +76,7 @@ public class ChatMessageService {
 
 		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
 			group, keyword);
-		if (messages.isEmpty()) {
-			throw new NoSuchElementException("해당 키워드로 검색된 결과가 없습니다. keyword: " + keyword);
-		}
+		
 		return buildMessageWithProfiles(messages);
 	}
 
@@ -92,7 +88,7 @@ public class ChatMessageService {
 		if (message.isPresent()) {
 			return toDTO(message.get());
 		} else {
-			throw new NoSuchElementException("해당 그룹의 메시지가 없습니다. groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
 	}
 
@@ -102,7 +98,7 @@ public class ChatMessageService {
 		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
 		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
@@ -151,15 +147,8 @@ public class ChatMessageService {
 
 	// GCS에 이미지 업로드 수행, public URL 반환
 	public String uploadAndGetPreview(MultipartFile image, String groupName, Long memberId) {
-		try {
-			validateImageFile(image);
-			String senderIdentifier = String.valueOf(memberId);
-			return gcsService.uploadChatImage(image, senderIdentifier, groupName);
-		} catch (IOException e) {
-			throw new GCSUploadFailedException("이미지 업로드 중 오류가 발생했습니다.", e);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(e.getMessage());
-		}
+		String senderIdentifier = String.valueOf(memberId);
+		return gcsService.uploadChatImage(image, senderIdentifier, groupName);
 	}
 
 	// 메시지 저장 ( TEXT / IMAGE ) - WebSocket에서 호출
@@ -178,24 +167,17 @@ public class ChatMessageService {
 		try {
 			return chatMessageRepository.save(chatMessage);
 		} catch (Exception e) {
-			throw new ResourceCreationException("메시지 저장에 실패했습니다.");
+			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
 		}
 
 	}
 
 	// ==================== 내부 사용 메서드 ====================
-	// 들어온 MultipartFile이 이미지인지 검증하는 메서드 - 이미지가 아닐 경우 예외 발생
-	private void validateImageFile(MultipartFile image) {
-		String contentType = image.getContentType();
-		if (contentType == null || !contentType.startsWith("image/")) {
-			throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
-		}
-	}
 
 	// 그룹 존재 여부와 요청자가 그룹 내 멤버인지 검증하는 메서드
 	private Group findGroupAndValidateMember(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new IllegalArgumentException("해당 그룹을 찾을 수 없습니다. groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		System.out.println("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
 		System.out.println("[검증 로그] 요청자 userIdentifier: " + memberId);
@@ -208,14 +190,15 @@ public class ChatMessageService {
 			.anyMatch(member -> member.getId().equals(memberId));
 
 		if (!isMember) {
-			throw new ForbiddenResourceAccessException("해당 그룹에 가입되어 있지 않습니다.");
+			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
 	}
 
 	private Member findMember(Long memberId) {
 		return memberRepository.findById(memberId)
-			.orElseThrow(() -> new NoSuchElementException("해당 유저를 찾을 수 없습니다. ID: " + memberId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 	}
 
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.

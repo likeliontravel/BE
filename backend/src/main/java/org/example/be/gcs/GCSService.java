@@ -3,8 +3,8 @@ package org.example.be.gcs;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.example.be.exception.custom.GCSDeletionFailedException;
-import org.example.be.exception.custom.GCSUploadFailedException;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +32,7 @@ public class GCSService {
 	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
 	 * @return : 저장 성공 후 반환받은 public URL
 	 */
-	public String uploadProfileImage(MultipartFile file, Long memberId) throws IOException {
+	public String uploadProfileImage(MultipartFile file, Long memberId) {
 		try {
 			validateImageFile(file);
 			String fileName = "profile_" + memberId + "_" + UUID.randomUUID();
@@ -42,11 +42,8 @@ public class GCSService {
 
 			return String.format("https://storage.googleapis.com/%s/%s", profileBucketName, fileName);
 		} catch (IOException e) {
-			throw new GCSUploadFailedException("[GCS] 프로필 이미지 업로드 실패. ", e);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(e.getMessage()); // 그대로 전파
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. \nmessage: " + e.getMessage());
 		}
-
 	}
 
 	/**
@@ -67,7 +64,8 @@ public class GCSService {
 				System.out.println("[GCS 프로필 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
 			}
 		} catch (Exception e) {
-			throw new GCSDeletionFailedException("GCS 프로필 이미지 삭제 중 오류가 발생했습니다.", e);
+			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED,
+				"image url: " + imageUrl + ", message: " + e.getMessage());
 		}
 
 	}
@@ -76,7 +74,7 @@ public class GCSService {
 	 * 채팅 이미지 업로드 메서드
 	 *
 	 */
-	public String uploadChatImage(MultipartFile file, String senderId, String groupName) throws IOException {
+	public String uploadChatImage(MultipartFile file, String senderId, String groupName) {
 		try {
 			validateImageFile(file);
 			String fileName = "chat_" + groupName + "_" + senderId + "_" + UUID.randomUUID();
@@ -86,9 +84,7 @@ public class GCSService {
 
 			return String.format("https://storage.googleapis.com/%s/%s", chatImageBucketName, fileName);
 		} catch (IOException e) {
-			throw new GCSUploadFailedException("[GCS] 채팅 이미지 업로드 실패. ", e);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "채팅 이미지 업로드 실패. \n message: " + e.getMessage());
 		}
 	}
 
@@ -96,7 +92,7 @@ public class GCSService {
 	private void validateImageFile(MultipartFile file) {
 		String contentType = file.getContentType();
 		if (contentType == null || !contentType.startsWith("image/")) {
-			throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "입력된 파일 contentType: " + contentType);
 		}
 	}
 

@@ -2,6 +2,9 @@ package org.example.be.oauth.dto;
 
 import java.util.Map;
 
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+
 public class NaverResponse implements OAuth2Response {
 	private final Map<String, Object> attribute;
 
@@ -19,7 +22,7 @@ public class NaverResponse implements OAuth2Response {
 	public String getProviderId() {
 		Object providerId = attribute.get("id");
 		if (providerId == null) {
-			throw new IllegalArgumentException("NaverLogin - ProviderId is Missing");
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - ProviderId is Missing");
 		}
 		return providerId.toString();
 	}
@@ -28,7 +31,7 @@ public class NaverResponse implements OAuth2Response {
 	public String getEmail() {
 		Object email = attribute.get("email");
 		if (email == null) {
-			throw new IllegalArgumentException("NaverLogin - email is missing");
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - email is Missing");
 		}
 		return email.toString();
 	}
@@ -37,7 +40,7 @@ public class NaverResponse implements OAuth2Response {
 	public String getName() {
 		Object name = attribute.get("name");
 		if (name == null) {
-			throw new IllegalArgumentException("NaverLogin - name is missing");
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - name is Missing");
 		}
 		return name.toString();
 	}
