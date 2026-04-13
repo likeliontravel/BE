@@ -2,9 +2,9 @@ package org.example.be.oauth.service;
 
 import java.util.Map;
 
-import org.example.be.member.entity.Member;
-import org.example.be.member.repository.MemberRepository;
-import org.example.be.member.type.OauthProvider;
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.member.type.OauthProvider;
 import org.example.be.oauth.dto.GoogleResponse;
 import org.example.be.oauth.dto.KakaoResponse;
 import org.example.be.oauth.dto.NaverResponse;

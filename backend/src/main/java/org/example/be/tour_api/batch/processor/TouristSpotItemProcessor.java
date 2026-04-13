@@ -3,10 +3,10 @@ package org.example.be.tour_api.batch.processor;
 import java.util.Map;
 import java.util.Optional;
 
-import org.example.be.place.region.TourRegion;
-import org.example.be.place.theme.PlaceCategory;
-import org.example.be.place.touristSpot.entity.TouristSpot;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
+import org.example.be.domain.place.region.TourRegion;
+import org.example.be.domain.place.theme.PlaceCategory;
+import org.example.be.domain.place.touristspot.entity.TouristSpot;
+import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;

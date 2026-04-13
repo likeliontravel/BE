@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.place.accommodation.dto.AccommodationDTO;
-import org.example.be.place.restaurant.dto.RestaurantDTO;
-import org.example.be.place.touristSpot.dto.TouristSpotDTO;
-import org.example.be.response.CommonResponse;
+import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
+import org.example.be.global.response.CommonResponse;
 import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.service.AccommodationFetchService;
 import org.example.be.tour_api.service.RestaurantFetchService;

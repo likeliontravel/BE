@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.place.theme.PlaceCategory;
-import org.example.be.place.theme.PlaceCategoryRepository;
+import org.example.be.domain.place.theme.PlaceCategory;
+import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.tour_api.dto.CategoryCodeDTO;
 import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.dto.SaveResult;

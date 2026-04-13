@@ -1,6 +1,6 @@
 package org.example.be.tour_api.controller;
 
-import org.example.be.response.CommonResponse;
+import org.example.be.global.response.CommonResponse;
 import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.service.RefreshRegionService;
 import org.springframework.http.ResponseEntity;

@@ -2,14 +2,14 @@ package org.example.be.tour_api.batch;
 
 import java.util.Map;
 
-import org.example.be.place.accommodation.entity.Accommodation;
-import org.example.be.place.accommodation.repository.AccommodationRepository;
-import org.example.be.place.region.TourRegionRepository;
-import org.example.be.place.restaurant.entity.Restaurant;
-import org.example.be.place.restaurant.repository.RestaurantRepository;
-import org.example.be.place.theme.PlaceCategoryRepository;
-import org.example.be.place.touristSpot.entity.TouristSpot;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
+import org.example.be.domain.place.accommodation.entity.Accommodation;
+import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.region.TourRegionRepository;
+import org.example.be.domain.place.restaurant.entity.Restaurant;
+import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
+import org.example.be.domain.place.theme.PlaceCategoryRepository;
+import org.example.be.domain.place.touristspot.entity.TouristSpot;
+import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.tour_api.batch.processor.AccommodationItemProcessor;
 import org.example.be.tour_api.batch.processor.PlaceProcessorHelper;
 import org.example.be.tour_api.batch.processor.RestaurantItemProcessor;

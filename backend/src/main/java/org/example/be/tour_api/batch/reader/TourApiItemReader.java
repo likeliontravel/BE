@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.example.be.place.region.TourRegionRepository;
+import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.tour_api.util.TourApiClient;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;

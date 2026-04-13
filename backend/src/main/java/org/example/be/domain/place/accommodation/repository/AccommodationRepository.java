@@ -1,0 +1,20 @@
+package org.example.be.domain.place.accommodation.repository;
+
+import org.example.be.domain.place.accommodation.entity.Accommodation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface AccommodationRepository extends JpaRepository<Accommodation, Long>, AccommodationRepositoryCustom {
+	// contentId 중복 체크용
+	boolean existsByContentId(String contentId);
+
+	// 일정 생성 할때 숙소의 contentId를 기준으로 가져옴
+	Optional<Accommodation> findByContentId(String contentId);
+
+	// 필터링 조회 메서드는 부모 인터페이스인 AccommodationRepositoryCustom의 구현체를 따라간다
+
+}
+

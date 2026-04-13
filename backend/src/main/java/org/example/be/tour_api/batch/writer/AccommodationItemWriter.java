@@ -2,8 +2,8 @@ package org.example.be.tour_api.batch.writer;
 
 import java.util.List;
 
-import org.example.be.place.accommodation.entity.Accommodation;
-import org.example.be.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.accommodation.entity.Accommodation;
+import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 

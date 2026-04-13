@@ -2,8 +2,8 @@ package org.example.be.tour_api.batch.writer;
 
 import java.util.List;
 
-import org.example.be.place.restaurant.entity.Restaurant;
-import org.example.be.place.restaurant.repository.RestaurantRepository;
+import org.example.be.domain.place.restaurant.entity.Restaurant;
+import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 

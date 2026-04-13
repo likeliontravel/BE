@@ -2,9 +2,9 @@ package org.example.be.generaluser.controller;
 
 import org.example.be.generaluser.dto.GeneralUserDTO;
 import org.example.be.generaluser.service.GeneralUserService;
-import org.example.be.group.invitation.service.GroupInvitationService;
-import org.example.be.group.service.GroupService;
-import org.example.be.response.CommonResponse;
+import org.example.be.domain.group.invitation.service.GroupInvitationService;
+import org.example.be.domain.group.service.GroupService;
+import org.example.be.global.response.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

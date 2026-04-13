@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.place.region.TourRegion;
-import org.example.be.place.region.TourRegionRepository;
+import org.example.be.domain.place.region.TourRegion;
+import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.tour_api.dto.AreaDTO;
 import org.example.be.tour_api.dto.FetchResult;
 import org.example.be.tour_api.dto.SaveResult;

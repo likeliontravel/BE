@@ -1,6 +1,6 @@
 package org.example.be.unifieduser.controller;
 
-import org.example.be.response.CommonResponse;
+import org.example.be.global.response.CommonResponse;
 import org.example.be.unifieduser.dto.ModifyNameDTO;
 import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
 import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;

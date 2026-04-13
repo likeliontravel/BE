@@ -7,7 +7,7 @@ import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.oauth.repository.SocialUserRepository;
-import org.example.be.security.util.SecurityUtil;
+import org.example.be.global.security.util.SecurityUtil;
 import org.example.be.unifieduser.dto.ModifyNameDTO;
 import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
 import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
