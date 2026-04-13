@@ -177,6 +177,7 @@ public class ScheduleService {
 		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
 		schedule.getSchedulePlaces().clear();
+		sc
 
 		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
 			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
@@ -207,6 +208,7 @@ public class ScheduleService {
 
 		try {
 			scheduleRepository.delete(schedule);
+			scheduleRepository.flush();
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "일정 삭제 실패 - message: " + e.getMessage());
 		}
