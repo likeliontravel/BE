@@ -1,9 +1,13 @@
 package org.example.be.schedule.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -14,10 +18,12 @@ import org.example.be.group.repository.GroupRepository;
 import org.example.be.group.service.GroupService;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.MemberService;
+import org.example.be.place.accommodation.entity.Accommodation;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.entity.PlaceType;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.restaurant.entity.Restaurant;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategory;
 import org.example.be.place.theme.PlaceCategoryRepository;
@@ -119,8 +125,56 @@ public class ScheduleService {
 			return Collections.emptyList();
 		}
 
-		// 사용자의 모든 그룹에 대한 일정을 한 번에 Fetch Join으로 가져옴 (N+1 방지)
 		List<Schedule> schedules = scheduleRepository.findAllByGroupsFetchJoin(groups);
+
+		// 1. 모든 SchedulePlace에서 고유한 contentId 수집 및 PlaceType별로 그룹화
+		Map<PlaceType, Set<String>> contentIdsByType = schedules.stream()
+			.flatMap(s -> s.getSchedulePlaces().stream())
+			.collect(Collectors.groupingBy(
+				SchedulePlace::getPlaceType,
+				Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
+			));
+
+		// 2. 타입별 장소 엔티티들을 한 번에 조회하여 Map에 저장
+		Map<String, TouristSpot> touristSpotMap = touristSpotRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TouristSpot, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
+
+		Map<String, Restaurant> restaurantMap = restaurantRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.Restaurant, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(Restaurant::getContentId, Function.identity()));
+
+		Map<String, Accommodation> accommodationMap = accommodationRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.Accommodation, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(Accommodation::getContentId, Function.identity()));
+
+		// 3. TourRegion 조회에 필요한 areaCode 및 siGunGuCode 수집
+		Set<String> regionCodeKeys = new HashSet<>();
+		touristSpotMap.values().forEach(ts -> regionCodeKeys.add(ts.getAreaCode() + "-" + ts.getSiGunGuCode()));
+		restaurantMap.values().forEach(r -> regionCodeKeys.add(r.getAreaCode() + "-" + r.getSiGunGuCode()));
+		accommodationMap.values().forEach(a -> regionCodeKeys.add(a.getAreaCode() + "-" + a.getSiGunGuCode()));
+
+		// 4. TourRegion 한 번에 조회하여 Map에 저장
+		Map<String, String> tourRegionMap = tourRegionRepository.findAll().stream()
+			.filter(tr -> regionCodeKeys.contains(tr.getAreaCode() + "-" + tr.getSiGunGuCode()))
+			.collect(Collectors.toMap(
+				tr -> tr.getAreaCode() + "-" + tr.getSiGunGuCode(),
+				TourRegion::getRegion
+			));
+
+		// 5. PlaceCategory 조회에 필요한 cat3 수집
+		Set<String> cat3Codes = touristSpotMap.values().stream()
+			.map(TouristSpot::getCat3)
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
+
+		// 6. PlaceCategory 한 번에 조회하여 Map에 저장
+		Map<String, String> placeCategoryMap = placeCategoryRepository.findAllByCat3In(new ArrayList<>(cat3Codes))
+			.stream()
+			.collect(Collectors.toMap(PlaceCategory::getCat3, PlaceCategory::getTheme));
 
 		Map<Long, Schedule> scheduleMap = schedules.stream()
 			.collect(Collectors.toMap(s -> s.getGroup().getId(), Function.identity()));
@@ -135,21 +189,27 @@ public class ScheduleService {
 
 				List<SchedulePlace> places = schedule.getSchedulePlaces();
 
-				// 1) region: 타입 무관, 가장 이른 visitStart
 				SchedulePlace firstAnyPlace = places.stream()
 					.min(Comparator.comparing(SchedulePlace::getVisitStart))
 					.orElse(null);
 
-				// 2) theme: TouristSpot 중 가장 이른 visitStart
 				SchedulePlace firstTouristSpotPlace = places.stream()
 					.filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
 					.min(Comparator.comparing(SchedulePlace::getVisitStart))
 					.orElse(null);
 
+				// 핵심: 미리 로드된 맵들을 헬퍼 메서드에 넘겨서 정보 추출
+				String region = getRegionFromPlace(
+					firstAnyPlace, touristSpotMap, restaurantMap, accommodationMap, tourRegionMap
+				);
+				String theme = getThemeFromPlace(
+					firstTouristSpotPlace, touristSpotMap, placeCategoryMap
+				);
+
 				return ScheduleSummaryResBody.from(
 					group.getGroupName(),
-					resolveRegion(firstAnyPlace),
-					resolveThemeFromTouristSpot(firstTouristSpotPlace),
+					region,
+					theme,
 					schedule.getStartSchedule(),
 					schedule.getEndSchedule()
 				);
@@ -208,63 +268,60 @@ public class ScheduleService {
 
 		try {
 			scheduleRepository.delete(schedule);
-			scheduleRepository.flush();
+			scheduleRepository.flush(); // 즉시 DB 제약 조건 확인
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "일정 삭제 실패 - message: " + e.getMessage());
 		}
 	}
 
-	private String resolveRegion(SchedulePlace place) {
+	// --- N+1 해결을 위한 새로운 헬퍼 메서드들 ---
+	private String getRegionFromPlace(
+		SchedulePlace place,
+		Map<String, TouristSpot> touristSpotMap,
+		Map<String, Restaurant> restaurantMap,
+		Map<String, Accommodation> accommodationMap,
+		Map<String, String> tourRegionMap
+	) {
 		if (place == null) {
 			return null;
 		}
 
+		String regionCodeKey = null;
 		switch (place.getPlaceType()) {
-			case TouristSpot: {
-				TouristSpot ts = touristSpotRepository.findByContentId(place.getContentId()).orElse(null);
-				if (ts == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(ts.getAreaCode(), ts.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			case Restaurant: {
-				org.example.be.place.restaurant.entity.Restaurant r =
-					restaurantRepository.findByContentId(place.getContentId()).orElse(null);
-				if (r == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(r.getAreaCode(), r.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			case Accommodation: {
-				org.example.be.place.accommodation.entity.Accommodation a =
-					accommodationRepository.findByContentId(place.getContentId()).orElse(null);
-				if (a == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(a.getAreaCode(), a.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			default:
-				return null;
+			case TouristSpot:
+				TouristSpot ts = touristSpotMap.get(place.getContentId());
+				if (ts != null)
+					regionCodeKey = ts.getAreaCode() + "-" + ts.getSiGunGuCode();
+				break;
+			case Restaurant:
+				Restaurant r = restaurantMap.get(place.getContentId());
+				if (r != null)
+					regionCodeKey = r.getAreaCode() + "-" + r.getSiGunGuCode();
+				break;
+			case Accommodation:
+				Accommodation a = accommodationMap.get(place.getContentId());
+				if (a != null)
+					regionCodeKey = a.getAreaCode() + "-" + a.getSiGunGuCode();
+				break;
 		}
+		return regionCodeKey != null ? tourRegionMap.get(regionCodeKey) : null;
 	}
 
-	private String resolveThemeFromTouristSpot(SchedulePlace touristSpotPlace) {
-		if (touristSpotPlace == null) {
-			return "기타";
+	// SchedulePlace와 미리 로드된 맵들을 이용하여 테마 정보 추출
+	private String getThemeFromPlace(
+		SchedulePlace place,
+		Map<String, TouristSpot> touristSpotMap,
+		Map<String, String> placeCategoryMap
+	) {
+		if (place == null || place.getPlaceType() != PlaceType.TouristSpot) {
+			return null;
 		}
-		TouristSpot ts = touristSpotRepository.findByContentId(touristSpotPlace.getContentId()).orElse(null);
-		if (ts == null) {
-			return "기타";
-		}
-		return placeCategoryRepository.findByCat3(ts.getCat3())
-			.map(PlaceCategory::getTheme)
-			.orElse("기타");
-	}
 
+		TouristSpot ts = touristSpotMap.get(place.getContentId());
+		if (ts == null || ts.getCat3() == null) {
+			return null;
+		}
+
+		return placeCategoryMap.get(ts.getCat3());
+	}
 }
