@@ -177,7 +177,7 @@ public class ScheduleService {
 		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
 		schedule.getSchedulePlaces().clear();
-		sc
+		scheduleRepository.flush();
 
 		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
 			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
