@@ -1,4 +1,4 @@
-package org.example.be.unifieduser.dto;
+package org.example.be.legacy.unifieduser.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,8 +8,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class UnifiedUserCreationRequestDTO {
-    private String provider;
-    private String email;
-    private String name;
-    private String role;
+	private String provider;
+	private String email;
+	private String name;
+	private String role;
 }

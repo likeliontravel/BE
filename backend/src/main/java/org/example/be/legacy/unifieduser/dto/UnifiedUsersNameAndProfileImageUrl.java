@@ -1,4 +1,4 @@
-package org.example.be.unifieduser.dto;
+package org.example.be.legacy.unifieduser.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UnifiedUsersNameAndProfileImageUrl {
-    private String name;
-    private String profileImageUrl;
+	private String name;
+	private String profileImageUrl;
 }

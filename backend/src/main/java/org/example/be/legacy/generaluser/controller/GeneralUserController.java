@@ -1,10 +1,10 @@
-package org.example.be.generaluser.controller;
+package org.example.be.legacy.generaluser.controller;
 
-import org.example.be.generaluser.dto.GeneralUserDTO;
-import org.example.be.generaluser.service.GeneralUserService;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.legacy.generaluser.dto.GeneralUserDTO;
+import org.example.be.legacy.generaluser.service.GeneralUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

@@ -1,17 +1,17 @@
-package org.example.be.generaluser.service;
+package org.example.be.legacy.generaluser.service;
 
-import org.example.be.domain.member.entity.Member;
-import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.generaluser.domain.GeneralUser;
-import org.example.be.generaluser.dto.GeneralUserDTO;
-import org.example.be.generaluser.repository.GeneralUserRepository;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
 import org.example.be.domain.group.service.GroupService;
-import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
-import org.example.be.unifieduser.service.UnifiedUserService;
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.legacy.generaluser.domain.GeneralUser;
+import org.example.be.legacy.generaluser.dto.GeneralUserDTO;
+import org.example.be.legacy.generaluser.repository.GeneralUserRepository;
+import org.example.be.legacy.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.legacy.unifieduser.service.UnifiedUserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

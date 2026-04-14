@@ -1,21 +1,21 @@
-package org.example.be.unifieduser.service;
+package org.example.be.legacy.unifieduser.service;
 
 import java.util.Optional;
 
-import org.example.be.storage.gcs.GCSService;
-import org.example.be.generaluser.repository.GeneralUserRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.oauth.repository.SocialUserRepository;
 import org.example.be.global.security.util.SecurityUtil;
-import org.example.be.unifieduser.dto.ModifyNameDTO;
-import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
-import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserCreationRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserDTO;
-import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
-import org.example.be.unifieduser.entity.UnifiedUser;
-import org.example.be.unifieduser.repository.UnifiedUserRepository;
+import org.example.be.legacy.generaluser.repository.GeneralUserRepository;
+import org.example.be.legacy.unifieduser.dto.ModifyNameDTO;
+import org.example.be.legacy.unifieduser.dto.PolicyUpdateRequestDTO;
+import org.example.be.legacy.unifieduser.dto.SubscribedUpdateRequestDTO;
+import org.example.be.legacy.unifieduser.dto.UnifiedUserCreationRequestDTO;
+import org.example.be.legacy.unifieduser.dto.UnifiedUserDTO;
+import org.example.be.legacy.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
+import org.example.be.legacy.unifieduser.entity.UnifiedUser;
+import org.example.be.legacy.unifieduser.repository.UnifiedUserRepository;
+import org.example.be.oauth.repository.SocialUserRepository;
+import org.example.be.storage.gcs.GCSService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

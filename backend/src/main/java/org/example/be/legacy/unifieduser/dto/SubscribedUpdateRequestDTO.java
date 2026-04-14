@@ -1,8 +1,8 @@
-package org.example.be.unifieduser.dto;
+package org.example.be.legacy.unifieduser.dto;
 
 import lombok.Getter;
 
 @Getter
 public class SubscribedUpdateRequestDTO {
-    private Boolean subscribed;
+	private Boolean subscribed;
 }

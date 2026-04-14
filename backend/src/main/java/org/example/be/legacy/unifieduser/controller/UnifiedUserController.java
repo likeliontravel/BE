@@ -1,12 +1,12 @@
-package org.example.be.unifieduser.controller;
+package org.example.be.legacy.unifieduser.controller;
 
 import org.example.be.global.response.CommonResponse;
-import org.example.be.unifieduser.dto.ModifyNameDTO;
-import org.example.be.unifieduser.dto.PolicyUpdateRequestDTO;
-import org.example.be.unifieduser.dto.SubscribedUpdateRequestDTO;
-import org.example.be.unifieduser.dto.UnifiedUserDTO;
-import org.example.be.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
-import org.example.be.unifieduser.service.UnifiedUserService;
+import org.example.be.legacy.unifieduser.dto.ModifyNameDTO;
+import org.example.be.legacy.unifieduser.dto.PolicyUpdateRequestDTO;
+import org.example.be.legacy.unifieduser.dto.SubscribedUpdateRequestDTO;
+import org.example.be.legacy.unifieduser.dto.UnifiedUserDTO;
+import org.example.be.legacy.unifieduser.dto.UnifiedUsersNameAndProfileImageUrl;
+import org.example.be.legacy.unifieduser.service.UnifiedUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
