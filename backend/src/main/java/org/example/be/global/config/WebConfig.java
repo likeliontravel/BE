@@ -2,7 +2,7 @@ package org.example.be.global.config;
 
 import java.util.List;
 
-import org.example.be.resolver.DecodedPathVariableResolver;
+import org.example.be.global.util.DecodedPathVariableResolver;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

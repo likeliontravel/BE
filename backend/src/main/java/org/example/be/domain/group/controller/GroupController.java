@@ -2,19 +2,19 @@ package org.example.be.domain.group.controller;
 
 import java.util.List;
 
-import org.example.be.domain.group.dto.response.GroupAddMemberResBody;
 import org.example.be.domain.group.dto.request.GroupCreateReqBody;
+import org.example.be.domain.group.dto.request.GroupExitOrDeleteReqBody;
+import org.example.be.domain.group.dto.request.GroupModifyReqBody;
+import org.example.be.domain.group.dto.response.GroupAddMemberResBody;
 import org.example.be.domain.group.dto.response.GroupDeleteResBody;
 import org.example.be.domain.group.dto.response.GroupDetailResBody;
-import org.example.be.domain.group.dto.request.GroupExitOrDeleteReqBody;
 import org.example.be.domain.group.dto.response.GroupExitResBody;
-import org.example.be.domain.group.dto.request.GroupModifyReqBody;
 import org.example.be.domain.group.dto.response.GroupModifyResBody;
 import org.example.be.domain.group.dto.response.GroupResBody;
 import org.example.be.domain.group.service.GroupService;
-import org.example.be.resolver.DecodedPathVariable;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.config.SecurityUser;
+import org.example.be.global.util.DecodedPathVariable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

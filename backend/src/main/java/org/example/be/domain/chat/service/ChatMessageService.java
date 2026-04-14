@@ -18,7 +18,7 @@ import org.example.be.domain.chat.type.MessageType;
 import org.example.be.domain.member.dto.response.MemberDto;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.gcs.GCSService;
+import org.example.be.storage.gcs.GCSService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.entity.Group;

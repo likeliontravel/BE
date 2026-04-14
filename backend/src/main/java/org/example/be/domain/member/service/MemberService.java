@@ -9,7 +9,7 @@ import org.example.be.domain.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.domain.member.dto.response.MemberProfileResBody;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.gcs.GCSService;
+import org.example.be.storage.gcs.GCSService;
 import org.example.be.domain.member.type.OauthProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
