@@ -1,9 +1,8 @@
 package org.example.be.domain.place.touristspot.controller;
 
-import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
-import org.example.be.domain.place.entity.PlaceSortType;
+import org.example.be.domain.place.common.type.PlaceSortType;
 import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
 import org.example.be.domain.place.touristspot.service.TouristSpotFilterService;
 import org.example.be.global.response.CommonResponse;
@@ -16,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/places")

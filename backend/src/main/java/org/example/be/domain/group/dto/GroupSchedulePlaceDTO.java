@@ -2,7 +2,7 @@ package org.example.be.domain.group.dto;
 
 import java.time.LocalDateTime;
 
-import org.example.be.domain.place.entity.PlaceType;
+import org.example.be.domain.place.common.type.PlaceType;
 
 // 방문 장소 ( 장소 블록 세부정보 ) DTO
 public record GroupSchedulePlaceDTO(

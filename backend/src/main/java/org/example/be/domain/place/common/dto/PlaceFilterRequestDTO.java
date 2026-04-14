@@ -1,11 +1,11 @@
-package org.example.be.domain.place.dto;
+package org.example.be.domain.place.common.dto;
+
+import java.util.List;
+
+import org.example.be.domain.place.common.type.PlaceSortType;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import org.example.be.domain.place.entity.PlaceSortType;
-
-import java.util.List;
 
 @Getter
 @Setter

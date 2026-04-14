@@ -1,10 +1,14 @@
 package org.example.be.domain.schedule.dto;
 
-import lombok.*;
-
-import org.example.be.domain.place.entity.PlaceType;
-
 import java.time.LocalDateTime;
+
+import org.example.be.domain.place.common.type.PlaceType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

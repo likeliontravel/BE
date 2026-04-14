@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.domain.place.entity.Place;
+import org.example.be.domain.place.common.entity.Place;
 import org.example.be.domain.place.region.TourRegion;
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.theme.PlaceCategory;

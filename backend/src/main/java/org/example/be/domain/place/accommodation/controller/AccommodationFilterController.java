@@ -1,11 +1,10 @@
 package org.example.be.domain.place.accommodation.controller;
 
-import jakarta.validation.constraints.Min;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
 import org.example.be.domain.place.accommodation.service.AccommodationFilterService;
-import org.example.be.domain.place.entity.PlaceSortType;
+import org.example.be.domain.place.common.type.PlaceSortType;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/places")

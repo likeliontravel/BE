@@ -1,8 +1,8 @@
-package org.example.be.domain.place.entity;
-
-import lombok.Getter;
+package org.example.be.domain.place.common.type;
 
 import org.springframework.data.domain.Sort;
+
+import lombok.Getter;
 
 @Getter
 public enum PlaceSortType {
