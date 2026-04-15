@@ -22,6 +22,7 @@ import org.example.be.member.service.MemberService;
 import org.example.be.place.accommodation.entity.Accommodation;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.entity.PlaceType;
+import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
 import org.example.be.place.restaurant.entity.Restaurant;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
@@ -157,13 +158,15 @@ public class ScheduleService {
 		restaurantMap.values().forEach(r -> regionCodeKeys.add(r.getAreaCode() + "-" + r.getSiGunGuCode()));
 		accommodationMap.values().forEach(a -> regionCodeKeys.add(a.getAreaCode() + "-" + a.getSiGunGuCode()));
 
-		// 4. TourRegion 한 번에 조회하여 Map에 저장 (findAll 제거 -> 필요한 지역만 조회)
-		Map<String, String> tourRegionMap = new HashMap<>();
-		for (String key : regionCodeKeys) {
-			String[] parts = key.split("-");
-			tourRegionRepository.findByAreaCodeAndSiGunGuCode(parts[0], parts[1])
-				.ifPresent(tr -> tourRegionMap.put(key, tr.getRegion()));
-		}
+		// 4. TourRegion 한 번에 조회하여 Map에 저장
+		Map<String, String> tourRegionMap = regionCodeKeys.isEmpty() ? new HashMap<>()
+			: tourRegionRepository.findAllByRegionKeys(regionCodeKeys)
+			.stream()
+			.collect(Collectors.toMap(
+				tr -> tr.getAreaCode() + "-" + tr.getSiGunGuCode(),
+				TourRegion::getRegion,
+				(existing, replacement) -> existing
+			));
 
 		// 5. PlaceCategory 조회에 필요한 cat3 수집
 		Set<String> cat3Codes = touristSpotMap.values().stream()
