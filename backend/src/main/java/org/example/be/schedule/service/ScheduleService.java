@@ -128,7 +128,7 @@ public class ScheduleService {
 
 		List<Schedule> schedules = scheduleRepository.findAllByGroupsFetchJoin(groups);
 
-		// 1. 모든 SchedulePlace에서 고유한 contentId 수집 및 PlaceType별로 그룹화
+		//  모든 SchedulePlace에서 고유한 contentId 수집 및 PlaceType별로 그룹화
 		Map<PlaceType, Set<String>> contentIdsByType = schedules.stream()
 			.flatMap(s -> s.getSchedulePlaces().stream())
 			.collect(Collectors.groupingBy(
@@ -136,7 +136,7 @@ public class ScheduleService {
 				Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
 			));
 
-		// 2. 타입별 장소 엔티티들을 한 번에 조회하여 Map에 저장
+		//  타입별 장소 엔티티들을 한 번에 조회하여 Map에 저장
 		Map<String, TouristSpot> touristSpotMap = touristSpotRepository.findAllByContentIdIn(
 				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TouristSpot, Collections.emptySet())))
 			.stream()
@@ -152,14 +152,14 @@ public class ScheduleService {
 			.stream()
 			.collect(Collectors.toMap(Accommodation::getContentId, Function.identity()));
 
-		// 3. TourRegion 조회에 필요한 areaCode 및 siGunGuCode 수집
 		Set<String> regionCodeKeys = new HashSet<>();
 		touristSpotMap.values().forEach(ts -> regionCodeKeys.add(ts.getAreaCode() + "-" + ts.getSiGunGuCode()));
 		restaurantMap.values().forEach(r -> regionCodeKeys.add(r.getAreaCode() + "-" + r.getSiGunGuCode()));
 		accommodationMap.values().forEach(a -> regionCodeKeys.add(a.getAreaCode() + "-" + a.getSiGunGuCode()));
 
-		// 4. TourRegion 한 번에 조회하여 Map에 저장
-		Map<String, String> tourRegionMap = regionCodeKeys.isEmpty() ? new HashMap<>()
+		// TourRegion 한 번에 조회하여 Map에 저장
+		Map<String, String> tourRegionMap = regionCodeKeys.isEmpty()
+			? new HashMap<>()
 			: tourRegionRepository.findAllByRegionKeys(regionCodeKeys)
 			.stream()
 			.collect(Collectors.toMap(
@@ -168,13 +168,11 @@ public class ScheduleService {
 				(existing, replacement) -> existing
 			));
 
-		// 5. PlaceCategory 조회에 필요한 cat3 수집
 		Set<String> cat3Codes = touristSpotMap.values().stream()
 			.map(TouristSpot::getCat3)
 			.filter(Objects::nonNull)
 			.collect(Collectors.toSet());
 
-		// 6. PlaceCategory 한 번에 조회하여 Map에 저장
 		Map<String, String> placeCategoryMap = placeCategoryRepository.findAllByCat3In(new ArrayList<>(cat3Codes))
 			.stream()
 			.collect(Collectors.toMap(PlaceCategory::getCat3, PlaceCategory::getTheme));
