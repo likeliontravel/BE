@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -168,10 +167,20 @@ public class ScheduleService {
 				(existing, replacement) -> existing
 			));
 
-		Set<String> cat3Codes = touristSpotMap.values().stream()
-			.map(TouristSpot::getCat3)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toSet());
+		// PlaceCategory 조회에 필요한 cat3 수집
+		Set<String> cat3Codes = new HashSet<>();
+		touristSpotMap.values().forEach(ts -> {
+			if (ts.getCat3() != null)
+				cat3Codes.add(ts.getCat3());
+		});
+		restaurantMap.values().forEach(r -> {
+			if (r.getCat3() != null)
+				cat3Codes.add(r.getCat3());
+		});
+		accommodationMap.values().forEach(a -> {
+			if (a.getCat3() != null)
+				cat3Codes.add(a.getCat3());
+		});
 
 		Map<String, String> placeCategoryMap = placeCategoryRepository.findAllByCat3In(new ArrayList<>(cat3Codes))
 			.stream()
@@ -194,17 +203,12 @@ public class ScheduleService {
 					.min(Comparator.comparing(SchedulePlace::getVisitStart))
 					.orElse(null);
 
-				SchedulePlace firstTouristSpotPlace = places.stream()
-					.filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
-					.min(Comparator.comparing(SchedulePlace::getVisitStart))
-					.orElse(null);
-
 				// 핵심: 미리 로드된 맵들을 헬퍼 메서드에 넘겨서 정보 추출
 				String region = getRegionFromPlace(
 					firstAnyPlace, touristSpotMap, restaurantMap, accommodationMap, tourRegionMap
 				);
 				String theme = getThemeFromPlace(
-					firstTouristSpotPlace, touristSpotMap, placeCategoryMap
+					firstAnyPlace, touristSpotMap, restaurantMap, accommodationMap, placeCategoryMap
 				);
 
 				return ScheduleSummaryResBody.from(
@@ -312,17 +316,33 @@ public class ScheduleService {
 	private String getThemeFromPlace(
 		SchedulePlace place,
 		Map<String, TouristSpot> touristSpotMap,
+		Map<String, Restaurant> restaurantMap,
+		Map<String, Accommodation> accommodationMap,
 		Map<String, String> placeCategoryMap
 	) {
-		if (place == null || place.getPlaceType() != PlaceType.TouristSpot) {
+		if (place == null) {
 			return null;
 		}
 
-		TouristSpot ts = touristSpotMap.get(place.getContentId());
-		if (ts == null || ts.getCat3() == null) {
-			return null;
+		String cat3 = null;
+		switch (place.getPlaceType()) {
+			case TouristSpot:
+				TouristSpot ts = touristSpotMap.get(place.getContentId());
+				if (ts != null)
+					cat3 = ts.getCat3();
+				break;
+			case Restaurant:
+				Restaurant r = restaurantMap.get(place.getContentId());
+				if (r != null)
+					cat3 = r.getCat3();
+				break;
+			case Accommodation:
+				Accommodation a = accommodationMap.get(place.getContentId());
+				if (a != null)
+					cat3 = a.getCat3();
+				break;
 		}
 
-		return placeCategoryMap.get(ts.getCat3());
+		return cat3 != null ? placeCategoryMap.get(cat3) : null;
 	}
 }
