@@ -2,7 +2,6 @@ package org.example.be.global.security.util;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.oauth.dto.CustomOAuth2User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -23,9 +22,9 @@ public class SecurityUtil {
 		String userIdentifier = null;
 
 		// 이 분기는 원래 if (principal instanceof UserContext) { ... } else if (principal instanceof CustomOAuth2User) { ... } 였습니다.
-		if (principal instanceof CustomOAuth2User) {
-			userIdentifier = ((CustomOAuth2User)principal).getUserIdentifier();
-		}
+		// if (principal instanceof CustomOAuth2User) {
+		// 	userIdentifier = ((CustomOAuth2User)principal).getUserIdentifier();
+		// }
 
 		if (userIdentifier == null) {
 			System.out.println("[SecurityUtil] 인증 객체에서 userIdentifier 추출 실패");

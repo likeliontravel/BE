@@ -1,13 +1,13 @@
-package org.example.be.oauth.dto;
+package org.example.be.global.security.oauth.userinfo;
 
 import java.util.Map;
 
-public class KakaoResponse implements OAuth2Response {
+public class KakaoUserInfo implements OAuth2UserInfo {
 	private final Map<String, Object> attributes;
 	private final Map<String, Object> kakaoAccount;
 	private final Map<String, Object> profile;
 
-	public KakaoResponse(Map<String, Object> attributes) {
+	public KakaoUserInfo(Map<String, Object> attributes) {
 		this.attributes = attributes;
 		this.kakaoAccount = extractMapFromAttributes(attributes, "kakao_account");
 		this.profile = extractMapFromAttributes(kakaoAccount, "profile");

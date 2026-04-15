@@ -1,14 +1,14 @@
-package org.example.be.oauth.service;
+package org.example.be.global.security.oauth.service;
 
 import java.util.Map;
 
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.type.OauthProvider;
-import org.example.be.oauth.dto.GoogleResponse;
-import org.example.be.oauth.dto.KakaoResponse;
-import org.example.be.oauth.dto.NaverResponse;
-import org.example.be.oauth.dto.OAuth2Response;
+import org.example.be.global.security.oauth.userinfo.GoogleUserInfo;
+import org.example.be.global.security.oauth.userinfo.KakaoUserInfo;
+import org.example.be.global.security.oauth.userinfo.NaverUserInfo;
+import org.example.be.global.security.oauth.userinfo.OAuth2UserInfo;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -32,7 +32,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 		OauthProvider provider = OauthProvider.valueOf(providerTypeCode);
 
-		OAuth2Response userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
+		OAuth2UserInfo userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
 
 		Member member = memberRepository.findByEmailAndOauthProvider(userInfo.getEmail(), provider).orElse(null);
 
@@ -43,18 +43,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 		return oAuth2User;
 	}
 
-	private OAuth2Response getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
+	private OAuth2UserInfo getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
 		if ("KAKAO".equalsIgnoreCase(providerTypeCode)) {
-			return new KakaoResponse(attributes);
+			return new KakaoUserInfo(attributes);
 		} else if ("NAVER".equalsIgnoreCase(providerTypeCode)) {
-			return new NaverResponse(attributes);
+			return new NaverUserInfo(attributes);
 		} else if ("GOOGLE".equalsIgnoreCase(providerTypeCode)) {
-			return new GoogleResponse(attributes);
+			return new GoogleUserInfo(attributes);
 		}
 		throw new OAuth2AuthenticationException("지원하지 않는 로그인 방식입니다: " + providerTypeCode);
 	}
 
-	private void joinMember(OAuth2Response userInfo, OauthProvider provider) {
+	private void joinMember(OAuth2UserInfo userInfo, OauthProvider provider) {
 		memberRepository.save(
 			Member.createForOAuth(userInfo.getName(), userInfo.getEmail(), userInfo.getProfileImage(), provider));
 	}

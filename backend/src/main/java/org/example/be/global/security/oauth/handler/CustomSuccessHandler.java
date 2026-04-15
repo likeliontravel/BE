@@ -1,19 +1,19 @@
-package org.example.be.oauth.handler;
+package org.example.be.global.security.oauth.handler;
 
 import java.io.IOException;
 import java.util.Map;
 
-import org.example.be.domain.member.entity.Member;
-import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.domain.member.service.AuthTokenService;
-import org.example.be.global.util.CookieHelper;
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
 import org.example.be.domain.group.service.GroupService;
-import org.example.be.oauth.dto.GoogleResponse;
-import org.example.be.oauth.dto.KakaoResponse;
-import org.example.be.oauth.dto.NaverResponse;
-import org.example.be.oauth.dto.OAuth2Response;
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.member.service.AuthTokenService;
+import org.example.be.global.security.oauth.userinfo.GoogleUserInfo;
+import org.example.be.global.security.oauth.userinfo.KakaoUserInfo;
+import org.example.be.global.security.oauth.userinfo.NaverUserInfo;
+import org.example.be.global.security.oauth.userinfo.OAuth2UserInfo;
+import org.example.be.global.util.CookieHelper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -49,7 +49,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 		String providerTypeCode = token.getAuthorizedClientRegistrationId().toUpperCase();
 
 		OAuth2User oAuth2User = (OAuth2User)authentication.getPrincipal();
-		OAuth2Response userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
+		OAuth2UserInfo userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
 
 		log.info("OAuth2 로그인 성공: provider={}, email={}, name={}",
 			userInfo.getProvider(), userInfo.getEmail(), userInfo.getName());
@@ -102,13 +102,13 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 
 	}
 
-	private OAuth2Response getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
+	private OAuth2UserInfo getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
 		if ("KAKAO".equalsIgnoreCase(providerTypeCode)) {
-			return new KakaoResponse(attributes);
+			return new KakaoUserInfo(attributes);
 		} else if ("NAVER".equalsIgnoreCase(providerTypeCode)) {
-			return new NaverResponse(attributes);
+			return new NaverUserInfo(attributes);
 		} else if ("GOOGLE".equalsIgnoreCase(providerTypeCode)) {
-			return new GoogleResponse(attributes);
+			return new GoogleUserInfo(attributes);
 		}
 
 		throw new OAuth2AuthenticationException("지원하지 않는 로그인 방식입니다: " + providerTypeCode);

@@ -1,15 +1,15 @@
-package org.example.be.oauth.dto;
+package org.example.be.global.security.oauth.userinfo;
 
 import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 
-public class NaverResponse implements OAuth2Response {
+public class NaverUserInfo implements OAuth2UserInfo {
 	private final Map<String, Object> attribute;
 
 	// 네이버는 응답 JSON 형태에 사용자 데이터가 response라는 이름의 키 값으로 존재.
-	public NaverResponse(Map<String, Object> attribute) {
+	public NaverUserInfo(Map<String, Object> attribute) {
 		this.attribute = (Map<String, Object>)attribute.get("response");
 	}
 

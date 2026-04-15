@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.example.be.global.jwt.util.JsonUt;
-import org.example.be.oauth.handler.CustomSuccessHandler;
-import org.example.be.oauth.service.CustomOAuth2UserService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.filter.CustomAuthenticationFilter;
+import org.example.be.global.security.oauth.handler.CustomSuccessHandler;
+import org.example.be.global.security.oauth.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

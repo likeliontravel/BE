@@ -1,4 +1,4 @@
-package org.example.be.oauth.dto;
+package org.example.be.global.security.oauth.userinfo;
 
 import java.util.Map;
 
@@ -8,13 +8,13 @@ import org.example.be.global.exception.code.ErrorCode;
 /**
  * Google OAuth2 인증을 통해 반환된 사용자 정보를 다루는 클래스.
  * - Google API의 JSON 응답을 파싱하여 필요한 데이터를 반환.
- * - OAuth2Response 인터페이스를 구현하여 다른 제공자와 동일한 방식으로 동작.
+ * - OAuth2UserInfo 인터페이스를 구현하여 다른 제공자와 동일한 방식으로 동작.
  */
-public class GoogleResponse implements OAuth2Response {
+public class GoogleUserInfo implements OAuth2UserInfo {
 
 	private final Map<String, Object> attributes;
 
-	public GoogleResponse(Map<String, Object> attributes) {
+	public GoogleUserInfo(Map<String, Object> attributes) {
 		this.attributes = attributes;
 	}
 
