@@ -137,17 +137,17 @@ public class ScheduleService {
 
 		//  타입별 장소 엔티티들을 한 번에 조회하여 Map에 저장
 		Map<String, TouristSpot> touristSpotMap = touristSpotRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TouristSpot, Collections.emptySet())))
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TOURISTSPOT, Collections.emptySet())))
 			.stream()
 			.collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
 
 		Map<String, Restaurant> restaurantMap = restaurantRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.Restaurant, Collections.emptySet())))
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.RESTAURANT, Collections.emptySet())))
 			.stream()
 			.collect(Collectors.toMap(Restaurant::getContentId, Function.identity()));
 
 		Map<String, Accommodation> accommodationMap = accommodationRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.Accommodation, Collections.emptySet())))
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.ACCOMMODATION, Collections.emptySet())))
 			.stream()
 			.collect(Collectors.toMap(Accommodation::getContentId, Function.identity()));
 
@@ -293,17 +293,17 @@ public class ScheduleService {
 
 		String regionCodeKey = null;
 		switch (place.getPlaceType()) {
-			case TouristSpot:
+			case TOURISTSPOT:
 				TouristSpot ts = touristSpotMap.get(place.getContentId());
 				if (ts != null)
 					regionCodeKey = ts.getAreaCode() + "-" + ts.getSiGunGuCode();
 				break;
-			case Restaurant:
+			case RESTAURANT:
 				Restaurant r = restaurantMap.get(place.getContentId());
 				if (r != null)
 					regionCodeKey = r.getAreaCode() + "-" + r.getSiGunGuCode();
 				break;
-			case Accommodation:
+			case ACCOMMODATION:
 				Accommodation a = accommodationMap.get(place.getContentId());
 				if (a != null)
 					regionCodeKey = a.getAreaCode() + "-" + a.getSiGunGuCode();
@@ -326,17 +326,17 @@ public class ScheduleService {
 
 		String cat3 = null;
 		switch (place.getPlaceType()) {
-			case TouristSpot:
+			case TOURISTSPOT:
 				TouristSpot ts = touristSpotMap.get(place.getContentId());
 				if (ts != null)
 					cat3 = ts.getCat3();
 				break;
-			case Restaurant:
+			case RESTAURANT:
 				Restaurant r = restaurantMap.get(place.getContentId());
 				if (r != null)
 					cat3 = r.getCat3();
 				break;
-			case Accommodation:
+			case ACCOMMODATION:
 				Accommodation a = accommodationMap.get(place.getContentId());
 				if (a != null)
 					cat3 = a.getCat3();

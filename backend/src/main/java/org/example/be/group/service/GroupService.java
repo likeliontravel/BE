@@ -281,22 +281,22 @@ public class GroupService {
 
 	private String resolveTitle(SchedulePlace place) {
 		return switch (place.getPlaceType()) {
-			case TouristSpot -> touristSpotRepository.findByContentId(place.getContentId())
+			case TOURISTSPOT -> touristSpotRepository.findByContentId(place.getContentId())
 				.map(t -> t.getTitle()).orElse("(없거나 삭제된 장소)");
-			case Restaurant -> restaurantRepository.findByContentId(place.getContentId())
+			case RESTAURANT -> restaurantRepository.findByContentId(place.getContentId())
 				.map(r -> r.getTitle()).orElse("(없거나 삭제된 장소)");
-			case Accommodation -> accommodationRepository.findByContentId(place.getContentId())
+			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
 				.map(a -> a.getTitle()).orElse("(없거나 삭제된 장소)");
 		};
 	}
 
 	private String resolveAddress(SchedulePlace place) {
 		return switch (place.getPlaceType()) {
-			case TouristSpot -> touristSpotRepository.findByContentId(place.getContentId())
+			case TOURISTSPOT -> touristSpotRepository.findByContentId(place.getContentId())
 				.map(t -> t.getAddr1() + t.getAddr2()).orElse("(없거나 삭제된 장소)");
-			case Restaurant -> restaurantRepository.findByContentId(place.getContentId())
+			case RESTAURANT -> restaurantRepository.findByContentId(place.getContentId())
 				.map(r -> r.getAddr1() + r.getAddr2()).orElse("(없거나 삭제된 장소)");
-			case Accommodation -> accommodationRepository.findByContentId(place.getContentId())
+			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
 				.map(a -> a.getAddr1() + a.getAddr2()).orElse("(없거나 삭제된 장소)");
 		};
 	}

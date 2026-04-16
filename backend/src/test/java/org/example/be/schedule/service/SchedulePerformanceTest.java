@@ -57,7 +57,7 @@ public class SchedulePerformanceTest {
 		scheduleRepository.save(schedule);
 		
 		for (int i = 0; i < DUMMY_COUNT; i++) {
-			SchedulePlace.create(schedule, VALID_CONTENT_ID, PlaceType.TouristSpot,
+			SchedulePlace.create(schedule, VALID_CONTENT_ID, PlaceType.TOURISTSPOT,
 				LocalDateTime.now(), LocalDateTime.now(), 1, i);
 		}
 
