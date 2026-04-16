@@ -3,8 +3,13 @@ package org.example.be.schedule.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
@@ -13,25 +18,25 @@ import org.example.be.group.repository.GroupRepository;
 import org.example.be.group.service.GroupService;
 import org.example.be.member.entity.Member;
 import org.example.be.member.service.MemberService;
+import org.example.be.place.accommodation.entity.Accommodation;
 import org.example.be.place.accommodation.repository.AccommodationRepository;
 import org.example.be.place.entity.PlaceType;
 import org.example.be.place.region.TourRegion;
 import org.example.be.place.region.TourRegionRepository;
+import org.example.be.place.restaurant.entity.Restaurant;
 import org.example.be.place.restaurant.repository.RestaurantRepository;
 import org.example.be.place.theme.PlaceCategory;
 import org.example.be.place.theme.PlaceCategoryRepository;
 import org.example.be.place.touristSpot.entity.TouristSpot;
 import org.example.be.place.touristSpot.repository.TouristSpotRepository;
-import org.example.be.schedule.dto.SchedulePlaceRequestDTO;
-import org.example.be.schedule.dto.SchedulePlaceResponseDTO;
-import org.example.be.schedule.dto.ScheduleRequestDTO;
-import org.example.be.schedule.dto.ScheduleResponseDTO;
-import org.example.be.schedule.dto.ScheduleSummaryDTO;
+import org.example.be.schedule.dto.request.SchedulePlaceReqBody;
+import org.example.be.schedule.dto.request.ScheduleReqBody;
+import org.example.be.schedule.dto.response.ScheduleResBody;
+import org.example.be.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.schedule.entity.Schedule;
 import org.example.be.schedule.entity.SchedulePlace;
 import org.example.be.schedule.repository.SchedulePlaceRepository;
 import org.example.be.schedule.repository.ScheduleRepository;
-import org.example.be.security.util.SecurityUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,59 +60,44 @@ public class ScheduleService {
 
 	// 일정 생성
 	@Transactional
-	public ScheduleResponseDTO createSchedule(ScheduleRequestDTO requestDTO) {
-		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
+	public ScheduleResBody createSchedule(ScheduleReqBody reqBody, Long userId) {
+		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
+			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD,
+				"일정 생성 실패 - 시작 날짜가 종료 날짜보다 이후일 수 없음 startSchedule: " + reqBody.startSchedule() + ", endSchedule: "
+					+ reqBody.endSchedule());
+		}
+
+		Group group = groupRepository.findByGroupName(reqBody.groupName())
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND,
-				"일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + requestDTO.getGroupName()));
+				"일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + reqBody.groupName()));
 
 		// 그룹 창설자인지 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		Member member = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND,
-				"일정 생성 실패 - 유저 찾을 수 없음 memberId: " + userIdentifier));
-		groupService.validateGroupCreator(group.getGroupName(), member.getId());
+		groupService.validateGroupCreator(group.getGroupName(), userId);
 
 		// 이미 일정이 존재하는지 검사
 		scheduleRepository.findByGroup(group).ifPresent(existingSchedule -> {
 			throw new BusinessException(ErrorCode.SCHEDULE_ALREADY_EXIST,
-				"일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + requestDTO.getGroupName());
+				"일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + reqBody.groupName());
 		});
 
-		Schedule schedule = Schedule.builder()
-			.startSchedule(requestDTO.getStartSchedule())
-			.endSchedule(requestDTO.getEndSchedule())
-			.group(group)
-			.build();
+		Schedule schedule = Schedule.create(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId()); // 변경됨
+		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
+			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
 
-			SchedulePlace schedulePlace = SchedulePlace.builder()
-				.schedule(schedule)
-				.contentId(places.getContentId())
-				.placeType(places.getPlaceType())
-				.visitStart(places.getVisitStart())
-				.visitedEnd(places.getVisitedEnd())
-				.dayOrder(places.getDayOrder())
-				.orderInDay(places.getOrderInDay())
-				.build();
-
-			schedule.getSchedulePlaces().add(schedulePlace);
+			SchedulePlace.create(schedule,
+				places.contentId(),
+				places.placeType(),
+				places.visitStart(),
+				places.visitedEnd(),
+				places.dayOrder(),
+				places.orderInDay()
+			);
 		}
 
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResponseDTO.builder()
-				.scheduleId(savedSchedule.getId())
-				.startSchedule(savedSchedule.getStartSchedule())
-				.endSchedule(savedSchedule.getEndSchedule())
-				.schedulePlaces(
-					savedSchedule.getSchedulePlaces().stream()
-						.map(this::toResponseDTO)
-						.toList()
-				)
-				.build();
+			return ScheduleResBody.from(savedSchedule);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
 		}
@@ -115,139 +105,159 @@ public class ScheduleService {
 
 	// 일정 조회
 	@Transactional(readOnly = true)
-	public ScheduleResponseDTO getScheduleByGroupName(String groupName) {
+	public ScheduleResBody getScheduleByGroupName(String groupName) {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		List<SchedulePlaceResponseDTO> placeDTOs = schedule.getSchedulePlaces().stream()
-			.map(this::toResponseDTO)
-			.toList();
-
-		return ScheduleResponseDTO.builder()
-			.scheduleId(schedule.getId())
-			.startSchedule(schedule.getStartSchedule())
-			.endSchedule(schedule.getEndSchedule())
-			.groupName(schedule.getGroup().getGroupName())
-			.schedulePlaces(placeDTOs)
-			.build();
+		return ScheduleResBody.from(schedule);
 	}
 
 	// 일정 요약 목록 조회
-	// 요청자의 가입된 그룹을 찾아 해당 그룹의 존재 일정 정보를 그룹별로 묶어 반환
-	// 만약 그룹은 존재하나 일정이 없는 경우 scheduleFirstRegion값으로 "아직 일정이 생성되지 않았습니다" 전달 및 나머지값 null 반환
 	@Transactional(readOnly = true)
-	public List<ScheduleSummaryDTO> getScheduleList() {
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
+	public List<ScheduleSummaryResBody> getScheduleList(Long userId) {
+		Member user = memberService.getById(userId);
 
 		List<Group> groups = groupRepository.findByMembersContaining(user);
 		if (groups.isEmpty()) {
 			return Collections.emptyList();
 		}
 
-		List<ScheduleSummaryDTO> scheduleSummaryList = new ArrayList<>();
+		List<Schedule> schedules = scheduleRepository.findAllByGroupsFetchJoin(groups);
 
-		for (Group group : groups) {
-			Optional<Schedule> scheduleOpt = scheduleRepository.findByGroup(group);
+		//  모든 SchedulePlace에서 고유한 contentId 수집 및 PlaceType별로 그룹화
+		Map<PlaceType, Set<String>> contentIdsByType = schedules.stream()
+			.flatMap(s -> s.getSchedulePlaces().stream())
+			.collect(Collectors.groupingBy(
+				SchedulePlace::getPlaceType,
+				Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
+			));
 
-			// 스케줄이 없으면 안내문구만 반환
-			if (scheduleOpt.isEmpty()) {
-				scheduleSummaryList.add(
-					ScheduleSummaryDTO.builder()
-						.groupName(group.getGroupName())
-						.scheduleFirstRegion("아직 일정이 생성되지 않았습니다.")
-						.scheduleFirstTheme(null)
-						.startSchedule(null)
-						.endSchedule(null)
-						.build()
+		//  타입별 장소 엔티티들을 한 번에 조회하여 Map에 저장
+		Map<String, TouristSpot> touristSpotMap = touristSpotRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TOURISTSPOT, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(TouristSpot::getContentId, Function.identity()));
+
+		Map<String, Restaurant> restaurantMap = restaurantRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.RESTAURANT, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(Restaurant::getContentId, Function.identity()));
+
+		Map<String, Accommodation> accommodationMap = accommodationRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.ACCOMMODATION, Collections.emptySet())))
+			.stream()
+			.collect(Collectors.toMap(Accommodation::getContentId, Function.identity()));
+
+		Set<String> regionCodeKeys = new HashSet<>();
+		touristSpotMap.values().forEach(ts -> regionCodeKeys.add(ts.getAreaCode() + "-" + ts.getSiGunGuCode()));
+		restaurantMap.values().forEach(r -> regionCodeKeys.add(r.getAreaCode() + "-" + r.getSiGunGuCode()));
+		accommodationMap.values().forEach(a -> regionCodeKeys.add(a.getAreaCode() + "-" + a.getSiGunGuCode()));
+
+		// TourRegion 한 번에 조회하여 Map에 저장
+		Map<String, String> tourRegionMap = regionCodeKeys.isEmpty()
+			? new HashMap<>()
+			: tourRegionRepository.findAllByRegionKeys(regionCodeKeys)
+			.stream()
+			.collect(Collectors.toMap(
+				tr -> tr.getAreaCode() + "-" + tr.getSiGunGuCode(),
+				TourRegion::getRegion,
+				(existing, replacement) -> existing
+			));
+
+		// PlaceCategory 조회에 필요한 cat3 수집
+		Set<String> cat3Codes = new HashSet<>();
+		touristSpotMap.values().forEach(ts -> {
+			if (ts.getCat3() != null)
+				cat3Codes.add(ts.getCat3());
+		});
+		restaurantMap.values().forEach(r -> {
+			if (r.getCat3() != null)
+				cat3Codes.add(r.getCat3());
+		});
+		accommodationMap.values().forEach(a -> {
+			if (a.getCat3() != null)
+				cat3Codes.add(a.getCat3());
+		});
+
+		Map<String, String> placeCategoryMap = placeCategoryRepository.findAllByCat3In(new ArrayList<>(cat3Codes))
+			.stream()
+			.collect(Collectors.toMap(PlaceCategory::getCat3, PlaceCategory::getTheme));
+
+		Map<Long, Schedule> scheduleMap = schedules.stream()
+			.collect(Collectors.toMap(s -> s.getGroup().getId(), Function.identity()));
+
+		return groups.stream()
+			.map(group -> {
+				Schedule schedule = scheduleMap.get(group.getId());
+
+				if (schedule == null) {
+					return ScheduleSummaryResBody.empty(group.getGroupName());
+				}
+
+				List<SchedulePlace> places = schedule.getSchedulePlaces();
+
+				SchedulePlace firstAnyPlace = places.stream()
+					.min(Comparator.comparing(SchedulePlace::getVisitStart))
+					.orElse(null);
+
+				// 핵심: 미리 로드된 맵들을 헬퍼 메서드에 넘겨서 정보 추출
+				String region = getRegionFromPlace(
+					firstAnyPlace, touristSpotMap, restaurantMap, accommodationMap, tourRegionMap
 				);
-				continue;
-			}
+				String theme = getThemeFromPlace(
+					firstAnyPlace, touristSpotMap, restaurantMap, accommodationMap, placeCategoryMap
+				);
 
-			Schedule schedule = scheduleOpt.get();
-			List<SchedulePlace> places = schedulePlaceRepository.findBySchedule(schedule);
+				return ScheduleSummaryResBody.from(
+					group.getGroupName(),
+					region,
+					theme,
+					schedule.getStartSchedule(),
+					schedule.getEndSchedule()
+				);
 
-			// 1) region: 타입 무관, 가장 이른 visitStart
-			SchedulePlace firstAnyPlace = places.stream()
-				.min(Comparator.comparing(SchedulePlace::getVisitStart))
-				.orElse(null);
-			String firstRegionName = resolveRegion(firstAnyPlace); // TouristSpot/Restaurant/Accommodation 모두 처리
-
-			// 2) theme: TouristSpot 중 가장 이른 visitStart가 있을 때만, 없으면 "기타"
-			SchedulePlace firstTouristSpotPlace = places.stream()
-				.filter(p -> p.getPlaceType() == PlaceType.TouristSpot)
-				.min(Comparator.comparing(SchedulePlace::getVisitStart))
-				.orElse(null);
-			String firstTheme = resolveThemeFromTouristSpot(firstTouristSpotPlace);
-
-			scheduleSummaryList.add(
-				ScheduleSummaryDTO.builder()
-					.groupName(group.getGroupName())
-					.scheduleFirstRegion(firstRegionName)
-					.scheduleFirstTheme(firstTheme)
-					.startSchedule(schedule.getStartSchedule())
-					.endSchedule(schedule.getEndSchedule())
-					.build()
-			);
-		}
-
-		return scheduleSummaryList;
+			})
+			.toList();
 	}
 
 	// 일정 수정
 	@Transactional
-	public ScheduleResponseDTO updateSchedule(Long scheduleId, ScheduleRequestDTO requestDTO) {
+	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody, Long userId) {
+		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
+			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD);
+		}
+
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
-		Group group = groupRepository.findByGroupName(requestDTO.getGroupName())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + requestDTO.getGroupName()));
+		Group group = groupRepository.findByGroupName(reqBody.groupName())
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + reqBody.groupName()));
 
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
 		// 그룹 창설자 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
-		groupService.validateGroupCreator(group.getGroupName(), user.getId());
+		groupService.validateGroupCreator(group.getGroupName(), userId);
 
-		schedule.setStartSchedule(requestDTO.getStartSchedule());
-		schedule.setEndSchedule(requestDTO.getEndSchedule());
-		schedule.setGroup(group);
+		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
 		schedule.getSchedulePlaces().clear();
+		scheduleRepository.flush();
 
-		for (SchedulePlaceRequestDTO places : requestDTO.getSchedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.getPlaceType(), places.getContentId());  // 변경됨
-
-			SchedulePlace schedulePlace = SchedulePlace.builder()
-				.schedule(schedule)
-				.contentId(places.getContentId())
-				.placeType(places.getPlaceType())
-				.visitStart(places.getVisitStart())
-				.visitedEnd(places.getVisitedEnd())
-				.dayOrder(places.getDayOrder())
-				.orderInDay(places.getOrderInDay())
-				.build();
-
-			schedule.getSchedulePlaces().add(schedulePlace);
+		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
+			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
+			SchedulePlace.create(schedule,
+				places.contentId(),
+				places.placeType(),
+				places.visitStart(),
+				places.visitedEnd(),
+				places.dayOrder(),
+				places.orderInDay()
+			);
 		}
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResponseDTO.builder()
-				.scheduleId(updatedSchedule.getId())
-				.startSchedule(updatedSchedule.getStartSchedule())
-				.endSchedule(updatedSchedule.getEndSchedule())
-				.schedulePlaces(
-					updatedSchedule.getSchedulePlaces().stream()
-						.map(this::toResponseDTO)
-						.toList()
-				)
-				.build();
+			return ScheduleResBody.from(updatedSchedule);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
 		}
@@ -255,97 +265,84 @@ public class ScheduleService {
 
 	// 일정 삭제
 	@Transactional
-	public void deleteSchedule(Long scheduleId) {
+	public void deleteSchedule(Long scheduleId, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
-		// 일정 권한 수정 마이그레이션때 userIdentifier 참조 없앨 예정
-		// 그룹 창설자 검증
-		String userIdentifier = SecurityUtil.getUserIdentifierFromAuthentication();
-		Member user = memberService.findByEmail(userIdentifier.substring(4))
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + userIdentifier));
-
-		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), user.getId());
+		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
 		try {
 			scheduleRepository.delete(schedule);
+			scheduleRepository.flush(); // 즉시 DB 제약 조건 확인
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "일정 삭제 실패 - message: " + e.getMessage());
 		}
 	}
 
-	// ----------------------------- 내부 헬퍼 메서드 ---------------------------
-	// 조회에 사용할 응답DTO 매퍼 ( SchedulePlace )
-	private SchedulePlaceResponseDTO toResponseDTO(SchedulePlace place) {
-		return SchedulePlaceResponseDTO.builder()
-			.id(place.getId())
-			.contentId(place.getContentId())
-			.placeType(place.getPlaceType())
-			.visitStart(place.getVisitStart())
-			.visitedEnd(place.getVisitedEnd())
-			.dayOrder(place.getDayOrder())
-			.orderInDay(place.getOrderInDay())
-			.build();
-	}
-
-	/**
-	 * placeType에 맞게 레포지토리에서 장소를 찾아 areaCode/siGunGuCode로 region을 구한다.
-	 * 장소를 찾지 못하면 null 반환.
-	 */
-	private String resolveRegion(SchedulePlace place) {
+	// --- N+1 해결을 위한 새로운 헬퍼 메서드들 ---
+	private String getRegionFromPlace(
+		SchedulePlace place,
+		Map<String, TouristSpot> touristSpotMap,
+		Map<String, Restaurant> restaurantMap,
+		Map<String, Accommodation> accommodationMap,
+		Map<String, String> tourRegionMap
+	) {
 		if (place == null) {
 			return null;
 		}
 
+		String regionCodeKey = null;
 		switch (place.getPlaceType()) {
-			case TouristSpot: {
-				TouristSpot ts = touristSpotRepository.findByContentId(place.getContentId()).orElse(null);
-				if (ts == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(ts.getAreaCode(), ts.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			case Restaurant: {
-				org.example.be.place.restaurant.entity.Restaurant r =
-					restaurantRepository.findByContentId(place.getContentId()).orElse(null);
-				if (r == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(r.getAreaCode(), r.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			case Accommodation: {
-				org.example.be.place.accommodation.entity.Accommodation a =
-					accommodationRepository.findByContentId(place.getContentId()).orElse(null);
-				if (a == null)
-					return null;
-				return tourRegionRepository
-					.findByAreaCodeAndSiGunGuCode(a.getAreaCode(), a.getSiGunGuCode())
-					.map(TourRegion::getRegion)
-					.orElse(null);
-			}
-			default:
-				return null;
+			case TOURISTSPOT:
+				TouristSpot ts = touristSpotMap.get(place.getContentId());
+				if (ts != null)
+					regionCodeKey = ts.getAreaCode() + "-" + ts.getSiGunGuCode();
+				break;
+			case RESTAURANT:
+				Restaurant r = restaurantMap.get(place.getContentId());
+				if (r != null)
+					regionCodeKey = r.getAreaCode() + "-" + r.getSiGunGuCode();
+				break;
+			case ACCOMMODATION:
+				Accommodation a = accommodationMap.get(place.getContentId());
+				if (a != null)
+					regionCodeKey = a.getAreaCode() + "-" + a.getSiGunGuCode();
+				break;
 		}
+		return regionCodeKey != null ? tourRegionMap.get(regionCodeKey) : null;
 	}
 
-	/**
-	 * TouristSpot이 있을 때만 theme을 추출. 없으면 "기타".
-	 */
-	private String resolveThemeFromTouristSpot(SchedulePlace touristSpotPlace) {
-		if (touristSpotPlace == null) {
-			return "기타";
+	// SchedulePlace와 미리 로드된 맵들을 이용하여 테마 정보 추출
+	private String getThemeFromPlace(
+		SchedulePlace place,
+		Map<String, TouristSpot> touristSpotMap,
+		Map<String, Restaurant> restaurantMap,
+		Map<String, Accommodation> accommodationMap,
+		Map<String, String> placeCategoryMap
+	) {
+		if (place == null) {
+			return null;
 		}
-		TouristSpot ts = touristSpotRepository.findByContentId(touristSpotPlace.getContentId()).orElse(null);
-		if (ts == null) {
-			return "기타";
-		}
-		return placeCategoryRepository.findByCat3(ts.getCat3())
-			.map(PlaceCategory::getTheme)
-			.orElse("기타");
-	}
 
+		String cat3 = null;
+		switch (place.getPlaceType()) {
+			case TOURISTSPOT:
+				TouristSpot ts = touristSpotMap.get(place.getContentId());
+				if (ts != null)
+					cat3 = ts.getCat3();
+				break;
+			case RESTAURANT:
+				Restaurant r = restaurantMap.get(place.getContentId());
+				if (r != null)
+					cat3 = r.getCat3();
+				break;
+			case ACCOMMODATION:
+				Accommodation a = accommodationMap.get(place.getContentId());
+				if (a != null)
+					cat3 = a.getCat3();
+				break;
+		}
+
+		return cat3 != null ? placeCategoryMap.get(cat3) : null;
+	}
 }
