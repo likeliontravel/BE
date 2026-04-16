@@ -1,4 +1,4 @@
-package org.example.be.domain.chat.config;
+package org.example.be.domain.chat.handler;
 
 import java.security.Principal;
 import java.util.Map;

@@ -1,9 +1,9 @@
 package org.example.be.global.config;
 
-import org.example.be.domain.chat.config.CustomHandshakeHandler;
-import org.example.be.domain.chat.config.CustomHandshakeInterceptor;
-import org.example.be.domain.member.service.AuthTokenService;
+import org.example.be.domain.chat.handler.CustomHandshakeHandler;
+import org.example.be.domain.chat.interceptor.CustomHandshakeInterceptor;
 import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.domain.member.service.AuthTokenService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;

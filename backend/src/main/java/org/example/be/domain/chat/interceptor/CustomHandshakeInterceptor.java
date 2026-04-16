@@ -1,12 +1,12 @@
-package org.example.be.domain.chat.config;
+package org.example.be.domain.chat.interceptor;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.service.AuthTokenService;
 import org.example.be.global.security.config.SecurityUser;
-import org.example.be.domain.group.repository.GroupRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
