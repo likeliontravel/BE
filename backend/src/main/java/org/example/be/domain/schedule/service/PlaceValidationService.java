@@ -1,8 +1,8 @@
 package org.example.be.domain.schedule.service;
 
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
-import org.example.be.domain.place.common.type.PlaceType;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
+import org.example.be.domain.place.shared.type.PlaceType;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;

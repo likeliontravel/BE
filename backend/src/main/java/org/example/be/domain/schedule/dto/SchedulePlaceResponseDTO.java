@@ -2,7 +2,7 @@ package org.example.be.domain.schedule.dto;
 
 import java.time.LocalDateTime;
 
-import org.example.be.domain.place.common.type.PlaceType;
+import org.example.be.domain.place.shared.type.PlaceType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

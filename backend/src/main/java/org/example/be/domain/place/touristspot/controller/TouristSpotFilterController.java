@@ -2,7 +2,7 @@ package org.example.be.domain.place.touristspot.controller;
 
 import java.util.List;
 
-import org.example.be.domain.place.common.type.PlaceSortType;
+import org.example.be.domain.place.shared.type.PlaceSortType;
 import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
 import org.example.be.domain.place.touristspot.service.TouristSpotFilterService;
 import org.example.be.global.response.CommonResponse;

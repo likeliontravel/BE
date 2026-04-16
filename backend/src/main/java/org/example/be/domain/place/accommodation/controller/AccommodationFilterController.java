@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
 import org.example.be.domain.place.accommodation.service.AccommodationFilterService;
-import org.example.be.domain.place.common.type.PlaceSortType;
+import org.example.be.domain.place.shared.type.PlaceSortType;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

@@ -1,4 +1,4 @@
-package org.example.be.domain.place.common.type;
+package org.example.be.domain.place.shared.type;
 
 public enum PlaceType {
 	TouristSpot,

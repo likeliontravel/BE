@@ -2,9 +2,9 @@ package org.example.be.domain.place.restaurant.controller;
 
 import java.util.List;
 
-import org.example.be.domain.place.common.type.PlaceSortType;
 import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
 import org.example.be.domain.place.restaurant.service.RestaurantFilterService;
+import org.example.be.domain.place.shared.type.PlaceSortType;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

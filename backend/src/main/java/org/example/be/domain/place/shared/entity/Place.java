@@ -1,4 +1,4 @@
-package org.example.be.domain.place.common.entity;
+package org.example.be.domain.place.shared.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;

@@ -1,8 +1,8 @@
-package org.example.be.domain.place.common.dto;
+package org.example.be.domain.place.shared.dto;
 
 import java.util.List;
 
-import org.example.be.domain.place.common.type.PlaceSortType;
+import org.example.be.domain.place.shared.type.PlaceSortType;
 
 import lombok.Getter;
 import lombok.Setter;
