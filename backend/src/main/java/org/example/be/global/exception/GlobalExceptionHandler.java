@@ -1,7 +1,7 @@
 package org.example.be.global.exception;
 
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.response.CommonResponse;
+import org.example.be.global.response.CommonResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

@@ -3,16 +3,17 @@ package org.example.be.schedule.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.example.be.group.entitiy.Group;
-import org.example.be.group.repository.GroupRepository;
-import org.example.be.member.entity.Member;
-import org.example.be.member.repository.MemberRepository;
-import org.example.be.place.entity.PlaceType;
-import org.example.be.place.touristSpot.repository.TouristSpotRepository;
-import org.example.be.schedule.entity.Schedule;
-import org.example.be.schedule.entity.SchedulePlace;
-import org.example.be.schedule.repository.SchedulePlaceRepository;
-import org.example.be.schedule.repository.ScheduleRepository;
+import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.place.shared.type.PlaceType;
+import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
+import org.example.be.domain.schedule.entity.Schedule;
+import org.example.be.domain.schedule.entity.SchedulePlace;
+import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
+import org.example.be.domain.schedule.repository.ScheduleRepository;
+import org.example.be.domain.schedule.service.ScheduleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ public class SchedulePerformanceTest {
 
 		Schedule schedule = Schedule.create(LocalDateTime.now(), LocalDateTime.now().plusDays(3), group);
 		scheduleRepository.save(schedule);
-		
+
 		for (int i = 0; i < DUMMY_COUNT; i++) {
 			SchedulePlace.create(schedule, VALID_CONTENT_ID, PlaceType.TOURISTSPOT,
 				LocalDateTime.now(), LocalDateTime.now(), 1, i);

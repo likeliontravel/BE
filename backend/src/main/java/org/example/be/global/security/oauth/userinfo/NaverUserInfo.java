@@ -1,0 +1,54 @@
+package org.example.be.global.security.oauth.userinfo;
+
+import java.util.Map;
+
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+
+public class NaverUserInfo implements OAuth2UserInfo {
+	private final Map<String, Object> attribute;
+
+	// 네이버는 응답 JSON 형태에 사용자 데이터가 response라는 이름의 키 값으로 존재.
+	public NaverUserInfo(Map<String, Object> attribute) {
+		this.attribute = (Map<String, Object>)attribute.get("response");
+	}
+
+	@Override
+	public String getProvider() {
+		return "naver";
+	}
+
+	@Override
+	public String getProviderId() {
+		Object providerId = attribute.get("id");
+		if (providerId == null) {
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - ProviderId is Missing");
+		}
+		return providerId.toString();
+	}
+
+	@Override
+	public String getEmail() {
+		Object email = attribute.get("email");
+		if (email == null) {
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - email is Missing");
+		}
+		return email.toString();
+	}
+
+	@Override
+	public String getName() {
+		Object name = attribute.get("name");
+		if (name == null) {
+			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - name is Missing");
+		}
+		return name.toString();
+	}
+
+	@Override
+	public String getProfileImage() {
+		Object profileImage = attribute.get("profile_image");
+		return profileImage != null ? profileImage.toString() : null;
+	}
+
+}
