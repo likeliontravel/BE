@@ -2,13 +2,15 @@ package org.example.be.domain.schedule.controller;
 
 import java.util.List;
 
-import org.example.be.domain.schedule.dto.ScheduleRequestDTO;
-import org.example.be.domain.schedule.dto.ScheduleResponseDTO;
-import org.example.be.domain.schedule.dto.ScheduleSummaryDTO;
+import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
+import org.example.be.domain.schedule.dto.response.ScheduleResBody;
+import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.domain.schedule.service.ScheduleService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.security.config.SecurityUser;
 import org.example.be.global.util.DecodedPathVariable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,41 +33,49 @@ public class ScheduleController {
 
 	// 일정 생성하기
 	@PostMapping
-	public ResponseEntity<CommonResponse<ScheduleResponseDTO>> createSchedule(
-		@RequestBody ScheduleRequestDTO requestDTO) {
-		ScheduleResponseDTO response = scheduleService.createSchedule(requestDTO);
+	public ResponseEntity<CommonResponse<ScheduleResBody>> createSchedule(
+		@Valid @RequestBody ScheduleReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser securityUser
+	) {
+		ScheduleResBody response = scheduleService.createSchedule(reqBody, securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 생성 성공"));
 	}
 
 	// 일정 조회하기
 	@GetMapping("/get/{groupName}")
-	public ResponseEntity<CommonResponse<ScheduleResponseDTO>> getScheduleByGroupName(
+	public ResponseEntity<CommonResponse<ScheduleResBody>> getScheduleByGroupName(
 		@DecodedPathVariable String groupName) {
-		ScheduleResponseDTO response = scheduleService.getScheduleByGroupName(groupName);
+		ScheduleResBody response = scheduleService.getScheduleByGroupName(groupName);
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 조회 성공"));
 	}
 
 	// 일정 목록 조회하기 - 일정 요약 정보를 목록으로 조회
 	@GetMapping("/getList")
-	public ResponseEntity<CommonResponse<List<ScheduleSummaryDTO>>> getUserScheduleSummaries() {
-		List<ScheduleSummaryDTO> summaries = scheduleService.getScheduleList();
+	public ResponseEntity<CommonResponse<List<ScheduleSummaryResBody>>> getUserScheduleSummaries(
+		@AuthenticationPrincipal SecurityUser securityUser
+	) {
+		List<ScheduleSummaryResBody> summaries = scheduleService.getScheduleList(securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(summaries, "일정 요약 목록 조회 성공"));
 	}
 
 	// 일정 수정하기
 	@PutMapping("/{scheduleId}")
-	public ResponseEntity<CommonResponse<ScheduleResponseDTO>> updateSchedule(
+	public ResponseEntity<CommonResponse<ScheduleResBody>> updateSchedule(
 		@PathVariable Long scheduleId,
-		@RequestBody ScheduleRequestDTO requestDTO
+		@Valid @RequestBody ScheduleReqBody reqBody,
+		@AuthenticationPrincipal SecurityUser securityUser
 	) {
-		ScheduleResponseDTO response = scheduleService.updateSchedule(scheduleId, requestDTO);
+		ScheduleResBody response = scheduleService.updateSchedule(scheduleId, reqBody, securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(response, "일정 수정 성공"));
 	}
 
 	// 일정 삭제하기
 	@DeleteMapping("/{scheduleId}")
-	public ResponseEntity<CommonResponse<Void>> deleteSchedule(@PathVariable Long scheduleId) {
-		scheduleService.deleteSchedule(scheduleId);
+	public ResponseEntity<CommonResponse<Void>> deleteSchedule(
+		@PathVariable Long scheduleId,
+		@AuthenticationPrincipal SecurityUser securityUser
+	) {
+		scheduleService.deleteSchedule(scheduleId, securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(null, "일정 삭제 성공"));
 	}
 }

@@ -74,6 +74,7 @@ public enum ErrorCode {
 	SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "일정이 존재하지 않습니다."),
 	SCHEDULE_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 그룹에 존재하는 일정이 있습니다."),
 	SCHEDULE_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "세부 일정이 존재하지 않습니다."),
+	SCHEDULE_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "일정 기간이 유효하지 않습니다. (시작일이 종료일보다 늦을 수 없습니다.)"),
 
 	// --- 장소 (Place) ---
 	PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 장소입니다."),

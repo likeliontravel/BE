@@ -1,12 +1,13 @@
 package org.example.be.domain.schedule.service;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.schedule.dto.SchedulePlaceRequestDTO;
-import org.example.be.domain.schedule.dto.SchedulePlaceResponseDTO;
+import org.example.be.domain.group.service.GroupService;
+import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
+import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,73 +20,74 @@ public class SchedulePlaceService {
 	private final SchedulePlaceRepository schedulePlaceRepository;
 	private final ScheduleRepository scheduleRepository;
 	private final PlaceValidationService placeValidationService;
+	private final GroupService groupService;
 
 	@Transactional
-	public SchedulePlaceResponseDTO createSchedulePlace(SchedulePlaceRequestDTO dto) {
-		var schedule = scheduleRepository.findById(dto.getScheduleId())
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + dto.getScheduleId().toString()));
+	public SchedulePlaceResBody createSchedulePlace(Long scheduleId, SchedulePlaceReqBody reqBody, Long userId) {
+		var schedule = scheduleRepository.findById(scheduleId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
-		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+		// 권한 검증: 그룹 창설자만 세부 일정을 추가할 수 있음
+		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
-		SchedulePlace schedulePlace = SchedulePlace.builder()
-			.schedule(schedule)
-			.contentId(dto.getContentId())
-			.placeType(dto.getPlaceType())
-			.visitStart(dto.getVisitStart())
-			.visitedEnd(dto.getVisitedEnd())
-			.dayOrder(dto.getDayOrder())
-			.orderInDay(dto.getOrderInDay())
-			.build();
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
+
+		SchedulePlace schedulePlace = SchedulePlace.create(
+			schedule,
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
 		try {
 			var saved = schedulePlaceRepository.save(schedulePlace);
-			return toResponseDTO(saved);
+			return SchedulePlaceResBody.from(saved);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "세부 일정 생성 실패 - message: " + e.getMessage());
 		}
 	}
 
 	@Transactional
-	public SchedulePlaceResponseDTO updateSchedulePlace(Long placeId, SchedulePlaceRequestDTO dto) {
+	public SchedulePlaceResBody updateSchedulePlace(Long placeId, SchedulePlaceReqBody reqBody, Long userId) {
 		var place = schedulePlaceRepository.findById(placeId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
 
-		placeValidationService.validateContentIdByPlaceType(dto.getPlaceType(), dto.getContentId());  // 변경
+		// 권한 검증: 그룹 창설자만 세부 일정을 수정할 수 있음
+		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
 
-		place.setContentId(dto.getContentId());
-		place.setPlaceType(dto.getPlaceType());
-		place.setVisitStart(dto.getVisitStart());
-		place.setVisitedEnd(dto.getVisitedEnd());
-		place.setDayOrder(dto.getDayOrder());
-		place.setOrderInDay(dto.getOrderInDay());
+		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
+
+		place.update(
+			reqBody.contentId(),
+			reqBody.placeType(),
+			reqBody.visitStart(),
+			reqBody.visitedEnd(),
+			reqBody.dayOrder(),
+			reqBody.orderInDay()
+		);
 
 		try {
-			return toResponseDTO(schedulePlaceRepository.save(place));
+			return SchedulePlaceResBody.from(schedulePlaceRepository.save(place));
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "세부 일정 수정 실패 - message: " + e.getMessage());
 		}
 	}
 
 	@Transactional
-	public void deleteSchedulePlace(Long placeId) {
+	public void deleteSchedulePlace(Long placeId, Long userId) {
 		var place = schedulePlaceRepository.findById(placeId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
+
+		// 권한 검증: 그룹 창설자만 세부 일정을 삭제할 수 있음
+		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
+
 		try {
 			schedulePlaceRepository.delete(place);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "세부 일정 삭제 실패 - message: " + e.getMessage());
 		}
-	}
-
-	private SchedulePlaceResponseDTO toResponseDTO(SchedulePlace place) {
-		return SchedulePlaceResponseDTO.builder()
-			.id(place.getId())
-			.contentId(place.getContentId())
-			.placeType(place.getPlaceType())
-			.visitStart(place.getVisitStart())
-			.visitedEnd(place.getVisitedEnd())
-			.dayOrder(place.getDayOrder())
-			.orderInDay(place.getOrderInDay())
-			.build();
 	}
 }

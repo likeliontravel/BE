@@ -3,26 +3,24 @@ package org.example.be.domain.group.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.example.be.domain.member.entity.Member;
-import org.example.be.domain.member.service.MemberService;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementSummaryDTO;
 import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepository;
-import org.example.be.domain.group.dto.response.GroupAddMemberResBody;
-import org.example.be.domain.group.dto.request.GroupCreateReqBody;
-import org.example.be.domain.group.dto.response.GroupDeleteResBody;
-import org.example.be.domain.group.dto.response.GroupDetailResBody;
-import org.example.be.domain.group.dto.request.GroupExitOrDeleteReqBody;
-import org.example.be.domain.group.dto.response.GroupExitResBody;
 import org.example.be.domain.group.dto.GroupMemberDTO;
-import org.example.be.domain.group.dto.request.GroupModifyReqBody;
-import org.example.be.domain.group.dto.response.GroupModifyResBody;
-import org.example.be.domain.group.dto.response.GroupResBody;
 import org.example.be.domain.group.dto.GroupScheduleDTO;
 import org.example.be.domain.group.dto.GroupSchedulePlaceDTO;
+import org.example.be.domain.group.dto.request.GroupCreateReqBody;
+import org.example.be.domain.group.dto.request.GroupExitOrDeleteReqBody;
+import org.example.be.domain.group.dto.request.GroupModifyReqBody;
+import org.example.be.domain.group.dto.response.GroupAddMemberResBody;
+import org.example.be.domain.group.dto.response.GroupDeleteResBody;
+import org.example.be.domain.group.dto.response.GroupDetailResBody;
+import org.example.be.domain.group.dto.response.GroupExitResBody;
+import org.example.be.domain.group.dto.response.GroupModifyResBody;
+import org.example.be.domain.group.dto.response.GroupResBody;
 import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.service.MemberService;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
@@ -30,6 +28,8 @@ import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -281,22 +281,22 @@ public class GroupService {
 
 	private String resolveTitle(SchedulePlace place) {
 		return switch (place.getPlaceType()) {
-			case TouristSpot -> touristSpotRepository.findByContentId(place.getContentId())
+			case TOURISTSPOT -> touristSpotRepository.findByContentId(place.getContentId())
 				.map(t -> t.getTitle()).orElse("(없거나 삭제된 장소)");
-			case Restaurant -> restaurantRepository.findByContentId(place.getContentId())
+			case RESTAURANT -> restaurantRepository.findByContentId(place.getContentId())
 				.map(r -> r.getTitle()).orElse("(없거나 삭제된 장소)");
-			case Accommodation -> accommodationRepository.findByContentId(place.getContentId())
+			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
 				.map(a -> a.getTitle()).orElse("(없거나 삭제된 장소)");
 		};
 	}
 
 	private String resolveAddress(SchedulePlace place) {
 		return switch (place.getPlaceType()) {
-			case TouristSpot -> touristSpotRepository.findByContentId(place.getContentId())
+			case TOURISTSPOT -> touristSpotRepository.findByContentId(place.getContentId())
 				.map(t -> t.getAddr1() + t.getAddr2()).orElse("(없거나 삭제된 장소)");
-			case Restaurant -> restaurantRepository.findByContentId(place.getContentId())
+			case RESTAURANT -> restaurantRepository.findByContentId(place.getContentId())
 				.map(r -> r.getAddr1() + r.getAddr2()).orElse("(없거나 삭제된 장소)");
-			case Accommodation -> accommodationRepository.findByContentId(place.getContentId())
+			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
 				.map(a -> a.getAddr1() + a.getAddr2()).orElse("(없거나 삭제된 장소)");
 		};
 	}

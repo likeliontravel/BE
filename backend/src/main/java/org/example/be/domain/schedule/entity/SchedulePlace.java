@@ -3,37 +3,26 @@ package org.example.be.domain.schedule.entity;
 import java.time.LocalDateTime;
 
 import org.example.be.domain.place.shared.type.PlaceType;
+import org.example.be.global.entity.Base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "schedule_place")
 
-public class SchedulePlace {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+public class SchedulePlace extends Base {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "schedule_id", nullable = false)
@@ -62,4 +51,31 @@ public class SchedulePlace {
 	@Column(nullable = false)
 	private Integer orderInDay;
 
+	public static SchedulePlace create(Schedule schedule, String contentId, PlaceType placeType,
+		LocalDateTime visitStart, LocalDateTime visitedEnd, Integer dayOrder, Integer orderInDay) {
+		SchedulePlace place = new SchedulePlace();
+		place.contentId = contentId;
+		place.placeType = placeType;
+		place.visitStart = visitStart;
+		place.visitedEnd = visitedEnd;
+		place.dayOrder = dayOrder;
+		place.orderInDay = orderInDay;
+
+		schedule.addSchedulePlace(place);
+		return place;
+	}
+
+	public void update(String contentId, PlaceType placeType, LocalDateTime visitStart, LocalDateTime visitedEnd,
+		Integer dayOrder, Integer orderInDay) {
+		this.contentId = contentId;
+		this.placeType = placeType;
+		this.visitStart = visitStart;
+		this.visitedEnd = visitedEnd;
+		this.dayOrder = dayOrder;
+		this.orderInDay = orderInDay;
+	}
+
+	public void assignSchedule(Schedule schedule) {
+		this.schedule = schedule;
+	}
 }

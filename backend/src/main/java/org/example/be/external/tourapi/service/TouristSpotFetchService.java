@@ -7,8 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.region.TourRegion;
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.theme.PlaceCategory;
@@ -20,6 +18,8 @@ import org.example.be.external.tourapi.dto.FetchResult;
 import org.example.be.external.tourapi.dto.SaveResult;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.external.tourapi.util.TourApiParser;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -213,7 +213,7 @@ public class ChatMessageService {
 			.distinct()
 			.collect(Collectors.toMap(
 				Member::getId,
-				MemberDto::from
+				member -> MemberDto.from(member, false)
 			));
 
 		Map<String, Object> result = new HashMap<>();
