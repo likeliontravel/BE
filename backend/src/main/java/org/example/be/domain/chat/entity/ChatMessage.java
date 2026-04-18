@@ -1,7 +1,5 @@
 package org.example.be.domain.chat.entity;
 
-import java.time.LocalDateTime;
-
 import org.example.be.domain.chat.type.MessageType;
 import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.member.entity.Member;
@@ -48,9 +46,5 @@ public class ChatMessage extends Base {
 	// 전달 내용 - 메시지 내용 / 이미지 publicUrl
 	@Column(columnDefinition = "TEXT")
 	private String content;
-
-	// 메시지 전송 시간
-	@Column(nullable = false)
-	private LocalDateTime sendAt;
 
 }
