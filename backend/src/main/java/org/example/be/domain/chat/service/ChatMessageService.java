@@ -48,7 +48,7 @@ public class ChatMessageService {
 			"[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
+		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderByCreatedTimeDesc(group);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
@@ -60,7 +60,7 @@ public class ChatMessageService {
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
+		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderByCreatedTimeDesc(group,
 			lastMessageId);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
@@ -74,7 +74,7 @@ public class ChatMessageService {
 	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
+		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderByCreatedTimeDesc(
 			group, keyword);
 
 		return buildMessageWithProfiles(messages);
@@ -84,7 +84,7 @@ public class ChatMessageService {
 	@Transactional
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
-		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
+		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderByCreatedTimeDesc(group);
 		if (message.isPresent()) {
 			return toDTO(message.get());
 		} else {
@@ -121,7 +121,7 @@ public class ChatMessageService {
 		for (Group group : groups) {
 			ChatMessage latestMessage = latestMessageMap.get(group.getId());
 			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
-			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
+			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getCreatedTime() : null;
 			MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
 
 			ChatRoomListWithLatestMessageResBody dto = ChatRoomListWithLatestMessageResBody.builder()
@@ -162,7 +162,6 @@ public class ChatMessageService {
 			.sender(sender)
 			.content(content)
 			.type(type)
-			.sendAt(LocalDateTime.now())
 			.build();
 		try {
 			return chatMessageRepository.save(chatMessage);
@@ -204,7 +203,7 @@ public class ChatMessageService {
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.
 	private Map<String, Object> buildMessageWithProfiles(List<ChatMessage> messages) {
 		List<ChatMessageResBody> dtoList = messages.stream()
-			.sorted(Comparator.comparing(ChatMessage::getSendAt))
+			.sorted(Comparator.comparing(ChatMessage::getCreatedTime))
 			.map(this::toDTO)
 			.collect(Collectors.toList());
 
@@ -231,7 +230,7 @@ public class ChatMessageService {
 			.senderId(entity.getSender().getId())
 			.type(entity.getType())
 			.content(entity.getContent())
-			.sendAt(entity.getSendAt())
+			.sendAt(entity.getCreatedTime())
 			.build();
 	}
 
