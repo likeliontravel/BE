@@ -179,17 +179,9 @@ public class ChatMessageService {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
-		log.debug("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
-		log.debug("[검증 로그] 요청자 userIdentifier: " + memberId);
-		log.debug("[검증 로그] 그룹 멤버 목록:");
-		group.getMembers().forEach(member ->
-			log.debug(" - ID: " + member.getId() + ", Name: " + member.getName())
-		);
+		log.debug("[ChatMessageService] 멤버 검증 시작 - 그룹: {}, 멤버ID: {}", groupName, memberId);
 
-		boolean isMember = group.getMembers().stream()
-			.anyMatch(member -> member.getId().equals(memberId));
-
-		if (!isMember) {
+		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
