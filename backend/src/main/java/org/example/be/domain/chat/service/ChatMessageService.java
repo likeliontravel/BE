@@ -15,23 +15,25 @@ import org.example.be.domain.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.chat.type.MessageType;
+import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.response.MemberDto;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.storage.gcs.GCSService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.group.entity.Group;
-import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.storage.gcs.GCSService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatMessageService {
 
 	private final ChatMessageRepository chatMessageRepository;
@@ -44,8 +46,7 @@ public class ChatMessageService {
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
 	@Transactional
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
-		System.out.println(
-			"[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
+		log.debug("[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderByCreatedTimeDesc(group);
