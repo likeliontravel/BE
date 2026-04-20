@@ -179,11 +179,11 @@ public class ChatMessageService {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
-		System.out.println("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
-		System.out.println("[검증 로그] 요청자 userIdentifier: " + memberId);
-		System.out.println("[검증 로그] 그룹 멤버 목록:");
+		log.debug("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
+		log.debug("[검증 로그] 요청자 userIdentifier: " + memberId);
+		log.debug("[검증 로그] 그룹 멤버 목록:");
 		group.getMembers().forEach(member ->
-			System.out.println(" - ID: " + member.getId() + ", Name: " + member.getName())
+			log.debug(" - ID: " + member.getId() + ", Name: " + member.getName())
 		);
 
 		boolean isMember = group.getMembers().stream()
