@@ -5,9 +5,6 @@ import java.time.LocalDateTime;
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.type.MessageType;
 
-import lombok.Builder;
-
-@Builder
 public record ChatMessageResBody(
 	Long id,
 	String groupName,
