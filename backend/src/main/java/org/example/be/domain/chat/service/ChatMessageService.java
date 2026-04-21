@@ -195,17 +195,4 @@ public class ChatMessageService {
 
 		return result;
 	}
-
-	// Entity -> DTO 파싱
-	public ChatMessageResBody toDTO(ChatMessage entity) {
-		return ChatMessageResBody.builder()
-			.id(entity.getId())
-			.groupName(entity.getGroup().getGroupName())
-			.senderId(entity.getSender().getId())
-			.type(entity.getType())
-			.content(entity.getContent())
-			.sendAt(entity.getCreatedTime())
-			.build();
-	}
-
 }
