@@ -178,7 +178,7 @@ public class ChatMessageService {
 	private Map<String, Object> buildMessageWithProfiles(List<ChatMessage> messages) {
 		List<ChatMessageResBody> dtoList = messages.stream()
 			.sorted(Comparator.comparing(ChatMessage::getCreatedTime))
-			.map(this::toDTO)
+			.map(ChatMessageResBody::from)
 			.collect(Collectors.toList());
 
 		Map<Long, MemberDto> profiles = messages.stream()
