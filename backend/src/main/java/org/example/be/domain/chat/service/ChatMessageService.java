@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.domain.chat.dto.ChatMessageResBody;
@@ -85,12 +84,9 @@ public class ChatMessageService {
 	@Transactional
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
-		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderByCreatedTimeDesc(group);
-		if (message.isPresent()) {
-			return toDTO(message.get());
-		} else {
-			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
-		}
+		return chatMessageRepository.findTop1ByGroupOrderByCreatedTimeDesc(group)
+			.map(ChatMessageResBody::from)
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName));
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
