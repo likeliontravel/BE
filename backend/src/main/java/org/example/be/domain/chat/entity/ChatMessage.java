@@ -14,17 +14,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
 @Table(name = "chat_message")
 public class ChatMessage extends Base {
 
@@ -46,5 +42,9 @@ public class ChatMessage extends Base {
 	// 전달 내용 - 메시지 내용 / 이미지 publicUrl
 	@Column(columnDefinition = "TEXT")
 	private String content;
+
+	public static ChatMessage create(Group group, Member sender, MessageType type, String content) {
+		return new ChatMessage(group, sender, type, content);
+	}
 
 }
