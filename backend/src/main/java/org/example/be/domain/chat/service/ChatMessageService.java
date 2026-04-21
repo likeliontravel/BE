@@ -1,7 +1,5 @@
 package org.example.be.domain.chat.service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -114,27 +112,19 @@ public class ChatMessageService {
 				));
 
 		// DTO로 변환
-		List<ChatRoomListWithLatestMessageResBody> dtoList = new ArrayList<>();
-		for (Group group : groups) {
-			ChatMessage latestMessage = latestMessageMap.get(group.getId());
-			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
-			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getCreatedTime() : null;
-			MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
-
-			ChatRoomListWithLatestMessageResBody dto = ChatRoomListWithLatestMessageResBody.builder()
-				.groupName(group.getGroupName())
-				.latestMessage(latestMessageContent)
-				.sendAt(latestMessageSendAt)
-				.type(latestMessageType)
-				.build();
-
-			dtoList.add(dto);
-		}
-
-		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
-		dtoList.sort(Comparator
-			.comparing(ChatRoomListWithLatestMessageResBody::sendAt, Comparator.nullsLast(Comparator.naturalOrder()))
-			.reversed());
+		List<ChatRoomListWithLatestMessageResBody> dtoList = groups.stream()
+			.map(group -> {
+				ChatMessage latest = latestMessageMap.get(group.getId());
+				return ChatRoomListWithLatestMessageResBody.from(
+					group.getGroupName(),
+					latest != null ? latest.getContent() : null,
+					latest != null ? latest.getCreatedTime() : null,
+					latest != null ? latest.getType() : null
+				);
+			})
+			.sorted(Comparator.comparing(ChatRoomListWithLatestMessageResBody::sendAt,
+				Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+			.collect(Collectors.toList());
 
 		return dtoList;
 
