@@ -144,12 +144,7 @@ public class ChatMessageService {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		Member sender = findMember(memberId);
 
-		ChatMessage chatMessage = ChatMessage.builder()
-			.group(group)
-			.sender(sender)
-			.content(content)
-			.type(type)
-			.build();
+		ChatMessage chatMessage = ChatMessage.create(group, sender, type, content);
 		try {
 			return chatMessageRepository.save(chatMessage);
 		} catch (Exception e) {
