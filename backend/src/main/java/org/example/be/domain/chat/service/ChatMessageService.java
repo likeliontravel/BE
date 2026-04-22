@@ -90,10 +90,8 @@ public class ChatMessageService {
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
 	@Transactional(readOnly = true)
 	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage(Long memberId) {
-		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
-		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + memberId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
