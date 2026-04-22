@@ -20,7 +20,6 @@ import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.storage.gcs.GCSService;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,9 +40,8 @@ public class ChatMessageService {
 	// ==================== 일반 REST API ====================
 
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
-		log.debug("[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderByCreatedTimeDesc(group);
@@ -54,7 +52,7 @@ public class ChatMessageService {
 	}
 
 	// 이전 메시지 20개 추가 조회 ( 스크롤 업 시 호출용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
@@ -68,7 +66,7 @@ public class ChatMessageService {
 	}
 
 	// 키워드 기반 메시지 검색
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
@@ -79,7 +77,7 @@ public class ChatMessageService {
 	}
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		return chatMessageRepository.findTop1ByGroupOrderByCreatedTimeDesc(group)
@@ -99,18 +97,19 @@ public class ChatMessageService {
 			return Collections.emptyList();
 		}
 
+		// QueryDSL 최적화 메서드 호출
 		List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessagesForGroups(groups);
 
-		// groupName -> latest ChatMessage 메핑
-		Map<Long, ChatMessage> latestMessageMap =
-			latestMessages.stream()
-				.collect(Collectors.toMap(
-					m -> m.getGroup().getId(),
-					m -> m
-				));
+		// groupName -> latest ChatMessage 매핑
+		Map<Long, ChatMessage> latestMessageMap = latestMessages.stream()
+			.collect(Collectors.toMap(
+				m -> m.getGroup().getId(),
+				m -> m,
+				(m1, m2) -> m1 // 중복 키 발생 시 기존 값 유지 (동시간대 메시지 방어 로직)
+			));
 
 		// DTO로 변환
-		List<ChatRoomListWithLatestMessageResBody> dtoList = groups.stream()
+		return groups.stream()
 			.map(group -> {
 				ChatMessage latest = latestMessageMap.get(group.getId());
 				return ChatRoomListWithLatestMessageResBody.from(
@@ -123,9 +122,6 @@ public class ChatMessageService {
 			.sorted(Comparator.comparing(ChatRoomListWithLatestMessageResBody::sendAt,
 				Comparator.nullsLast(Comparator.naturalOrder())).reversed())
 			.collect(Collectors.toList());
-
-		return dtoList;
-
 	}
 
 	// ==================== 메시지 저장 관련 ====================
@@ -148,7 +144,6 @@ public class ChatMessageService {
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
 		}
-
 	}
 
 	// ==================== 내부 사용 메서드 ====================
@@ -157,8 +152,6 @@ public class ChatMessageService {
 	private Group findGroupAndValidateMember(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
-
-		log.debug("[ChatMessageService] 멤버 검증 시작 - 그룹: {}, 멤버ID: {}", groupName, memberId);
 
 		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
