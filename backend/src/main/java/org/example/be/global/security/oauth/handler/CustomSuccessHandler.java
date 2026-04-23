@@ -40,7 +40,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 	private final GroupInvitationService groupInvitationService;
 	private final GroupService groupService;
 
-	private static final String FE_REDIRECT_URL = "/";
+	private static final String FE_REDIRECT_URL = "https://toleave.cloud/";
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
