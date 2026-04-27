@@ -34,8 +34,6 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
     //inherited
     public final NumberPath<Long> id = _super.id;
 
-    public final DateTimePath<java.time.LocalDateTime> sendAt = createDateTime("sendAt", java.time.LocalDateTime.class);
-
     public final org.example.be.domain.member.entity.QMember sender;
 
     public final EnumPath<org.example.be.domain.chat.type.MessageType> type = createEnum("type", org.example.be.domain.chat.type.MessageType.class);
