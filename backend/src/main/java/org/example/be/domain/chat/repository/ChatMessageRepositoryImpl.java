@@ -5,6 +5,7 @@ import static org.example.be.domain.group.entity.QGroup.*;
 import static org.example.be.domain.member.entity.QMember.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.entity.QChatMessage;
@@ -82,6 +83,19 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 			)
 			.orderBy(chatMessage.createdTime.desc())
 			.fetch();
+	}
+
+	@Override
+	public Optional<ChatMessage> findLatestMessage(Group targetGroup) {
+		return Optional.ofNullable(
+			queryFactory
+				.selectFrom(chatMessage)
+				.join(chatMessage.group, group).fetchJoin()
+				.join(chatMessage.sender, member).fetchJoin()
+				.where(chatMessage.group.eq(targetGroup))
+				.orderBy(chatMessage.createdTime.desc())
+				.fetchFirst() // limit(1).fetchOne() 과 동일
+		);
 	}
 
 	private BooleanExpression ltMessageId(Long lastMessageId) {

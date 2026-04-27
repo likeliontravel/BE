@@ -1,6 +1,7 @@
 package org.example.be.domain.chat.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.group.entity.Group;
@@ -16,4 +17,7 @@ public interface ChatMessageRepositoryCustom {
 
 	// 키워드 검색 ( fetch join 적용 )
 	List<ChatMessage> searchMessagesWithKeyword(Group group, String keyword);
+
+	// 그룹별 최신 메시지 1개 조회 ( fetch join 적용 )
+	Optional<ChatMessage> findLatestMessage(Group group);
 }

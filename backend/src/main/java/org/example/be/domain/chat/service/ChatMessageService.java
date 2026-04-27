@@ -78,7 +78,7 @@ public class ChatMessageService {
 	@Transactional(readOnly = true)
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
-		return chatMessageRepository.findTop1ByGroupOrderByCreatedTimeDesc(group)
+		return chatMessageRepository.findLatestMessage(group)
 			.map(ChatMessageResBody::from)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName));
 	}
