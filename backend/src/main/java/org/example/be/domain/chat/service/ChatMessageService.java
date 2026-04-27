@@ -44,7 +44,7 @@ public class ChatMessageService {
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderByCreatedTimeDesc(group);
+		List<ChatMessage> messages = chatMessageRepository.findRecentMessages(group, 20);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
@@ -56,8 +56,7 @@ public class ChatMessageService {
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderByCreatedTimeDesc(group,
-			lastMessageId);
+		List<ChatMessage> messages = chatMessageRepository.findPreviousMessages(group, lastMessageId, 20);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
 				"groupName: " + groupName + ", messageId: " + lastMessageId);
@@ -70,8 +69,7 @@ public class ChatMessageService {
 	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderByCreatedTimeDesc(
-			group, keyword);
+		List<ChatMessage> messages = chatMessageRepository.searchMessagesWithKeyword(group, keyword);
 
 		return buildMessageWithProfiles(messages);
 	}
