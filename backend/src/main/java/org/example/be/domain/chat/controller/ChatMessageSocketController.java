@@ -58,7 +58,7 @@ public class ChatMessageSocketController {
 		);
 
 		// DTO 변환 후 해당 채팅방 구독자에게 브로드캐스팅
-		ChatMessageResBody chatMessageResBody = chatMessageService.toDTO(savedMessage);
+		ChatMessageResBody chatMessageResBody = ChatMessageResBody.from(savedMessage);
 		messagingTemplate.convertAndSend("/sub/chat/" + groupName, chatMessageResBody);
 	}
 }

@@ -1,13 +1,10 @@
 package org.example.be.domain.chat.service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.example.be.domain.chat.dto.ChatMessageResBody;
@@ -15,23 +12,24 @@ import org.example.be.domain.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.chat.type.MessageType;
+import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.response.MemberDto;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.storage.gcs.GCSService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.group.entity.Group;
-import org.example.be.domain.group.repository.GroupRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.example.be.storage.gcs.GCSService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatMessageService {
 
 	private final ChatMessageRepository chatMessageRepository;
@@ -42,13 +40,11 @@ public class ChatMessageService {
 	// ==================== 일반 REST API ====================
 
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
-		System.out.println(
-			"[Controller] 호출 시점 Authentication: " + SecurityContextHolder.getContext().getAuthentication());
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupOrderBySendAtDesc(group);
+		List<ChatMessage> messages = chatMessageRepository.findRecentMessages(group, 20);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
 		}
@@ -56,12 +52,11 @@ public class ChatMessageService {
 	}
 
 	// 이전 메시지 20개 추가 조회 ( 스크롤 업 시 호출용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findTop20ByGroupAndIdLessThanOrderBySendAtDesc(group,
-			lastMessageId);
+		List<ChatMessage> messages = chatMessageRepository.findPreviousMessages(group, lastMessageId, 20);
 		if (messages.isEmpty()) {
 			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
 				"groupName: " + groupName + ", messageId: " + lastMessageId);
@@ -70,35 +65,29 @@ public class ChatMessageService {
 	}
 
 	// 키워드 기반 메시지 검색
-	@Transactional
+	@Transactional(readOnly = true)
 	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.findByGroupAndContentContainingIgnoreCaseOrderBySendAtDesc(
-			group, keyword);
+		List<ChatMessage> messages = chatMessageRepository.searchMessagesWithKeyword(group, keyword);
 
 		return buildMessageWithProfiles(messages);
 	}
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
-	@Transactional
+	@Transactional(readOnly = true)
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
-		Optional<ChatMessage> message = chatMessageRepository.findTop1ByGroupOrderBySendAtDesc(group);
-		if (message.isPresent()) {
-			return toDTO(message.get());
-		} else {
-			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
-		}
+		return chatMessageRepository.findLatestMessage(group)
+			.map(ChatMessageResBody::from)
+			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName));
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
 	@Transactional(readOnly = true)
 	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage(Long memberId) {
-		// Chat 도메인 마이그레이션 시 userIdentifier 관련 전부 없앨 예정( 임시 컴파일 오류 방지용 땜빵만 놓습니다. 리팩토링할 때 멤버로 바꿔용 )
-		// 현재처럼 두면 최근 member도입 이후 가입한 회원에 대해서 userIdentifier라는걸 인식 못해서 아마 안될겁니다.
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "userIdentifier: " + memberId));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
@@ -106,41 +95,31 @@ public class ChatMessageService {
 			return Collections.emptyList();
 		}
 
+		// QueryDSL 최적화 메서드 호출
 		List<ChatMessage> latestMessages = chatMessageRepository.findLatestMessagesForGroups(groups);
 
-		// groupName -> latest ChatMessage 메핑
-		Map<Long, ChatMessage> latestMessageMap =
-			latestMessages.stream()
-				.collect(Collectors.toMap(
-					m -> m.getGroup().getId(),
-					m -> m
-				));
+		// groupName -> latest ChatMessage 매핑
+		Map<Long, ChatMessage> latestMessageMap = latestMessages.stream()
+			.collect(Collectors.toMap(
+				m -> m.getGroup().getId(),
+				m -> m,
+				(m1, m2) -> m1 // 중복 키 발생 시 기존 값 유지 (동시간대 메시지 방어 로직)
+			));
 
 		// DTO로 변환
-		List<ChatRoomListWithLatestMessageResBody> dtoList = new ArrayList<>();
-		for (Group group : groups) {
-			ChatMessage latestMessage = latestMessageMap.get(group.getId());
-			String latestMessageContent = latestMessage != null ? latestMessage.getContent() : null;
-			LocalDateTime latestMessageSendAt = latestMessage != null ? latestMessage.getSendAt() : null;
-			MessageType latestMessageType = latestMessage != null ? latestMessage.getType() : null;
-
-			ChatRoomListWithLatestMessageResBody dto = ChatRoomListWithLatestMessageResBody.builder()
-				.groupName(group.getGroupName())
-				.latestMessage(latestMessageContent)
-				.sendAt(latestMessageSendAt)
-				.type(latestMessageType)
-				.build();
-
-			dtoList.add(dto);
-		}
-
-		// 최신 메시지 시각 내림차순 정렬 (null은 마지막)
-		dtoList.sort(Comparator
-			.comparing(ChatRoomListWithLatestMessageResBody::sendAt, Comparator.nullsLast(Comparator.naturalOrder()))
-			.reversed());
-
-		return dtoList;
-
+		return groups.stream()
+			.map(group -> {
+				ChatMessage latest = latestMessageMap.get(group.getId());
+				return ChatRoomListWithLatestMessageResBody.from(
+					group.getGroupName(),
+					latest != null ? latest.getContent() : null,
+					latest != null ? latest.getCreatedTime() : null,
+					latest != null ? latest.getType() : null
+				);
+			})
+			.sorted(Comparator.comparing(ChatRoomListWithLatestMessageResBody::sendAt,
+				Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+			.collect(Collectors.toList());
 	}
 
 	// ==================== 메시지 저장 관련 ====================
@@ -157,19 +136,12 @@ public class ChatMessageService {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		Member sender = findMember(memberId);
 
-		ChatMessage chatMessage = ChatMessage.builder()
-			.group(group)
-			.sender(sender)
-			.content(content)
-			.type(type)
-			.sendAt(LocalDateTime.now())
-			.build();
+		ChatMessage chatMessage = ChatMessage.create(group, sender, type, content);
 		try {
 			return chatMessageRepository.save(chatMessage);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
 		}
-
 	}
 
 	// ==================== 내부 사용 메서드 ====================
@@ -179,17 +151,7 @@ public class ChatMessageService {
 		Group group = groupRepository.findByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
-		System.out.println("[ChatMessageService에서 검증 로그] 그룹 이름: " + groupName);
-		System.out.println("[검증 로그] 요청자 userIdentifier: " + memberId);
-		System.out.println("[검증 로그] 그룹 멤버 목록:");
-		group.getMembers().forEach(member ->
-			System.out.println(" - ID: " + member.getId() + ", Name: " + member.getName())
-		);
-
-		boolean isMember = group.getMembers().stream()
-			.anyMatch(member -> member.getId().equals(memberId));
-
-		if (!isMember) {
+		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
 			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
@@ -204,8 +166,8 @@ public class ChatMessageService {
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.
 	private Map<String, Object> buildMessageWithProfiles(List<ChatMessage> messages) {
 		List<ChatMessageResBody> dtoList = messages.stream()
-			.sorted(Comparator.comparing(ChatMessage::getSendAt))
-			.map(this::toDTO)
+			.sorted(Comparator.comparing(ChatMessage::getCreatedTime))
+			.map(ChatMessageResBody::from)
 			.collect(Collectors.toList());
 
 		Map<Long, MemberDto> profiles = messages.stream()
@@ -222,17 +184,4 @@ public class ChatMessageService {
 
 		return result;
 	}
-
-	// Entity -> DTO 파싱
-	public ChatMessageResBody toDTO(ChatMessage entity) {
-		return ChatMessageResBody.builder()
-			.id(entity.getId())
-			.groupName(entity.getGroup().getGroupName())
-			.senderId(entity.getSender().getId())
-			.type(entity.getType())
-			.content(entity.getContent())
-			.sendAt(entity.getSendAt())
-			.build();
-	}
-
 }

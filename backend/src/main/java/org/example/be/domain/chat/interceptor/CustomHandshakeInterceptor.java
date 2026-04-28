@@ -18,9 +18,11 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 // 이 HandshakeInterceptor는 웹소켓 생성 전에 우리 회원인지 검증, 해당 그룹 멤버인지 검증하고 세션 attributes에 SecurityUser 정보를 저장시켜준다.
 @RequiredArgsConstructor
+@Slf4j
 public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 
 	private final AuthTokenService authTokenService;
@@ -34,12 +36,12 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		String accessToken = servletRequest.getParameter("accessToken");
 		String groupName = servletRequest.getParameter("groupName");
 
-		System.out.println("[WebSocket Debug] Handshake attempt - groupName: " + groupName);
+		log.debug("[WebSocket Debug] Handshake attempt - groupName: {}", groupName);
 
 		// 1. 토큰 검증 및 클레임 추출
 		Map<String, Object> claims = authTokenService.payload(accessToken);
 		if (claims == null) {
-			System.out.println("[WebSocket Debug] Token validation failed");
+			log.debug("[WebSocket Debug] Token validation failed");
 			return failHandshake(response, "유효하지 않거나 만료된 토큰입니다.");
 		}
 
@@ -48,7 +50,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		String name = (String)claims.get("name");
 		String role = (String)claims.get("role");
 
-		System.out.println("[WebSocket Debug] User authenticated - memberId: " + memberId + ", email: " + email);
+		log.debug("[WebSocket Debug] User authenticated - memberId: {}, email: {}", memberId, email);
 
 		// 2. SecurityUser 객체 생성
 		SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
@@ -57,27 +59,16 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		);
 
 		// 3. 해당 그룹의 멤버인지 검증 (ID 기반)
-		boolean isMember = groupRepository.findWithMembersByGroupName(groupName)
-			.map(group -> {
-				boolean match = group.getMembers().stream()
-					.anyMatch(groupMember -> groupMember.getId().equals(memberId));
-				if (!match) {
-					System.out.println("[WebSocket Debug] User " + memberId + " is NOT a member of group " + groupName);
-				}
-				return match;
-			})
-			.orElseGet(() -> {
-				System.out.println("[WebSocket Debug] Group not found: " + groupName);
-				return false;
-			});
+		boolean isMember = groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId);
 
 		if (!isMember) {
+			log.debug("[WebSocket Debug] User {} is NOT a member of group {} or group not found", memberId, groupName);
 			return failHandshake(response, "해당 그룹의 멤버가 아닙니다.");
 		}
 
 		// 4. 인증된 사용자 정보를 WebSocket 세션 속성에 저장 (HandshakeHandler에서 Principal로 변환 예정)
 		attributes.put("securityUser", securityUser);
-		System.out.println("[WebSocket Debug] Handshake successful");
+		log.debug("[WebSocket Debug] Handshake successful");
 
 		return true;
 	}
