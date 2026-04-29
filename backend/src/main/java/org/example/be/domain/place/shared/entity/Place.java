@@ -1,5 +1,7 @@
 package org.example.be.domain.place.shared.entity;
 
+import org.example.be.global.entity.Base;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
@@ -14,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @MappedSuperclass
-public abstract class Place {
+public abstract class Place extends Base {
 
 	@Column(name = "content_id", unique = true, nullable = false)
 	private String contentId;   // Tour API 콘텐츠 ID (고유값)
@@ -39,6 +41,4 @@ public abstract class Place {
 	private Integer mLevel;     // 맵 확대 레벨 (nullable) : 지도에 마커로 표시할 때 초기 지도 줌 수준을 자동 조정하는데 사용된다고 합니다.
 
 	private String tel;         // 전화번호
-	private String createdTime; // 등록일
-	private String modifiedTime;// 수정일
 }
