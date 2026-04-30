@@ -80,19 +80,6 @@ public class ScheduleService {
 
 		Schedule schedule = Schedule.create(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
-
-			SchedulePlace.create(schedule,
-				places.contentId(),
-				places.placeType(),
-				places.visitStart(),
-				places.visitedEnd(),
-				places.dayOrder(),
-				places.orderInDay()
-			);
-		}
-
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
 			return ScheduleResBody.from(savedSchedule);
@@ -239,20 +226,6 @@ public class ScheduleService {
 
 		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		schedule.getSchedulePlaces().clear();
-		scheduleRepository.flush();
-
-		for (SchedulePlaceReqBody places : reqBody.schedulePlaces()) {
-			placeValidationService.validateContentIdByPlaceType(places.placeType(), places.contentId());
-			SchedulePlace.create(schedule,
-				places.contentId(),
-				places.placeType(),
-				places.visitStart(),
-				places.visitedEnd(),
-				places.dayOrder(),
-				places.orderInDay()
-			);
-		}
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
 			return ScheduleResBody.from(updatedSchedule);
