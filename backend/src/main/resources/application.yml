@@ -1,5 +1,11 @@
 server:
   port: 8080
+  error:
+    whitelabel:
+      enabled: false
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
 
 spring:
   application:
@@ -13,13 +19,6 @@ spring:
       enabled: always
   jackson:
     time-zone: Asia/Seoul
-
-  error:
-    whitelabel:
-      enabled: false
-    include-message: never
-    include-stacktrace: never
-    include-binding-errors: never
 
   jpa:
     hibernate:
