@@ -1,9 +1,10 @@
 package org.example.be.external.tourapi.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.external.tourapi.util.TourApiClient;
@@ -11,9 +12,8 @@ import org.example.be.external.tourapi.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,8 @@ public class RestaurantFetchService {
 	private String serviceKey;
 
 	//식당 데이터를 가져와 저장 및 DTO 리스트 반환하기
-	public List<RestaurantDTO> getData(int areaCode, int contentTypeId, int numOfRows, int pageNo) throws Exception {
+	public List<RestaurantResBody> getData(int areaCode, int contentTypeId, int numOfRows, int pageNo) throws
+		Exception {
 		String rawJson = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo,
 			serviceKey); //tourApiClient에서 정보에 맞는 데이터를 가져옴
 
@@ -69,8 +70,8 @@ public class RestaurantFetchService {
 		}
 	}
 
-	private RestaurantDTO toDTO(Map<String, Object> item) {
-		return RestaurantDTO.builder()
+	private RestaurantResBody toDTO(Map<String, Object> item) {
+		return RestaurantResBody.builder()
 			.contentId(String.valueOf(item.get("contentid")))
 			.title((String)item.get("title"))
 			.addr1((String)item.get("addr1"))

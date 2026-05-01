@@ -3,7 +3,7 @@ package org.example.be.external.tourapi.controller;
 import java.util.List;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
 import org.example.be.external.tourapi.dto.FetchResult;
 import org.example.be.external.tourapi.service.AccommodationFetchService;
@@ -74,7 +74,7 @@ public class TourismController {
 
 	// 식당 정보 저장
 	@GetMapping("/fetch/restaurant/{areaCode}")
-	public ResponseEntity<List<RestaurantDTO>> fetchRestaurants(
+	public ResponseEntity<List<RestaurantResBody>> fetchRestaurants(
 		@PathVariable String areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
 	) throws Exception {
@@ -84,7 +84,7 @@ public class TourismController {
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
-		List<RestaurantDTO> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
+		List<RestaurantResBody> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
 		return ResponseEntity.ok(result);
 	}
 

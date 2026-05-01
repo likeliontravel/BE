@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.region.TourRegionService;
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
@@ -28,7 +28,7 @@ public class RestaurantFilterService {
 	private final PlaceCategoryService placeCategoryService;
 
 	// 식당 필터링
-	public List<RestaurantDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword,
+	public List<RestaurantResBody> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword,
 		Pageable pageable) {
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
 		if (regions != null && regions.isEmpty()) {
@@ -67,12 +67,12 @@ public class RestaurantFilterService {
 	}
 
 	// DTO로 변환
-	private RestaurantDTO convertToDTO(Restaurant restaurant) {
+	private RestaurantResBody convertToDTO(Restaurant restaurant) {
 
 		String region = (restaurant.getTourRegion() != null) ? restaurant.getTourRegion().getRegion() : "기타";
 		String theme = (restaurant.getPlaceCategory() != null) ? restaurant.getPlaceCategory().getTheme() : "기타";
 
-		return RestaurantDTO.builder()
+		return RestaurantResBody.builder()
 			.contentId(restaurant.getContentId())
 			.title(restaurant.getTitle())
 			.addr1(restaurant.getAddr1())
