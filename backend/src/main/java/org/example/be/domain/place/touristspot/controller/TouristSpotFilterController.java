@@ -2,8 +2,8 @@ package org.example.be.domain.place.touristspot.controller;
 
 import java.util.List;
 
-import org.example.be.domain.place.shared.type.PlaceSortType;
-import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
+import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.domain.place.touristspot.service.TouristSpotFilterService;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.data.domain.PageRequest;
@@ -11,11 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,8 +24,26 @@ public class TouristSpotFilterController {
 
 	private final TouristSpotFilterService touristSpotFilterService;
 
+	/**
+	 * 관광지 필터링 API
+	 */
+	@GetMapping("/touristspots")
+	public ResponseEntity<CommonResponse<List<TouristSpotResBody>>> getFilteredTouristSpots(
+		@ModelAttribute PlaceSearchReqBody reqBody
+	) {
+		Pageable pageable = PageRequest.of(
+			reqBody.page() - 1,
+			reqBody.size(),
+			Sort.by(reqBody.sortType().getSortDirection(), reqBody.sortType().getSortProperty())
+		);
 
-    /*
+		List<TouristSpotResBody> results = touristSpotFilterService.getFilteredTouristSpots(reqBody, pageable);
+		return ResponseEntity.ok(CommonResponse.success(results, "관광지 필터링 조회 성공"));
+	}
+}
+
+
+    /* 이건 형진형의 추억이라 일단 둘게요...
 
     예찬 선배가 잘해놔서 뭐 다른거 없었고 그냥 어노테이션 관련해서 추가해봤고 페이징 처리 할때
 
@@ -51,20 +68,3 @@ public class TouristSpotFilterController {
      이건 찾아봤습니다.
 
     */
-
-	@GetMapping("/touristspots")
-	public ResponseEntity<CommonResponse<List<TouristSpotDTO>>> getFilteredTouristSpots(
-		@RequestParam(required = false) List<String> regions,
-		@RequestParam(required = false) List<String> themes,
-		@RequestParam(required = false) String keyword,
-		@RequestParam(defaultValue = "1") @Min(1) int page,   // 1 이상만 허용
-		@RequestParam(defaultValue = "30") @Min(1) int size,  // 1 이상만 허용
-		@RequestParam(defaultValue = "TITLE_ASC") PlaceSortType sortType
-	) {
-		Pageable pageable = PageRequest.of(page - 1, size,
-			Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
-		List<TouristSpotDTO> results = touristSpotFilterService.getFilteredTouristSpots(regions, themes, keyword,
-			pageable);
-		return ResponseEntity.ok(CommonResponse.success(results, "관광지 필터링 조회 성공"));
-	}
-}
