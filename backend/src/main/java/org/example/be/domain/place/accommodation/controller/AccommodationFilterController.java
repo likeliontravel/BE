@@ -2,7 +2,7 @@ package org.example.be.domain.place.accommodation.controller;
 
 import java.util.List;
 
-import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
+import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.service.AccommodationFilterService;
 import org.example.be.domain.place.shared.type.PlaceSortType;
 import org.example.be.global.response.CommonResponse;
@@ -40,7 +40,7 @@ public class AccommodationFilterController {
 	 * page, size, sort는 기본값 정해져있음(nullable)
 	 */
 	@GetMapping("/accommodations")
-	public ResponseEntity<CommonResponse<List<AccommodationDTO>>> getFilteredAccommodations(
+	public ResponseEntity<CommonResponse<List<AccommodationResBody>>> getFilteredAccommodations(
 		@RequestParam(required = false) List<String> regions,
 		@RequestParam(required = false) List<String> themes,
 		@RequestParam(required = false) String keyword,
@@ -50,7 +50,8 @@ public class AccommodationFilterController {
 	) {
 		Pageable pageable = PageRequest.of(page - 1, size,
 			Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
-		List<AccommodationDTO> result = accommodationFilterService.getFilteredAccommodations(regions, themes, keyword,
+		List<AccommodationResBody> result = accommodationFilterService.getFilteredAccommodations(regions, themes,
+			keyword,
 			pageable);
 		return ResponseEntity.ok(CommonResponse.success(result, "숙소 필터링 조회 성공"));
 	}

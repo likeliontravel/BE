@@ -3,7 +3,7 @@ package org.example.be.domain.place.accommodation.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
+import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.entity.Accommodation;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.domain.place.region.TourRegionService;
@@ -24,7 +24,8 @@ public class AccommodationFilterService {
 	private final PlaceCategoryService placeCategoryService;
 
 	// 숙소 필터링
-	public List<AccommodationDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword,
+	public List<AccommodationResBody> getFilteredAccommodations(List<String> regions, List<String> themes,
+		String keyword,
 		Pageable pageable) {
 
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
@@ -64,12 +65,12 @@ public class AccommodationFilterService {
 			.collect(Collectors.toList());
 	}
 
-	private AccommodationDTO convertToDTO(Accommodation accommodation) {
+	private AccommodationResBody convertToDTO(Accommodation accommodation) {
 
 		String region = (accommodation.getTourRegion() != null) ? accommodation.getTourRegion().getRegion() : "기타";
 		String theme = (accommodation.getPlaceCategory() != null) ? accommodation.getPlaceCategory().getTheme() : "기타";
 
-		return AccommodationDTO.builder()
+		return AccommodationResBody.builder()
 			.contentId(accommodation.getContentId())
 			.title(accommodation.getTitle())
 			.addr1(accommodation.getAddr1())
