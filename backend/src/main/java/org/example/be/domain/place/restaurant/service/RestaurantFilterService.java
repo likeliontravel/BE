@@ -7,6 +7,7 @@ import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
@@ -27,8 +28,12 @@ public class RestaurantFilterService {
 	private final PlaceCategoryService placeCategoryService;
 
 	// 식당 필터링
-	public List<RestaurantResBody> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword,
-		Pageable pageable) {
+	public List<RestaurantResBody> getFilteredRestaurants(PlaceSearchReqBody reqBody, Pageable pageable) {
+
+		List<String> regions = reqBody.regions();
+		List<String> themes = reqBody.themes();
+		String keyword = reqBody.keyword();
+
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
 		if (regions != null && regions.isEmpty()) {
 			regions = null;
@@ -64,7 +69,7 @@ public class RestaurantFilterService {
 			.map(RestaurantResBody::from)
 			.toList();
 	}
-	
+
 	//    // Restaurant -> ResponseDTO 변환
 	//    private RestaurantResponseDTO toRestaurantResponseDTO(Restaurant restaurant) {
 	//        String region = tourRegionRepository
