@@ -12,6 +12,7 @@ import org.example.be.global.security.oauth.userinfo.OAuth2UserInfo;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -34,12 +35,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
 		OAuth2UserInfo userInfo = getOAuth2UserInfo(providerTypeCode, oAuth2User.getAttributes());
 
-		Member member = memberRepository.findByEmailAndOauthProvider(userInfo.getEmail(), provider).orElse(null);
+		// 이메일 단독 UNIQUE 정책에 맞춰 email만으로 조회, 이후 member 객체 필드의 provider를 비교
+		Member member = memberRepository.findByEmail(userInfo.getEmail()).orElse(null);
 
 		if (member == null) {
+			// 신규 가입인 경우
 			joinMember(userInfo, provider);
+		} else if (member.getOauthProvider() != provider) {
+			// 동일 이메일이 다른 provider (또는 General)로 이미 가입되어 있는 경우
+			// 개인정보 보호를 위해 어떤 provider로 가입되었는지는 노출하지 않음
+			throw new OAuth2AuthenticationException(new OAuth2Error("email_already_registered"),
+				"다른 로그인 방식으로 가입된 이메일입니다. 해당 방식으로 로그인해주세요.");
 		}
 
+		// email 존재, 같은 provider면 그대로 통과 -> SuccessHandler에서 토큰 발급
 		return oAuth2User;
 	}
 
