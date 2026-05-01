@@ -1,7 +1,6 @@
 package org.example.be.domain.place.restaurant.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.region.TourRegionService;
@@ -62,39 +61,10 @@ public class RestaurantFilterService {
 		List<Restaurant> restaurants = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
 
 		return restaurants.stream()
-			.map(this::convertToDTO)
-			.collect(Collectors.toList());
+			.map(RestaurantResBody::from)
+			.toList();
 	}
-
-	// DTO로 변환
-	private RestaurantResBody convertToDTO(Restaurant restaurant) {
-
-		String region = (restaurant.getTourRegion() != null) ? restaurant.getTourRegion().getRegion() : "기타";
-		String theme = (restaurant.getPlaceCategory() != null) ? restaurant.getPlaceCategory().getTheme() : "기타";
-
-		return RestaurantResBody.builder()
-			.contentId(restaurant.getContentId())
-			.title(restaurant.getTitle())
-			.addr1(restaurant.getAddr1())
-			.addr2(restaurant.getAddr2())
-			.areaCode(restaurant.getAreaCode())
-			.siGunGuCode(restaurant.getSiGunGuCode())
-			.cat1(restaurant.getCat1())
-			.cat2(restaurant.getCat2())
-			.cat3(restaurant.getCat3())
-			.imageUrl(restaurant.getImageUrl())
-			.thumbnailImageUrl(restaurant.getThumbnailImageUrl())
-			.mapX(restaurant.getMapX())
-			.mapY(restaurant.getMapY())
-			.mLevel(restaurant.getMLevel())
-			.tel(restaurant.getTel())
-			.createdTime(restaurant.getCreatedTime())
-			.modifiedTime(restaurant.getModifiedTime())
-			.theme(theme)
-			.region(region)
-			.build();
-	}
-
+	
 	//    // Restaurant -> ResponseDTO 변환
 	//    private RestaurantResponseDTO toRestaurantResponseDTO(Restaurant restaurant) {
 	//        String region = tourRegionRepository
