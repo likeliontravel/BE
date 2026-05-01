@@ -44,6 +44,7 @@ public class AccommodationFilterController {
 	) {
 		Pageable pageable = PageRequest.of(reqBody.page() - 1, reqBody.size(),
 			Sort.by(reqBody.sortType().getSortDirection(), reqBody.sortType().getSortProperty()));
+
 		List<AccommodationResBody> result = accommodationFilterService.getFilteredAccommodations(reqBody, pageable);
 		return ResponseEntity.ok(CommonResponse.success(result, "숙소 필터링 조회 성공"));
 	}
