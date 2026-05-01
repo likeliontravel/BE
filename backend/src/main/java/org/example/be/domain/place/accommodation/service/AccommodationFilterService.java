@@ -1,7 +1,6 @@
 package org.example.be.domain.place.accommodation.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.entity.Accommodation;
@@ -61,36 +60,8 @@ public class AccommodationFilterService {
 			pageable);
 
 		return accommodations.stream()
-			.map(this::convertToDTO)
-			.collect(Collectors.toList());
-	}
-
-	private AccommodationResBody convertToDTO(Accommodation accommodation) {
-
-		String region = (accommodation.getTourRegion() != null) ? accommodation.getTourRegion().getRegion() : "기타";
-		String theme = (accommodation.getPlaceCategory() != null) ? accommodation.getPlaceCategory().getTheme() : "기타";
-
-		return AccommodationResBody.builder()
-			.contentId(accommodation.getContentId())
-			.title(accommodation.getTitle())
-			.addr1(accommodation.getAddr1())
-			.addr2(accommodation.getAddr2())
-			.areaCode(accommodation.getAreaCode())
-			.siGunGuCode(accommodation.getSiGunGuCode())
-			.cat1(accommodation.getCat1())
-			.cat2(accommodation.getCat2())
-			.cat3(accommodation.getCat3())
-			.imageUrl(accommodation.getImageUrl())
-			.thumbnailImageUrl(accommodation.getThumbnailImageUrl())
-			.mapX(accommodation.getMapX())
-			.mapY(accommodation.getMapY())
-			.mLevel(accommodation.getMLevel())
-			.tel(accommodation.getTel())
-			.createdTime(accommodation.getCreatedTime())
-			.modifiedTime(accommodation.getModifiedTime())
-			.theme(theme)
-			.region(region)
-			.build();
+			.map(AccommodationResBody::from)
+			.toList();
 	}
 	//
 	//    // Accommodation -> ResponseDTO 변환 ( db를 한번 더 찔러서 조회하길래 convertToDTO로 변경. 문제 있을 시 돌려놓을 예정)
