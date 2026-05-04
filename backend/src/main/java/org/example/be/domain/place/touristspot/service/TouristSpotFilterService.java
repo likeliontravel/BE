@@ -10,6 +10,8 @@ import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +25,7 @@ public class TouristSpotFilterService {
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
 
-	public List<TouristSpotResBody> getFilteredTouristSpots(PlaceSearchReqBody reqBody, Pageable pageable) {
+	public PageResponse<TouristSpotResBody> getFilteredTouristSpots(PlaceSearchReqBody reqBody, Pageable pageable) {
 
 		List<String> regions = reqBody.regions();
 		List<String> themes = reqBody.themes();
@@ -58,10 +60,12 @@ public class TouristSpotFilterService {
 			}
 		}
 
-		List<TouristSpot> filtered = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
+		Page<TouristSpot> page = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
 
-		return filtered.stream()
+		List<TouristSpotResBody> content = page.getContent().stream()
 			.map(TouristSpotResBody::from)
 			.toList();
+
+		return PageResponse.from(page, content);
 	}
 }
