@@ -66,8 +66,13 @@ public class RestaurantItemProcessor implements ItemProcessor<Map<String, Object
 			Restaurant restaurant = existing.get();
 			boolean changed = processorHelper.updateCommonFields(restaurant, item);
 			if (changed) {
-				restaurant.setTourRegion(tourRegion);
-				restaurant.setPlaceCategory(placeCategory);
+				restaurant.update(
+					restaurant.getTitle(), restaurant.getAddr1(), restaurant.getAddr2(), restaurant.getAreaCode(),
+					restaurant.getSiGunGuCode(), restaurant.getCat1(), restaurant.getCat2(), restaurant.getCat3(),
+					restaurant.getImageUrl(), restaurant.getThumbnailImageUrl(), restaurant.getMapX(),
+					restaurant.getMapY(), restaurant.getMLevel(), restaurant.getTel(), restaurant.getModifiedTime(),
+					tourRegion, placeCategory
+				);
 				updatedCount++;
 				log.debug("[Processor] UPDATED Restaurant - contentId={}", contentId);
 				return restaurant;

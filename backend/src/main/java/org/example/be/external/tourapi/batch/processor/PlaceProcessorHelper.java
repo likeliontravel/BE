@@ -90,21 +90,23 @@ public class PlaceProcessorHelper {
 		String newModifiedTime = String.valueOf(item.get("modifiedtime"));
 
 		if (!Objects.equals(existing.getModifiedTime(), newModifiedTime)) {
-			existing.setTitle(String.valueOf(item.get("title")));
-			existing.setAddr1(String.valueOf(item.get("addr1")));
-			existing.setAddr2(String.valueOf(item.get("addr2")));
-			existing.setAreaCode(String.valueOf(item.get("areacode")));
-			existing.setSiGunGuCode(getSiGunGuCode(item));
-			existing.setCat1(String.valueOf(item.get("cat1")));
-			existing.setCat2(String.valueOf(item.get("cat2")));
-			existing.setCat3(String.valueOf(item.get("cat3")));
-			existing.setImageUrl(String.valueOf(item.get("firstimage")));
-			existing.setThumbnailImageUrl(String.valueOf(item.get("firstimage2")));
-			existing.setMapX(toDouble(item.get("mapx")));
-			existing.setMapY(toDouble(item.get("mapy")));
-			existing.setMLevel(toInteger(item.get("mlevel")));
-			existing.setTel(String.valueOf(item.get("tel")));
-			existing.setModifiedTime(newModifiedTime);
+			existing.updateCommonFields(
+				String.valueOf(item.get("title")),
+				String.valueOf(item.get("addr1")),
+				String.valueOf(item.get("addr2")),
+				String.valueOf(item.get("areacode")),
+				getSiGunGuCode(item),
+				String.valueOf(item.get("cat1")),
+				String.valueOf(item.get("cat2")),
+				String.valueOf(item.get("cat3")),
+				String.valueOf(item.get("firstimage")),
+				String.valueOf(item.get("firstimage2")),
+				toDouble(item.get("mapx")),
+				toDouble(item.get("mapy")),
+				toInteger(item.get("mlevel")),
+				String.valueOf(item.get("tel")),
+				newModifiedTime
+			);
 			return true;
 		}
 		return false;

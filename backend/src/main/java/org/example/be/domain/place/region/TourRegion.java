@@ -47,4 +47,10 @@ public class TourRegion {
 
 	@Column(name = "region")
 	private String region;
+
+	public void update(String areaName, String siGunGuName, String region) {
+		this.areaName = areaName;
+		this.siGunGuName = siGunGuName;
+		this.region = region;
+	}
 }

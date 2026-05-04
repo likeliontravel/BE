@@ -47,4 +47,15 @@ public class PlaceCategory {
 
 	@Column(name = "theme")
 	private String theme;
+
+	public void update(String contentTypeId, String cat1, String cat2, String largeClassification,
+		String midClassification, String smallClassification, String theme) {
+		this.contentTypeId = contentTypeId;
+		this.cat1 = cat1;
+		this.cat2 = cat2;
+		this.largeClassification = largeClassification;
+		this.midClassification = midClassification;
+		this.smallClassification = smallClassification;
+		this.theme = theme;
+	}
 }

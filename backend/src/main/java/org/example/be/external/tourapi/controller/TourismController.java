@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
-import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
+import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.external.tourapi.dto.FetchResult;
 import org.example.be.external.tourapi.service.AccommodationFetchService;
 import org.example.be.external.tourapi.service.RestaurantFetchService;
@@ -38,7 +38,7 @@ public class TourismController {
 
 	// 관광지 정보 저장
 	@GetMapping("/fetch/touristSpot/{areaCode}")
-	public ResponseEntity<List<TouristSpotDTO>> fetchTouristSpots(
+	public ResponseEntity<List<TouristSpotResBody>> fetchTouristSpots(
 		@PathVariable String areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
 	) throws Exception {
@@ -48,7 +48,7 @@ public class TourismController {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 
-		List<TouristSpotDTO> result = touristSpotFetchService.getTouristSpots(
+		List<TouristSpotResBody> result = touristSpotFetchService.getTouristSpots(
 			code, state, 12, 1000, pageNo
 		);
 
@@ -98,4 +98,3 @@ public class TourismController {
 		return ResponseEntity.ok(CommonResponse.success(result, "TouristSpot 전체 저장 성공"));
 	}
 }
-

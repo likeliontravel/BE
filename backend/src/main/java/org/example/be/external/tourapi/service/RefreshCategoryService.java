@@ -134,13 +134,8 @@ public class RefreshCategoryService {
 					|| !Objects.equals(theme, pc.getTheme());
 
 			if (changed) {
-				pc.setContentTypeId(contentTypeId);
-				pc.setCat1(cat1Code);
-				pc.setCat2(cat2Code);
-				pc.setLargeClassification(largeClassification);
-				pc.setMidClassification(midClassification);
-				pc.setSmallClassification(smallClassification);
-				pc.setTheme(theme);
+				pc.update(contentTypeId, cat1Code, cat2Code, largeClassification, midClassification,
+					smallClassification, theme);
 				// JPA dirty checking으로 자동 업데이트
 				return SaveResult.UPDATED;
 			} else {

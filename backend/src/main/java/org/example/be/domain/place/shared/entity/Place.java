@@ -40,4 +40,24 @@ public abstract class Place {
 	private String tel;         // 전화번호
 	private String createdTime; // 등록일
 	private String modifiedTime;// 수정일
+
+	public void updateCommonFields(String title, String addr1, String addr2, String areaCode, String siGunGuCode,
+		String cat1, String cat2, String cat3, String imageUrl, String thumbnailImageUrl,
+		Double mapX, Double mapY, Integer mLevel, String tel, String modifiedTime) {
+		this.title = title;
+		this.addr1 = addr1;
+		this.addr2 = addr2;
+		this.areaCode = areaCode;
+		this.siGunGuCode = siGunGuCode;
+		this.cat1 = cat1;
+		this.cat2 = cat2;
+		this.cat3 = cat3;
+		this.imageUrl = imageUrl;
+		this.thumbnailImageUrl = thumbnailImageUrl;
+		this.mapX = mapX;
+		this.mapY = mapY;
+		this.mLevel = mLevel;
+		this.tel = tel;
+		this.modifiedTime = modifiedTime;
+	}
 }

@@ -36,6 +36,16 @@ public class TouristSpot extends Place {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "place_category_id")
 	private PlaceCategory placeCategory;
+	
+	public void update(String title, String addr1, String addr2, String areaCode, String siGunGuCode,
+		String cat1, String cat2, String cat3, String imageUrl, String thumbnailImageUrl,
+		Double mapX, Double mapY, Integer mLevel, String tel, String modifiedTime,
+		TourRegion tourRegion, PlaceCategory placeCategory) {
 
-	// Place 클래스의 모든 필드 상속
+		super.updateCommonFields(title, addr1, addr2, areaCode, siGunGuCode, cat1, cat2, cat3,
+			imageUrl, thumbnailImageUrl, mapX, mapY, mLevel, tel, modifiedTime);
+
+		this.tourRegion = tourRegion;
+		this.placeCategory = placeCategory;
+	}
 }
