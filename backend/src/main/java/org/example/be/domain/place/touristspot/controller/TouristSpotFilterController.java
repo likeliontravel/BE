@@ -1,11 +1,10 @@
 package org.example.be.domain.place.touristspot.controller;
 
-import java.util.List;
-
 import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.domain.place.touristspot.service.TouristSpotFilterService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -28,7 +27,7 @@ public class TouristSpotFilterController {
 	 * 관광지 필터링 API
 	 */
 	@GetMapping("/touristspots")
-	public ResponseEntity<CommonResponse<List<TouristSpotResBody>>> getFilteredTouristSpots(
+	public ResponseEntity<CommonResponse<PageResponse<TouristSpotResBody>>> getFilteredTouristSpots(
 		@ModelAttribute PlaceSearchReqBody reqBody
 	) {
 		Pageable pageable = PageRequest.of(
@@ -37,7 +36,7 @@ public class TouristSpotFilterController {
 			Sort.by(reqBody.sortType().getSortDirection(), reqBody.sortType().getSortProperty())
 		);
 
-		List<TouristSpotResBody> results = touristSpotFilterService.getFilteredTouristSpots(reqBody, pageable);
+		PageResponse<TouristSpotResBody> results = touristSpotFilterService.getFilteredTouristSpots(reqBody, pageable);
 		return ResponseEntity.ok(CommonResponse.success(results, "관광지 필터링 조회 성공"));
 	}
 }
