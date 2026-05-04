@@ -109,6 +109,6 @@ tasks.withType(JavaCompile).configureEach {
     options.annotationProcessorGeneratedSourcesDirectory = querydslDir
 }
 
-sourceSets {
-    main.java.srcDirs += querydslDir
-}
+//sourceSets {
+//    main.java.srcDirs += querydslDir
+//}
