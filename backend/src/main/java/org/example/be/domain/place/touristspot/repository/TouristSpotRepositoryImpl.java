@@ -51,7 +51,7 @@ public class TouristSpotRepositoryImpl implements TouristSpotRepositoryCustom {
 			)
 			.fetchOne();
 
-		return new PageImpl<>(content, pageable, total);
+		return new PageImpl<>(content, pageable, total != null ? total : 0L);
 	}
 
 	private BooleanExpression regionsIn(List<String> regions, QTourRegion tourRegion) {

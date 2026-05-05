@@ -10,6 +10,8 @@ import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +26,7 @@ public class AccommodationFilterService {
 	private final PlaceCategoryService placeCategoryService;
 
 	// 숙소 필터링
-	public List<AccommodationResBody> getFilteredAccommodations(PlaceSearchReqBody reqBody, Pageable pageable) {
+	public PageResponse<AccommodationResBody> getFilteredAccommodations(PlaceSearchReqBody reqBody, Pageable pageable) {
 
 		List<String> regions = reqBody.regions();
 		List<String> themes = reqBody.themes();
@@ -59,12 +61,14 @@ public class AccommodationFilterService {
 			}
 		}
 
-		List<Accommodation> accommodations = accommodationRepository.findAllByFilters(regions, themes, keyword,
+		Page<Accommodation> page = accommodationRepository.findAllByFilters(regions, themes, keyword,
 			pageable);
 
-		return accommodations.stream()
+		List<AccommodationResBody> content = page.getContent().stream()
 			.map(AccommodationResBody::from)
 			.toList();
+
+		return PageResponse.from(page, content);
 	}
 	//
 	//    // Accommodation -> ResponseDTO 변환 ( db를 한번 더 찔러서 조회하길래 convertToDTO로 변경. 문제 있을 시 돌려놓을 예정)
