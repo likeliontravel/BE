@@ -1,11 +1,10 @@
 package org.example.be.domain.place.restaurant.controller;
 
-import java.util.List;
-
 import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.service.RestaurantFilterService;
 import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,7 +25,7 @@ public class RestaurantFilterController {
 
 	// 식당 필터링 API
 	@GetMapping("/restaurants")
-	public ResponseEntity<CommonResponse<List<RestaurantResBody>>> getFilteredRestaurants(
+	public ResponseEntity<CommonResponse<PageResponse<RestaurantResBody>>> getFilteredRestaurants(
 		@ModelAttribute PlaceSearchReqBody reqBody
 	) {
 		Pageable pageable = PageRequest.of(
@@ -34,7 +33,7 @@ public class RestaurantFilterController {
 			Sort.by(reqBody.sortType().getSortDirection(), reqBody.sortType().getSortProperty())
 		);
 
-		List<RestaurantResBody> result = restaurantFilterService.getFilteredRestaurants(reqBody, pageable);
+		PageResponse<RestaurantResBody> result = restaurantFilterService.getFilteredRestaurants(reqBody, pageable);
 		return ResponseEntity.ok(CommonResponse.success(result, "식당 필터링 조회 성공"));
 	}
 
