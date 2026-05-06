@@ -2,16 +2,16 @@ package org.example.be.domain.place.restaurant.service;
 
 import java.util.List;
 
-import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
-import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -20,15 +20,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class RestaurantFilterService {
-
-	private final TourRegionRepository tourRegionRepository;
-	private final PlaceCategoryRepository placeCategoryRepository;
+	
 	private final RestaurantRepository restaurantRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
 
 	// 식당 필터링
-	public List<RestaurantResBody> getFilteredRestaurants(PlaceSearchReqBody reqBody, Pageable pageable) {
+	public PageResponse<RestaurantResBody> getFilteredRestaurants(PlaceSearchReqBody reqBody, Pageable pageable) {
 
 		List<String> regions = reqBody.regions();
 		List<String> themes = reqBody.themes();
@@ -63,11 +61,13 @@ public class RestaurantFilterService {
 			}
 		}
 
-		List<Restaurant> restaurants = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
+		Page<Restaurant> page = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
 
-		return restaurants.stream()
+		List<RestaurantResBody> content = page.getContent().stream()
 			.map(RestaurantResBody::from)
 			.toList();
+
+		return PageResponse.from(page, content);
 	}
 
 	//    // Restaurant -> ResponseDTO 변환
