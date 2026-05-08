@@ -13,6 +13,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
 	boolean existsByEmail(String email);
 
+	// CustomOAuth2UserService.loadUser() 에서 이메일 단독 검증으로 변경 후 미사용 중
 	Optional<Member> findByEmailAndOauthProvider(String email, OauthProvider provider);
 
 }

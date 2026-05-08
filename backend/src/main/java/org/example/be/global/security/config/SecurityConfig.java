@@ -6,6 +6,7 @@ import java.util.List;
 import org.example.be.global.jwt.util.JsonUt;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.filter.CustomAuthenticationFilter;
+import org.example.be.global.security.oauth.handler.CustomFailureHandler;
 import org.example.be.global.security.oauth.handler.CustomSuccessHandler;
 import org.example.be.global.security.oauth.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CustomSuccessHandler customSuccessHandler;
 	private final CustomAuthenticationFilter customAuthenticationFilter;
+	private final CustomFailureHandler customFailureHandler;
 
 	// @Bean
 	// public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -85,7 +87,8 @@ public class SecurityConfig {
 			.oauth2Login((oauth2) -> oauth2
 				.userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
 					.userService(customOAuth2UserService))
-				.successHandler(customSuccessHandler))
+				.successHandler(customSuccessHandler)
+				.failureHandler(customFailureHandler))
 
 			.exceptionHandling(
 				exceptionHandling -> exceptionHandling

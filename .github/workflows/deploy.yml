@@ -140,6 +140,49 @@ jobs:
 
       - name: verify deployment
         run: |
-          sleep 15
+          set -e
+          
+          # ──────────────────────────────────────────
+          # 1. 컨테이너 기본 상태 확인
+          # ──────────────────────────────────────────
           docker compose -f $HOME/toleave_yechan/docker-compose.prod.yml ps
+
+          # ──────────────────────────────────────────
+          # 2. 이미지 정합성 검증 - GHCR에서 왔는지 확인
+          # ──────────────────────────────────────────
+          IMAGE=$(docker inspect toleave-app --format '{{.Config.Image}}')
+          echo "Deployed image: $IMAGE"
+
+          if [[ "$IMAGE" != ghcr.io/likeliontravel/toleave-backend:* ]]; then
+            echo "::error::배포된 이미지가 GHCR 이미지가 아닙니다: $IMAGE"
+            echo "::error::EC2에 비공식 docker-compose.yml이나 옛 캐시 이미지가 있는지 확인하세요."
+            exit 1
+          fi
+
+          # ──────────────────────────────────────────
+          # 3. 헬스체크 응답 검증 - 최대 60초 폴링
+          # ──────────────────────────────────────────
+          echo "Health check 시작..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/health > /dev/null; then
+              echo "Health check 통과 (시도 $i회)"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "::error::Health check 실패 (60초 초과)"
+              echo "::error::docker logs toleave-app 으로 부팅 로그 확인 필요"
+              docker logs toleave-app --tail=50
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # ──────────────────────────────────────────
+          # 4. 부팅 로그에서 에러 패턴 감지
+          # ──────────────────────────────────────────
+          if docker logs toleave-app 2>&1 | grep -E "ERROR|FATAL|Exception" | head -5; then
+            echo "::warning::부팅 로그에서 에러 패턴이 감지되었습니다. 위 로그 확인 필요."
+          fi
+
+          echo "배포 검증 완료"
           
