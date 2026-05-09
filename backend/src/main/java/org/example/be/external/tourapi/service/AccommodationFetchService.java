@@ -1,9 +1,11 @@
 package org.example.be.external.tourapi.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
+import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.entity.Accommodation;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.external.tourapi.util.TourApiClient;
@@ -11,10 +13,8 @@ import org.example.be.external.tourapi.util.TourApiParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class AccommodationFetchService {
 	private String serviceKey;
 
 	// 컨트롤러 입력 -> 페이지 입력에 따라 데이터 저장 함수 분기
-	public List<AccommodationDTO> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws
+	public List<AccommodationResBody> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws
 		Exception {
 		int contentTypeId = 32; // 숙소 ContentTypeId 32 고정
 		if (pageNo <= 0) {
@@ -40,7 +40,7 @@ public class AccommodationFetchService {
 	}
 
 	// Page 입력 시 해당 단위 데이터 저장
-	private List<AccommodationDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
+	private List<AccommodationResBody> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
 		int pageNo) throws Exception {
 		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
 		log.debug("[TourAPI JSON 응답 - 숙소] \n {}", json);
@@ -55,10 +55,10 @@ public class AccommodationFetchService {
 	}
 
 	// Page 미입력 시 전체 결과 저장
-	private List<AccommodationDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
+	private List<AccommodationResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
 		Exception {
 		int pageNo = 1;
-		List<AccommodationDTO> allItems = new ArrayList<>();
+		List<AccommodationResBody> allItems = new ArrayList<>();
 
 		while (true) {
 			String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
@@ -108,8 +108,8 @@ public class AccommodationFetchService {
 	}
 
 	// Map<String, Object> -> DTO
-	private AccommodationDTO toDTO(Map<String, Object> item) {
-		return AccommodationDTO.builder()
+	private AccommodationResBody toDTO(Map<String, Object> item) {
+		return AccommodationResBody.builder()
 			.contentId((String)item.get("contentid"))
 			.title((String)item.get("title"))
 			.addr1((String)item.get("addr1"))

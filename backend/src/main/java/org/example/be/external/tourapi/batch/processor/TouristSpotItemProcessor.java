@@ -69,8 +69,13 @@ public class TouristSpotItemProcessor implements ItemProcessor<Map<String, Objec
 			TouristSpot spot = existing.get();
 			boolean changed = processorHelper.updateCommonFields(spot, item);
 			if (changed) {
-				spot.setTourRegion(tourRegion);
-				spot.setPlaceCategory(placeCategory);
+				// commonFields 외에 자식 엔티티의 특정 필드(tourRegion, placeCategory) 업데이트
+				spot.update(
+					spot.getTitle(), spot.getAddr1(), spot.getAddr2(), spot.getAreaCode(), spot.getSiGunGuCode(),
+					spot.getCat1(), spot.getCat2(), spot.getCat3(), spot.getImageUrl(), spot.getThumbnailImageUrl(),
+					spot.getMapX(), spot.getMapY(), spot.getMLevel(), spot.getTel(), spot.getModifiedTime(),
+					tourRegion, placeCategory
+				);
 				updatedCount++;
 				log.debug("[Proccessor] UPDATED TouristSpot - contentId={}", contentId);
 				return spot;

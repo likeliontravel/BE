@@ -11,7 +11,7 @@ import org.example.be.domain.place.region.TourRegion;
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.theme.PlaceCategory;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
-import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
+import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.external.tourapi.dto.FetchResult;
@@ -42,7 +42,7 @@ public class TouristSpotFetchService {
 	@Value("${service-key}")
 	private String serviceKey;
 
-	public List<TouristSpotDTO> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows,
+	public List<TouristSpotResBody> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows,
 		int pageNo) throws Exception {
 		if (pageNo <= 0) {
 			return getAllData(areaCode, state, contentTypeId, numOfRows);
@@ -52,7 +52,7 @@ public class TouristSpotFetchService {
 	}
 
 	// 페이지 입력 시 fetch
-	private List<TouristSpotDTO> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
+	private List<TouristSpotResBody> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
 		int pageNo) throws Exception {
 		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
 		log.debug("[TourAPI JSON 응답] {}", json);
@@ -62,15 +62,15 @@ public class TouristSpotFetchService {
 		return items.stream()
 			.filter(item -> item.get("addr1") != null && item.get("addr1").toString().contains(state))
 			.peek(this::saveIfNotExist)
-			.map(this::toDTO)
+			.map(this::toResBody)
 			.collect(Collectors.toList());
 	}
 
 	// 페이지 미입력시 전체 데이터 fetch
-	private List<TouristSpotDTO> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
+	private List<TouristSpotResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
 		Exception {
 		int pageNo = 1;
-		List<TouristSpotDTO> allItems = new ArrayList<>();
+		List<TouristSpotResBody> allItems = new ArrayList<>();
 
 		while (true) {
 			String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
@@ -90,7 +90,7 @@ public class TouristSpotFetchService {
 				break;
 
 			filtered.forEach(this::saveIfNotExist);
-			allItems.addAll(filtered.stream().map(this::toDTO).toList());
+			allItems.addAll(filtered.stream().map(this::toResBody).toList());
 			pageNo++;
 		}
 
@@ -247,23 +247,25 @@ public class TouristSpotFetchService {
 
 		String newModifiedTime = String.valueOf(item.get("modifiedtime"));
 		if (!Objects.equals(existing.getModifiedTime(), newModifiedTime)) {
-			existing.setTitle(String.valueOf(item.get("title")));
-			existing.setAddr1(String.valueOf(item.get("addr1")));
-			existing.setAddr2(String.valueOf(item.get("addr2")));
-			existing.setAreaCode(String.valueOf(item.get("areacode")));
-			existing.setSiGunGuCode(getSiGunGuCode(item));    // 이미 item으로 뽑히면서 String.valueOf()로 캐스팅 되어있음
-			existing.setCat1(String.valueOf(item.get("cat1")));
-			existing.setCat2(String.valueOf(item.get("cat2")));
-			existing.setCat3(String.valueOf(item.get("cat3")));
-			existing.setImageUrl(String.valueOf(item.get("firstimage")));
-			existing.setThumbnailImageUrl(String.valueOf(item.get("firstimage2")));
-			existing.setMapX(toDouble(item.get("mapx")));
-			existing.setMapY(toDouble(item.get("mapy")));
-			existing.setMLevel(toInteger(item.get("mlevel")));
-			existing.setTel(String.valueOf(item.get("tel")));
-			existing.setModifiedTime(newModifiedTime);
-			existing.setTourRegion(tourRegion);
-			existing.setPlaceCategory(placeCategory);
+			existing.update(
+				String.valueOf(item.get("title")),
+				String.valueOf(item.get("addr1")),
+				String.valueOf(item.get("addr2")),
+				String.valueOf(item.get("areacode")),
+				getSiGunGuCode(item),
+				String.valueOf(item.get("cat1")),
+				String.valueOf(item.get("cat2")),
+				String.valueOf(item.get("cat3")),
+				String.valueOf(item.get("firstimage")),
+				String.valueOf(item.get("firstimage2")),
+				toDouble(item.get("mapx")),
+				toDouble(item.get("mapy")),
+				toInteger(item.get("mlevel")),
+				String.valueOf(item.get("tel")),
+				newModifiedTime,
+				tourRegion,
+				placeCategory
+			);
 			log.debug("[TouristSpot Updated] contentId={}", existing.getContentId());
 			return true;
 		}
@@ -307,8 +309,8 @@ public class TouristSpotFetchService {
 	}
 
 	// TouristSpot -> DTO 변환
-	private TouristSpotDTO toDTO(Map<String, Object> item) {
-		return TouristSpotDTO.builder()
+	private TouristSpotResBody toResBody(Map<String, Object> item) {
+		return TouristSpotResBody.builder()
 			.contentId((String)item.get("contentid"))
 			.title((String)item.get("title"))
 			.addr1((String)item.get("addr1"))

@@ -67,8 +67,14 @@ public class AccommodationItemProcessor implements ItemProcessor<Map<String, Obj
 			Accommodation accommodation = existing.get();
 			boolean changed = processorHelper.updateCommonFields(accommodation, item);
 			if (changed) {
-				accommodation.setTourRegion(tourRegion);
-				accommodation.setPlaceCategory(placeCategory);
+				accommodation.update(
+					accommodation.getTitle(), accommodation.getAddr1(), accommodation.getAddr2(),
+					accommodation.getAreaCode(), accommodation.getSiGunGuCode(), accommodation.getCat1(),
+					accommodation.getCat2(), accommodation.getCat3(), accommodation.getImageUrl(),
+					accommodation.getThumbnailImageUrl(), accommodation.getMapX(), accommodation.getMapY(),
+					accommodation.getMLevel(), accommodation.getTel(), accommodation.getModifiedTime(),
+					tourRegion, placeCategory
+				);
 				updatedCount++;
 				log.debug("[Processor] UPDATED Accommodation - contentId={}", contentId);
 				return accommodation;

@@ -1,22 +1,26 @@
 package org.example.be.domain.place.accommodation.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
+import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.entity.Accommodation;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.domain.place.region.TourRegionService;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AccommodationFilterService {
 
 	private final AccommodationRepository accommodationRepository;
@@ -24,8 +28,11 @@ public class AccommodationFilterService {
 	private final PlaceCategoryService placeCategoryService;
 
 	// 숙소 필터링
-	public List<AccommodationDTO> getFilteredAccommodations(List<String> regions, List<String> themes, String keyword,
-		Pageable pageable) {
+	public PageResponse<AccommodationResBody> getFilteredAccommodations(PlaceSearchReqBody reqBody, Pageable pageable) {
+
+		List<String> regions = reqBody.regions();
+		List<String> themes = reqBody.themes();
+		String keyword = reqBody.keyword();
 
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
 		if (regions != null && regions.isEmpty()) {
@@ -56,40 +63,14 @@ public class AccommodationFilterService {
 			}
 		}
 
-		List<Accommodation> accommodations = accommodationRepository.findAllByFilters(regions, themes, keyword,
+		Page<Accommodation> page = accommodationRepository.findAllByFilters(regions, themes, keyword,
 			pageable);
 
-		return accommodations.stream()
-			.map(this::convertToDTO)
-			.collect(Collectors.toList());
-	}
+		List<AccommodationResBody> content = page.getContent().stream()
+			.map(AccommodationResBody::from)
+			.toList();
 
-	private AccommodationDTO convertToDTO(Accommodation accommodation) {
-
-		String region = (accommodation.getTourRegion() != null) ? accommodation.getTourRegion().getRegion() : "기타";
-		String theme = (accommodation.getPlaceCategory() != null) ? accommodation.getPlaceCategory().getTheme() : "기타";
-
-		return AccommodationDTO.builder()
-			.contentId(accommodation.getContentId())
-			.title(accommodation.getTitle())
-			.addr1(accommodation.getAddr1())
-			.addr2(accommodation.getAddr2())
-			.areaCode(accommodation.getAreaCode())
-			.siGunGuCode(accommodation.getSiGunGuCode())
-			.cat1(accommodation.getCat1())
-			.cat2(accommodation.getCat2())
-			.cat3(accommodation.getCat3())
-			.imageUrl(accommodation.getImageUrl())
-			.thumbnailImageUrl(accommodation.getThumbnailImageUrl())
-			.mapX(accommodation.getMapX())
-			.mapY(accommodation.getMapY())
-			.mLevel(accommodation.getMLevel())
-			.tel(accommodation.getTel())
-			.createdTime(accommodation.getCreatedTime())
-			.modifiedTime(accommodation.getModifiedTime())
-			.theme(theme)
-			.region(region)
-			.build();
+		return PageResponse.from(page, content);
 	}
 	//
 	//    // Accommodation -> ResponseDTO 변환 ( db를 한번 더 찔러서 조회하길래 convertToDTO로 변경. 문제 있을 시 돌려놓을 예정)

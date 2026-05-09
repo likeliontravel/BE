@@ -12,17 +12,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "accommodation")
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @SuperBuilder
 public class Accommodation extends Place {
@@ -39,4 +38,16 @@ public class Accommodation extends Place {
 	private PlaceCategory placeCategory;
 
 	// Place 클래스의 모든 필드 상속
+
+	public void update(String title, String addr1, String addr2, String areaCode, String siGunGuCode,
+		String cat1, String cat2, String cat3, String imageUrl, String thumbnailImageUrl,
+		Double mapX, Double mapY, Integer mLevel, String tel, String modifiedTime,
+		TourRegion tourRegion, PlaceCategory placeCategory) {
+
+		super.updateCommonFields(title, addr1, addr2, areaCode, siGunGuCode, cat1, cat2, cat3,
+			imageUrl, thumbnailImageUrl, mapX, mapY, mLevel, tel, modifiedTime);
+
+		this.tourRegion = tourRegion;
+		this.placeCategory = placeCategory;
+	}
 }

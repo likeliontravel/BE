@@ -1,12 +1,20 @@
 package org.example.be.domain.place.theme;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name = "place_category")
@@ -39,4 +47,15 @@ public class PlaceCategory {
 
 	@Column(name = "theme")
 	private String theme;
+
+	public void update(String contentTypeId, String cat1, String cat2, String largeClassification,
+		String midClassification, String smallClassification, String theme) {
+		this.contentTypeId = contentTypeId;
+		this.cat1 = cat1;
+		this.cat2 = cat2;
+		this.largeClassification = largeClassification;
+		this.midClassification = midClassification;
+		this.smallClassification = smallClassification;
+		this.theme = theme;
+	}
 }

@@ -1,30 +1,37 @@
 package org.example.be.domain.place.touristspot.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.example.be.domain.place.region.TourRegionService;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryService;
-import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
+import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TouristSpotFilterService {
 
 	private final TouristSpotRepository touristSpotRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
 
-	public List<TouristSpotDTO> getFilteredTouristSpots(List<String> regions, List<String> themes, String keyword,
-		Pageable pageable) {
+	public PageResponse<TouristSpotResBody> getFilteredTouristSpots(PlaceSearchReqBody reqBody, Pageable pageable) {
+
+		List<String> regions = reqBody.regions();
+		List<String> themes = reqBody.themes();
+		String keyword = reqBody.keyword();
 
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
 		if (regions != null && regions.isEmpty()) {
@@ -55,38 +62,12 @@ public class TouristSpotFilterService {
 			}
 		}
 
-		List<TouristSpot> filtered = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
+		Page<TouristSpot> page = touristSpotRepository.findAllByFilters(regions, themes, keyword, pageable);
 
-		return filtered.stream()
-			.map(this::convertToDTO)
-			.collect(Collectors.toList());
-	}
+		List<TouristSpotResBody> content = page.getContent().stream()
+			.map(TouristSpotResBody::from)
+			.toList();
 
-	private TouristSpotDTO convertToDTO(TouristSpot spot) {
-
-		String region = (spot.getTourRegion() != null) ? spot.getTourRegion().getRegion() : "기타";
-		String theme = (spot.getPlaceCategory() != null) ? spot.getPlaceCategory().getTheme() : "기타";
-
-		return TouristSpotDTO.builder()
-			.contentId(spot.getContentId())
-			.title(spot.getTitle())
-			.addr1(spot.getAddr1())
-			.addr2(spot.getAddr2())
-			.areaCode(spot.getAreaCode())
-			.siGunGuCode(spot.getSiGunGuCode())
-			.cat1(spot.getCat1())
-			.cat2(spot.getCat2())
-			.cat3(spot.getCat3())
-			.imageUrl(spot.getImageUrl())
-			.thumbnailImageUrl(spot.getThumbnailImageUrl())
-			.mapX(spot.getMapX())
-			.mapY(spot.getMapY())
-			.mLevel(spot.getMLevel())
-			.tel(spot.getTel())
-			.createdTime(spot.getCreatedTime())
-			.modifiedTime(spot.getModifiedTime())
-			.theme(theme)
-			.region(region)
-			.build();
+		return PageResponse.from(page, content);
 	}
 }

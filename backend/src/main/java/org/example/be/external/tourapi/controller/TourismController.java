@@ -2,17 +2,17 @@ package org.example.be.external.tourapi.controller;
 
 import java.util.List;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.place.accommodation.dto.AccommodationDTO;
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
-import org.example.be.domain.place.touristspot.dto.TouristSpotDTO;
-import org.example.be.global.response.CommonResponse;
+import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
+import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.external.tourapi.dto.FetchResult;
 import org.example.be.external.tourapi.service.AccommodationFetchService;
 import org.example.be.external.tourapi.service.RestaurantFetchService;
 import org.example.be.external.tourapi.service.TouristSpotFetchService;
 import org.example.be.external.tourapi.util.AreaCodeResolver;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.CommonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +38,7 @@ public class TourismController {
 
 	// 관광지 정보 저장
 	@GetMapping("/fetch/touristSpot/{areaCode}")
-	public ResponseEntity<List<TouristSpotDTO>> fetchTouristSpots(
+	public ResponseEntity<List<TouristSpotResBody>> fetchTouristSpots(
 		@PathVariable String areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
 	) throws Exception {
@@ -48,7 +48,7 @@ public class TourismController {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 
-		List<TouristSpotDTO> result = touristSpotFetchService.getTouristSpots(
+		List<TouristSpotResBody> result = touristSpotFetchService.getTouristSpots(
 			code, state, 12, 1000, pageNo
 		);
 
@@ -57,7 +57,7 @@ public class TourismController {
 
 	// 숙소 정보(Accommodation)를 TourAPI에서 가져와 중복을 제거하고 저장하는 엔드포인트
 	@GetMapping("/fetch/accommodation/{areaCode}")
-	public ResponseEntity<List<AccommodationDTO>> fetchAccommodations(
+	public ResponseEntity<List<AccommodationResBody>> fetchAccommodations(
 		@PathVariable String areaCode, @RequestParam(defaultValue = "1") int pageNo
 	) throws Exception {
 		int code = Integer.parseInt(areaCode);
@@ -65,7 +65,7 @@ public class TourismController {
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
-		List<AccommodationDTO> result = accommodationFetchService.getAccommodations(
+		List<AccommodationResBody> result = accommodationFetchService.getAccommodations(
 			code, state, 1000, pageNo
 		);
 
@@ -74,7 +74,7 @@ public class TourismController {
 
 	// 식당 정보 저장
 	@GetMapping("/fetch/restaurant/{areaCode}")
-	public ResponseEntity<List<RestaurantDTO>> fetchRestaurants(
+	public ResponseEntity<List<RestaurantResBody>> fetchRestaurants(
 		@PathVariable String areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
 	) throws Exception {
@@ -84,7 +84,7 @@ public class TourismController {
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
-		List<RestaurantDTO> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
+		List<RestaurantResBody> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
 		return ResponseEntity.ok(result);
 	}
 
@@ -98,4 +98,3 @@ public class TourismController {
 		return ResponseEntity.ok(CommonResponse.success(result, "TouristSpot 전체 저장 성공"));
 	}
 }
-

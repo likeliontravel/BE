@@ -134,9 +134,7 @@ public class RefreshRegionService {
 					|| !Objects.equals(region, t.getRegion());
 
 			if (changed) {
-				t.setAreaName(areaName);
-				t.setSiGunGuName(siGunGuName);
-				t.setRegion(region);
+				t.update(areaName, siGunGuName, region);
 				// dirty checking으로 자동 업데이트
 				return SaveResult.UPDATED;
 			} else {

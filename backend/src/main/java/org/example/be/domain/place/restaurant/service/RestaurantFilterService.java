@@ -1,35 +1,39 @@
 package org.example.be.domain.place.restaurant.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.domain.place.region.TourRegionService;
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
-import org.example.be.domain.place.theme.PlaceCategoryRepository;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RestaurantFilterService {
-
-	private final TourRegionRepository tourRegionRepository;
-	private final PlaceCategoryRepository placeCategoryRepository;
+	
 	private final RestaurantRepository restaurantRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
 
 	// 식당 필터링
-	public List<RestaurantDTO> getFilteredRestaurants(List<String> regions, List<String> themes, String keyword,
-		Pageable pageable) {
+	public PageResponse<RestaurantResBody> getFilteredRestaurants(PlaceSearchReqBody reqBody, Pageable pageable) {
+
+		List<String> regions = reqBody.regions();
+		List<String> themes = reqBody.themes();
+		String keyword = reqBody.keyword();
+
 		// 파라미터가 빈 리스트라면 null 로 변환 → JPQL에서 무시되도록
 		if (regions != null && regions.isEmpty()) {
 			regions = null;
@@ -59,40 +63,13 @@ public class RestaurantFilterService {
 			}
 		}
 
-		List<Restaurant> restaurants = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
+		Page<Restaurant> page = restaurantRepository.findAllByFilters(regions, themes, keyword, pageable);
 
-		return restaurants.stream()
-			.map(this::convertToDTO)
-			.collect(Collectors.toList());
-	}
+		List<RestaurantResBody> content = page.getContent().stream()
+			.map(RestaurantResBody::from)
+			.toList();
 
-	// DTO로 변환
-	private RestaurantDTO convertToDTO(Restaurant restaurant) {
-
-		String region = (restaurant.getTourRegion() != null) ? restaurant.getTourRegion().getRegion() : "기타";
-		String theme = (restaurant.getPlaceCategory() != null) ? restaurant.getPlaceCategory().getTheme() : "기타";
-
-		return RestaurantDTO.builder()
-			.contentId(restaurant.getContentId())
-			.title(restaurant.getTitle())
-			.addr1(restaurant.getAddr1())
-			.addr2(restaurant.getAddr2())
-			.areaCode(restaurant.getAreaCode())
-			.siGunGuCode(restaurant.getSiGunGuCode())
-			.cat1(restaurant.getCat1())
-			.cat2(restaurant.getCat2())
-			.cat3(restaurant.getCat3())
-			.imageUrl(restaurant.getImageUrl())
-			.thumbnailImageUrl(restaurant.getThumbnailImageUrl())
-			.mapX(restaurant.getMapX())
-			.mapY(restaurant.getMapY())
-			.mLevel(restaurant.getMLevel())
-			.tel(restaurant.getTel())
-			.createdTime(restaurant.getCreatedTime())
-			.modifiedTime(restaurant.getModifiedTime())
-			.theme(theme)
-			.region(region)
-			.build();
+		return PageResponse.from(page, content);
 	}
 
 	//    // Restaurant -> ResponseDTO 변환

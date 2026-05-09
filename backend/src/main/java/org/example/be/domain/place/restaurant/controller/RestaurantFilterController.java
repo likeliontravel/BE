@@ -1,21 +1,19 @@
 package org.example.be.domain.place.restaurant.controller;
 
-import java.util.List;
-
-import org.example.be.domain.place.restaurant.dto.RestaurantDTO;
+import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.restaurant.service.RestaurantFilterService;
-import org.example.be.domain.place.shared.type.PlaceSortType;
+import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -27,17 +25,15 @@ public class RestaurantFilterController {
 
 	// 식당 필터링 API
 	@GetMapping("/restaurants")
-	public ResponseEntity<CommonResponse<List<RestaurantDTO>>> getFilteredRestaurants(
-		@RequestParam(name = "regions", required = false) List<String> regions,
-		@RequestParam(name = "themes", required = false) List<String> themes,
-		@RequestParam(name = "keyword", required = false) String keyword,
-		@RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
-		@RequestParam(name = "size", defaultValue = "30") @Min(1) int size,
-		@RequestParam(name = "sortType", defaultValue = "TITLE_ASC") PlaceSortType sortType
+	public ResponseEntity<CommonResponse<PageResponse<RestaurantResBody>>> getFilteredRestaurants(
+		@ModelAttribute PlaceSearchReqBody reqBody
 	) {
-		Pageable pageable = PageRequest.of(page - 1, size,
-			Sort.by(sortType.getSortDirection(), sortType.getSortProperty()));
-		List<RestaurantDTO> result = restaurantFilterService.getFilteredRestaurants(regions, themes, keyword, pageable);
+		Pageable pageable = PageRequest.of(
+			reqBody.page() - 1, reqBody.size(),
+			Sort.by(reqBody.sortType().getSortDirection(), reqBody.sortType().getSortProperty())
+		);
+
+		PageResponse<RestaurantResBody> result = restaurantFilterService.getFilteredRestaurants(reqBody, pageable);
 		return ResponseEntity.ok(CommonResponse.success(result, "식당 필터링 조회 성공"));
 	}
 
