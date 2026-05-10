@@ -13,10 +13,11 @@ import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.service.MemberService;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.theme.PlaceCategoryService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -53,7 +54,7 @@ public class BoardService {
 
 	// ======================= 게시글 전체 조회 ======================= //
 	@Transactional
-	public List<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
+	public PageResponse<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
 		BoardSearchReqBody searchReqBody = new BoardSearchReqBody(null, null, null, reqBody.boardSortType(),
 			reqBody.page(), reqBody.size());
 
@@ -67,14 +68,16 @@ public class BoardService {
 	 * QueryDSL을 활용하여 동적 쿼리를 사용해 조건이 있는 경우에만 필터링 합니다
 	 */
 	@Transactional
-	public List<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
+	public PageResponse<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
 		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
 		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
 		Pageable pageable = PageRequest.of(page, size);
 
 		Page<Board> boardPage = boardRepository.search(reqBody, pageable);
 
-		return mapToBoardResBody(boardPage.getContent());
+		List<BoardResBody> content = mapToBoardResBody(boardPage.getContent());
+
+		return PageResponse.from(boardPage, content);
 
 	}
 
