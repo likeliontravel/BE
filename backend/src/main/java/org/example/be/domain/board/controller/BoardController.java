@@ -5,7 +5,6 @@ import org.example.be.domain.board.dto.BoardResBody;
 import org.example.be.domain.board.dto.BoardSearchReqBody;
 import org.example.be.domain.board.dto.BoardUpdateReqBody;
 import org.example.be.domain.board.dto.SimplePageableReqBody;
-import org.example.be.domain.board.entity.BoardSortType;
 import org.example.be.domain.board.service.BoardService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.response.PageResponse;
@@ -14,12 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -44,7 +43,8 @@ public class BoardController {
 
 	// ==================== 게시판 목록 조회 ==================== //
 	@GetMapping
-	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
+	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getAllBoard(
+		@ModelAttribute SimplePageableReqBody reqBody) {
 		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
 
@@ -53,13 +53,8 @@ public class BoardController {
 	// * return : 입력한 정렬타입으로 정렬한 키워드 검색 결과 BoardDTO List
 	@GetMapping("/search")
 	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getSearchedBoard(
-		@RequestParam String searchKeyword,
-		@RequestParam(required = false) Integer page,
-		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
-
-		BoardSearchReqBody request = new BoardSearchReqBody(null, null, searchKeyword, boardSortType, page, size);
-		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "게시판 키워드 검색 성공"));
+		@ModelAttribute BoardSearchReqBody reqBody) {
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(reqBody), "게시판 키워드 검색 성공"));
 	}
 
 	// 테마 별 게시판 글 목록 조회
@@ -67,12 +62,8 @@ public class BoardController {
 	// * return : 입력한 정렬타입으로 정렬한 해당 테마 검색 결과 BoardDTO List
 	@GetMapping("/byTheme")
 	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getBoardListByTheme(
-		@RequestParam String theme,
-		@RequestParam(required = false) Integer page,
-		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchReqBody request = new BoardSearchReqBody(theme, null, null, boardSortType, page, size);
-		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "테마 별 게시판 목록 조회 성공"));
+		@ModelAttribute BoardSearchReqBody reqBody) {
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(reqBody), "테마 별 게시판 목록 조회 성공"));
 	}
 
 	// 지역 별 게시판 글 목록 조회
@@ -80,12 +71,8 @@ public class BoardController {
 	// * return : 입력한 정렬타입으로 정렬한 해당 지역 검색 결과 BoardDTO List
 	@GetMapping("/byRegion")
 	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getBoardListByRegion(
-		@RequestParam String region,
-		@RequestParam(required = false) Integer page,
-		@RequestParam(required = false) Integer size,
-		@RequestParam(required = false) BoardSortType boardSortType) {
-		BoardSearchReqBody request = new BoardSearchReqBody(null, region, null, boardSortType, page, size);
-		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(request), "지역 별 게시판 목록 조회 성공"));
+		@ModelAttribute BoardSearchReqBody reqBody) {
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(reqBody), "지역 별 게시판 목록 조회 성공"));
 	}
 
 	// ==================== 게시판 글 관리 ( 생성 / 수정 / 삭제 ) ==================== //
