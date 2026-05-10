@@ -4,7 +4,6 @@ import org.example.be.domain.board.dto.BoardCreateReqBody;
 import org.example.be.domain.board.dto.BoardResBody;
 import org.example.be.domain.board.dto.BoardSearchReqBody;
 import org.example.be.domain.board.dto.BoardUpdateReqBody;
-import org.example.be.domain.board.dto.SimplePageableReqBody;
 import org.example.be.domain.board.service.BoardService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.response.PageResponse;
@@ -44,8 +43,8 @@ public class BoardController {
 	// ==================== 게시판 목록 조회 ==================== //
 	@GetMapping
 	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getAllBoard(
-		@ModelAttribute SimplePageableReqBody reqBody) {
-		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
+		@ModelAttribute BoardSearchReqBody reqBody) {
+		return ResponseEntity.ok(CommonResponse.success(boardService.searchBoard(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
 
 	// 키워드 검색으로 게시판 글 목록 조회

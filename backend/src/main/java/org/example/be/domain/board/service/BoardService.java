@@ -7,7 +7,6 @@ import org.example.be.domain.board.dto.BoardCreateReqBody;
 import org.example.be.domain.board.dto.BoardResBody;
 import org.example.be.domain.board.dto.BoardSearchReqBody;
 import org.example.be.domain.board.dto.BoardUpdateReqBody;
-import org.example.be.domain.board.dto.SimplePageableReqBody;
 import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
@@ -52,19 +51,10 @@ public class BoardService {
 		return BoardResBody.from(board, board.getWriter().getProfileImageUrl());
 	}
 
-	// ======================= 게시글 전체 조회 ======================= //
-	@Transactional
-	public PageResponse<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
-		BoardSearchReqBody searchReqBody = new BoardSearchReqBody(null, null, null, reqBody.boardSortType(),
-			reqBody.page(), reqBody.size());
-
-		return searchBoard(searchReqBody);
-	}
-
 	// ======================= 게시글 통합 조회 (QueryDSL 사용)======================= //
 
 	/**
-	 * 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
+	 * 전제조회, 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
 	 * QueryDSL을 활용하여 동적 쿼리를 사용해 조건이 있는 경우에만 필터링 합니다
 	 */
 	@Transactional
