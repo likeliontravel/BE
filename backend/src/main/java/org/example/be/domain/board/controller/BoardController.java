@@ -1,7 +1,5 @@
 package org.example.be.domain.board.controller;
 
-import java.util.List;
-
 import org.example.be.domain.board.dto.BoardCreateReqBody;
 import org.example.be.domain.board.dto.BoardResBody;
 import org.example.be.domain.board.dto.BoardSearchReqBody;
@@ -10,6 +8,7 @@ import org.example.be.domain.board.dto.SimplePageableReqBody;
 import org.example.be.domain.board.entity.BoardSortType;
 import org.example.be.domain.board.service.BoardService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.example.be.global.security.config.SecurityUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,7 +44,7 @@ public class BoardController {
 
 	// ==================== 게시판 목록 조회 ==================== //
 	@GetMapping
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
+	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getAllBoard(SimplePageableReqBody reqBody) {
 		return ResponseEntity.ok(CommonResponse.success(boardService.getSortedBoardList(reqBody), "정렬된 전체 게시글 조회 성공"));
 	}
 
@@ -53,7 +52,7 @@ public class BoardController {
 	// * param : BoardSortType( POPULAR / RECENT ), searchKeyword
 	// * return : 입력한 정렬타입으로 정렬한 키워드 검색 결과 BoardDTO List
 	@GetMapping("/search")
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getSearchedBoard(
+	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getSearchedBoard(
 		@RequestParam String searchKeyword,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
@@ -67,7 +66,7 @@ public class BoardController {
 	// * param : BoardSortType( POPULAR / RECENT ), theme
 	// * return : 입력한 정렬타입으로 정렬한 해당 테마 검색 결과 BoardDTO List
 	@GetMapping("/byTheme")
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getBoardListByTheme(
+	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getBoardListByTheme(
 		@RequestParam String theme,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
@@ -80,7 +79,7 @@ public class BoardController {
 	// * param : BoardSortType( POPULAR / RECENT ), region
 	// * return : 입력한 정렬타입으로 정렬한 해당 지역 검색 결과 BoardDTO List
 	@GetMapping("/byRegion")
-	public ResponseEntity<CommonResponse<List<BoardResBody>>> getBoardListByRegion(
+	public ResponseEntity<CommonResponse<PageResponse<BoardResBody>>> getBoardListByRegion(
 		@RequestParam String region,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size,
