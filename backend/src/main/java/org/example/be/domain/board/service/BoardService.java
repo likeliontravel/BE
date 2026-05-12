@@ -57,7 +57,7 @@ public class BoardService {
 	 * 전제조회, 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
 	 * QueryDSL을 활용하여 동적 쿼리를 사용해 조건이 있는 경우에만 필터링 합니다
 	 */
-	@Transactional
+	@Transactional(readOnly = true)
 	public PageResponse<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
 		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
 		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
