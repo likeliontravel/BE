@@ -46,13 +46,13 @@ public class CommentController {
 
 	//댓글 작성
 	@PostMapping("{boardId}")
-	public ResponseEntity<CommonResponse<String>> write(@PathVariable Long boardId,
+	public ResponseEntity<CommonResponse<CommentResBody>> write(@PathVariable Long boardId,
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.writeComment(boardId, reqBody, user.getId());
+		CommentResBody resBody = commentService.writeComment(boardId, reqBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success("댓글이 작성되었습니다.", "댓글 등록 성공"));
+			.body(CommonResponse.success(resBody, "댓글이 작성되었습니다."));
 	}
 
 	// 댓글 수정 - 작성자 본인만 수정 가능
