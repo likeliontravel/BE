@@ -5,7 +5,7 @@ import static org.example.be.domain.member.entity.QMember.*;
 
 import java.util.List;
 
-import org.example.be.domain.board.dto.BoardSearchReqBody;
+import org.example.be.domain.board.dto.request.BoardSearchReqBody;
 import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.entity.BoardSortType;
 import org.springframework.data.domain.Page;

@@ -1,8 +1,8 @@
 package org.example.be.domain.board.controller;
 
-import org.example.be.domain.board.dto.CommentCreateReqBody;
-import org.example.be.domain.board.dto.CommentResBody;
-import org.example.be.domain.board.dto.CommentUpdateReqBody;
+import org.example.be.domain.board.dto.request.CommentCreateReqBody;
+import org.example.be.domain.board.dto.request.CommentUpdateReqBody;
+import org.example.be.domain.board.dto.response.CommentResBody;
 import org.example.be.domain.board.service.CommentService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.config.SecurityUser;

@@ -1,9 +1,9 @@
 package org.example.be.domain.board.controller;
 
-import org.example.be.domain.board.dto.BoardCreateReqBody;
-import org.example.be.domain.board.dto.BoardResBody;
-import org.example.be.domain.board.dto.BoardSearchReqBody;
-import org.example.be.domain.board.dto.BoardUpdateReqBody;
+import org.example.be.domain.board.dto.request.BoardCreateReqBody;
+import org.example.be.domain.board.dto.request.BoardSearchReqBody;
+import org.example.be.domain.board.dto.request.BoardUpdateReqBody;
+import org.example.be.domain.board.dto.response.BoardResBody;
 import org.example.be.domain.board.service.BoardService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.response.PageResponse;

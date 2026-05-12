@@ -3,10 +3,10 @@ package org.example.be.domain.board.service;
 import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.example.be.domain.board.dto.BoardCreateReqBody;
-import org.example.be.domain.board.dto.BoardResBody;
-import org.example.be.domain.board.dto.BoardSearchReqBody;
-import org.example.be.domain.board.dto.BoardUpdateReqBody;
+import org.example.be.domain.board.dto.request.BoardCreateReqBody;
+import org.example.be.domain.board.dto.request.BoardSearchReqBody;
+import org.example.be.domain.board.dto.request.BoardUpdateReqBody;
+import org.example.be.domain.board.dto.response.BoardResBody;
 import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
