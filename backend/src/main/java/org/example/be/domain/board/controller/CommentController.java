@@ -57,13 +57,13 @@ public class CommentController {
 
 	// 댓글 수정 - 작성자 본인만 수정 가능
 	@PutMapping("/{commentId}")
-	public ResponseEntity<CommonResponse<String>> update(@PathVariable Long commentId,
+	public ResponseEntity<CommonResponse<CommentResBody>> update(@PathVariable Long commentId,
 		@Valid @RequestBody CommentUpdateReqBody commentResBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.updateComment(commentId, commentResBody, user.getId());
+		CommentResBody resBody = commentService.updateComment(commentId, commentResBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
+			.body(CommonResponse.success(resBody, "댓글이 수정되었습니다."));
 	}
 
 	// 댓글 삭제
