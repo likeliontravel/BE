@@ -11,7 +11,6 @@ import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.domain.member.service.MemberService;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
@@ -35,7 +34,6 @@ public class BoardService {
 	private final MemberRepository memberRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
-	private final MemberService memberService;
 
 	private static final int DEFAULT_PAGE = 0;
 	private static final int DEFAULT_SIZE = 30;
