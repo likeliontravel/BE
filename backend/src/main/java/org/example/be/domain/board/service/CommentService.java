@@ -16,8 +16,8 @@ import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class CommentService {
 
 	// 해당 게시글 댓글 조회
 	@Transactional
-	public Page<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
+	public PageResponse<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
 		boardRepository.findById(boardId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
 
@@ -42,7 +42,7 @@ public class CommentService {
 		List<Comment> rootComments = rootPage.getContent();
 
 		if (rootComments.isEmpty())
-			return new PageImpl<>(List.of(), pageable, 0);
+			return PageResponse.from(rootPage, List.of());
 
 		List<Long> rootIds = rootComments.stream().map(Comment::getId).toList();
 		List<Comment> childComments = commentRepository.findChildrenByParentIds(rootIds);
@@ -59,7 +59,7 @@ public class CommentService {
 			})
 			.toList();
 
-		return new PageImpl<>(result, pageable, rootPage.getTotalElements());
+		return PageResponse.from(rootPage, result);
 	}
 
 	// 댓글 작성

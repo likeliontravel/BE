@@ -5,8 +5,8 @@ import org.example.be.domain.board.dto.request.CommentUpdateReqBody;
 import org.example.be.domain.board.dto.response.CommentResBody;
 import org.example.be.domain.board.service.CommentService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.example.be.global.security.config.SecurityUser;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -34,13 +34,13 @@ public class CommentController {
 
 	// 댓글 조회
 	@GetMapping("/{boardId}")
-	public ResponseEntity<CommonResponse<Page<CommentResBody>>> getAllComments(@PathVariable Long boardId,
+	public ResponseEntity<CommonResponse<PageResponse<CommentResBody>>> getAllComments(@PathVariable Long boardId,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size) {
 
 		Pageable pageable = PageRequest.of(page, size);
 
-		Page<CommentResBody> comments = commentService.getAllComments(boardId, pageable);
+		PageResponse<CommentResBody> comments = commentService.getAllComments(boardId, pageable);
 		return ResponseEntity.ok(CommonResponse.success(comments, "댓글 목록 조회 성공"));
 	}
 
