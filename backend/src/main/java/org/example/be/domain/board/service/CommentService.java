@@ -33,7 +33,7 @@ public class CommentService {
 	private final MemberRepository memberRepository;
 
 	// 해당 게시글 댓글 조회
-	@Transactional
+	@Transactional(readOnly = true)
 	public PageResponse<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
 		boardRepository.findById(boardId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
