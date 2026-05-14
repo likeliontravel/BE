@@ -1,4 +1,4 @@
-package org.example.be.domain.board.dto;
+package org.example.be.domain.board.dto.response;
 
 import java.time.LocalDateTime;
 

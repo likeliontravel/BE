@@ -1,4 +1,4 @@
-package org.example.be.domain.board.dto;
+package org.example.be.domain.board.dto.request;
 
 import org.hibernate.validator.constraints.URL;
 

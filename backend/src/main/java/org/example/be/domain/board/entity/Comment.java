@@ -3,10 +3,10 @@ package org.example.be.domain.board.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.example.be.domain.board.dto.CommentCreateReqBody;
-import org.example.be.domain.board.dto.CommentUpdateReqBody;
-import org.example.be.global.entity.Base;
+import org.example.be.domain.board.dto.request.CommentCreateReqBody;
+import org.example.be.domain.board.dto.request.CommentUpdateReqBody;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.global.entity.Base;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 

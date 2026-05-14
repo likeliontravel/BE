@@ -1,12 +1,12 @@
 package org.example.be.domain.board.controller;
 
-import org.example.be.domain.board.dto.CommentCreateReqBody;
-import org.example.be.domain.board.dto.CommentResBody;
-import org.example.be.domain.board.dto.CommentUpdateReqBody;
+import org.example.be.domain.board.dto.request.CommentCreateReqBody;
+import org.example.be.domain.board.dto.request.CommentUpdateReqBody;
+import org.example.be.domain.board.dto.response.CommentResBody;
 import org.example.be.domain.board.service.CommentService;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.global.response.PageResponse;
 import org.example.be.global.security.config.SecurityUser;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -34,36 +34,36 @@ public class CommentController {
 
 	// 댓글 조회
 	@GetMapping("/{boardId}")
-	public ResponseEntity<CommonResponse<Page<CommentResBody>>> getAllComments(@PathVariable Long boardId,
+	public ResponseEntity<CommonResponse<PageResponse<CommentResBody>>> getAllComments(@PathVariable Long boardId,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size) {
 
 		Pageable pageable = PageRequest.of(page, size);
 
-		Page<CommentResBody> comments = commentService.getAllComments(boardId, pageable);
+		PageResponse<CommentResBody> comments = commentService.getAllComments(boardId, pageable);
 		return ResponseEntity.ok(CommonResponse.success(comments, "댓글 목록 조회 성공"));
 	}
 
 	//댓글 작성
 	@PostMapping("{boardId}")
-	public ResponseEntity<CommonResponse<String>> write(@PathVariable Long boardId,
+	public ResponseEntity<CommonResponse<CommentResBody>> write(@PathVariable Long boardId,
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.writeComment(boardId, reqBody, user.getId());
+		CommentResBody resBody = commentService.writeComment(boardId, reqBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success("댓글이 작성되었습니다.", "댓글 등록 성공"));
+			.body(CommonResponse.success(resBody, "댓글이 작성되었습니다."));
 	}
 
 	// 댓글 수정 - 작성자 본인만 수정 가능
 	@PutMapping("/{commentId}")
-	public ResponseEntity<CommonResponse<String>> update(@PathVariable Long commentId,
+	public ResponseEntity<CommonResponse<CommentResBody>> update(@PathVariable Long commentId,
 		@Valid @RequestBody CommentUpdateReqBody commentResBody,
 		@AuthenticationPrincipal SecurityUser user) {
 
-		commentService.updateComment(commentId, commentResBody, user.getId());
+		CommentResBody resBody = commentService.updateComment(commentId, commentResBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success("댓글이 수정되었습니다.", "댓글 수정 성공"));
+			.body(CommonResponse.success(resBody, "댓글이 수정되었습니다."));
 	}
 
 	// 댓글 삭제

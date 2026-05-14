@@ -3,20 +3,19 @@ package org.example.be.domain.board.service;
 import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.example.be.domain.board.dto.BoardCreateReqBody;
-import org.example.be.domain.board.dto.BoardResBody;
-import org.example.be.domain.board.dto.BoardSearchReqBody;
-import org.example.be.domain.board.dto.BoardUpdateReqBody;
-import org.example.be.domain.board.dto.SimplePageableReqBody;
+import org.example.be.domain.board.dto.request.BoardCreateReqBody;
+import org.example.be.domain.board.dto.request.BoardSearchReqBody;
+import org.example.be.domain.board.dto.request.BoardUpdateReqBody;
+import org.example.be.domain.board.dto.response.BoardResBody;
 import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.domain.member.service.MemberService;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.theme.PlaceCategoryService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,6 @@ public class BoardService {
 	private final MemberRepository memberRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
-	private final MemberService memberService;
 
 	private static final int DEFAULT_PAGE = 0;
 	private static final int DEFAULT_SIZE = 30;
@@ -51,30 +49,23 @@ public class BoardService {
 		return BoardResBody.from(board, board.getWriter().getProfileImageUrl());
 	}
 
-	// ======================= 게시글 전체 조회 ======================= //
-	@Transactional
-	public List<BoardResBody> getSortedBoardList(SimplePageableReqBody reqBody) {
-		BoardSearchReqBody searchReqBody = new BoardSearchReqBody(null, null, null, reqBody.boardSortType(),
-			reqBody.page(), reqBody.size());
-
-		return searchBoard(searchReqBody);
-	}
-
 	// ======================= 게시글 통합 조회 (QueryDSL 사용)======================= //
 
 	/**
-	 * 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
+	 * 전제조회, 키워드 검색, 테마 별 조회, 지역 별 조회를 하나의 메서드로 통합한 메서드
 	 * QueryDSL을 활용하여 동적 쿼리를 사용해 조건이 있는 경우에만 필터링 합니다
 	 */
-	@Transactional
-	public List<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
+	@Transactional(readOnly = true)
+	public PageResponse<BoardResBody> searchBoard(BoardSearchReqBody reqBody) {
 		int page = (reqBody.page() == null || reqBody.page() < 0) ? DEFAULT_PAGE : reqBody.page();
 		int size = (reqBody.size() == null || reqBody.size() <= 0) ? DEFAULT_SIZE : reqBody.size();
 		Pageable pageable = PageRequest.of(page, size);
 
 		Page<Board> boardPage = boardRepository.search(reqBody, pageable);
 
-		return mapToBoardResBody(boardPage.getContent());
+		List<BoardResBody> content = mapToBoardResBody(boardPage.getContent());
+
+		return PageResponse.from(boardPage, content);
 
 	}
 
