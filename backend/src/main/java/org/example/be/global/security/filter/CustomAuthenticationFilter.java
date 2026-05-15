@@ -65,7 +65,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 					// 응답 헤더와 쿠키에 새 토큰 세팅
 					cookieHelper.setCookie("refreshToken", newRefreshToken);
 					cookieHelper.setCookie("accessToken", newAccessToken);
-					response.setHeader("Authorization", newAccessToken); //포스트맨 테스트용
 
 					setAuthenticationFromUser(member);
 
