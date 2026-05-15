@@ -58,13 +58,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 			if (getRefreshToken != null && !getRefreshToken.isBlank()) {
 				try {
 					long userId = authTokenService.findRefreshOwner(getRefreshToken);
-					String newRefreshToken = authTokenService.rotateRefresh(getRefreshToken);
 					Member member = memberService.getById(userId);
+					String newRefreshToken = authTokenService.rotateRefresh(getRefreshToken);
 					String newAccessToken = authTokenService.genAccessToken(member);
 
 					// 응답 헤더와 쿠키에 새 토큰 세팅
 					cookieHelper.setCookie("refreshToken", newRefreshToken);
-					response.setHeader("Authorization", newAccessToken);
+					cookieHelper.setCookie("accessToken", newAccessToken);
+					response.setHeader("Authorization", newAccessToken); //포스트맨 테스트용
 
 					setAuthenticationFromUser(member);
 
