@@ -45,7 +45,7 @@ public class CommentController {
 	}
 
 	//댓글 작성
-	@PostMapping("{boardId}")
+	@PostMapping("/{boardId}")
 	public ResponseEntity<CommonResponse<CommentResBody>> write(@PathVariable Long boardId,
 		@Valid @RequestBody CommentCreateReqBody reqBody,
 		@AuthenticationPrincipal SecurityUser user) {
