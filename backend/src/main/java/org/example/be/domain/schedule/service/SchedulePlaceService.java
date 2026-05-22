@@ -1,5 +1,7 @@
 package org.example.be.domain.schedule.service;
 
+import java.util.List;
+
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
@@ -23,31 +25,36 @@ public class SchedulePlaceService {
 	private final GroupService groupService;
 
 	@Transactional
-	public SchedulePlaceResBody createSchedulePlace(Long scheduleId, SchedulePlaceReqBody reqBody, Long userId) {
+	public List<SchedulePlaceResBody> createSchedulePlace(Long scheduleId, List<SchedulePlaceReqBody> reqBodies,
+		Long userId) {
 		var schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 추가할 수 있음
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
-		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
+		List<SchedulePlace> places = reqBodies.stream()
+			.map(reqBody -> {
+				placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
+				return SchedulePlace.create(
+					schedule,
+					reqBody.contentId(),
+					reqBody.placeType(),
+					reqBody.visitStart(),
+					reqBody.visitedEnd(),
+					reqBody.dayOrder(),
+					reqBody.orderInDay()
+				);
 
-		SchedulePlace schedulePlace = SchedulePlace.create(
-			schedule,
-			reqBody.contentId(),
-			reqBody.placeType(),
-			reqBody.visitStart(),
-			reqBody.visitedEnd(),
-			reqBody.dayOrder(),
-			reqBody.orderInDay()
-		);
+			})
+			.toList();
 
-		try {
-			var saved = schedulePlaceRepository.save(schedulePlace);
-			return SchedulePlaceResBody.from(saved);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "세부 일정 생성 실패 - message: " + e.getMessage());
-		}
+		List<SchedulePlace> savedPlaces = schedulePlaceRepository.saveAll(places);
+
+		return savedPlaces.stream()
+			.map(place -> SchedulePlaceResBody.from(place, null))
+			.toList();
+
 	}
 
 	@Transactional

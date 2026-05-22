@@ -1,5 +1,7 @@
 package org.example.be.domain.schedule.controller;
 
+import java.util.List;
+
 import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.service.SchedulePlaceService;
@@ -27,11 +29,11 @@ public class SchedulePlaceController {
 
 	// 특정 일정(scheduleId)에 세부 장소 추가
 	@PostMapping("/detail/{scheduleId}")
-	public ResponseEntity<CommonResponse<SchedulePlaceResBody>> createSchedulePlace(
+	public ResponseEntity<CommonResponse<List<SchedulePlaceResBody>>> createSchedulePlace(
 		@PathVariable Long scheduleId,
-		@Valid @RequestBody SchedulePlaceReqBody reqBody,
+		@Valid @RequestBody List<SchedulePlaceReqBody> reqBodies,
 		@AuthenticationPrincipal SecurityUser securityUser) {
-		SchedulePlaceResBody response = schedulePlaceService.createSchedulePlace(scheduleId, reqBody,
+		List<SchedulePlaceResBody> response = schedulePlaceService.createSchedulePlace(scheduleId, reqBodies,
 			securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 생성 성공"));
 	}
