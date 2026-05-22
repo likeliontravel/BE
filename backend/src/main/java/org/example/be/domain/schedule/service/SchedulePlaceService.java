@@ -52,7 +52,7 @@ public class SchedulePlaceService {
 		List<SchedulePlace> savedPlaces = schedulePlaceRepository.saveAll(places);
 
 		return savedPlaces.stream()
-			.map(place -> SchedulePlaceResBody.from(place, null))
+			.map(SchedulePlaceResBody::from)
 			.toList();
 
 	}
