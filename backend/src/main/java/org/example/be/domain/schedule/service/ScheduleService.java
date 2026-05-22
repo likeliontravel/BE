@@ -27,7 +27,6 @@ import org.example.be.domain.place.theme.PlaceCategory;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
-import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
 import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
@@ -97,7 +96,28 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		return ScheduleResBody.from(schedule);
+		// PlaceType 별로 contenId 수집하는 로직입니당
+		Map<PlaceType, Set<String>> contentIdsByType = schedule.getSchedulePlaces().stream()
+			.collect(Collectors.groupingBy(
+				SchedulePlace::getPlaceType, Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
+			));
+
+		// contenId별로 장소이름 저장 맵입니당
+		Map<String, String> placeTitles = new HashMap<>();
+
+		placeTitles.putAll(touristSpotRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TOURISTSPOT, Collections.emptySet())))
+			.stream().collect(Collectors.toMap(TouristSpot::getContentId, TouristSpot::getTitle)));
+
+		placeTitles.putAll(restaurantRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.RESTAURANT, Collections.emptySet())))
+			.stream().collect(Collectors.toMap(Restaurant::getContentId, Restaurant::getTitle)));
+
+		placeTitles.putAll(accommodationRepository.findAllByContentIdIn(
+				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.ACCOMMODATION, Collections.emptySet())))
+			.stream().collect(Collectors.toMap(Accommodation::getContentId, Accommodation::getTitle)));
+
+		return ScheduleResBody.from(schedule, placeTitles);
 	}
 
 	// 일정 요약 목록 조회
