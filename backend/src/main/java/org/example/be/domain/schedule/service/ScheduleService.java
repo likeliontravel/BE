@@ -81,7 +81,9 @@ public class ScheduleService {
 
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.from(savedSchedule);
+			// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
+			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedSchedule.getSchedulePlaces());
+			return ScheduleResBody.from(savedSchedule, placeTitles);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
 		}
@@ -96,26 +98,7 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		// PlaceType 별로 contenId 수집하는 로직입니당
-		Map<PlaceType, Set<String>> contentIdsByType = schedule.getSchedulePlaces().stream()
-			.collect(Collectors.groupingBy(
-				SchedulePlace::getPlaceType, Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
-			));
-
-		// contenId별로 장소이름 저장 맵입니당
-		Map<String, String> placeTitles = new HashMap<>();
-
-		placeTitles.putAll(touristSpotRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.TOURISTSPOT, Collections.emptySet())))
-			.stream().collect(Collectors.toMap(TouristSpot::getContentId, TouristSpot::getTitle)));
-
-		placeTitles.putAll(restaurantRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.RESTAURANT, Collections.emptySet())))
-			.stream().collect(Collectors.toMap(Restaurant::getContentId, Restaurant::getTitle)));
-
-		placeTitles.putAll(accommodationRepository.findAllByContentIdIn(
-				new ArrayList<>(contentIdsByType.getOrDefault(PlaceType.ACCOMMODATION, Collections.emptySet())))
-			.stream().collect(Collectors.toMap(Accommodation::getContentId, Accommodation::getTitle)));
+		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(schedule.getSchedulePlaces());
 
 		return ScheduleResBody.from(schedule, placeTitles);
 	}
@@ -248,7 +231,10 @@ public class ScheduleService {
 
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.from(updatedSchedule);
+			
+			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(
+				updatedSchedule.getSchedulePlaces());
+			return ScheduleResBody.from(updatedSchedule, placeTitles);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
 		}

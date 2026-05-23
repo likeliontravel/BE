@@ -19,11 +19,13 @@ import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PlaceValidationService {
 
 	private final TouristSpotRepository touristSpotRepository;

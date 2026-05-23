@@ -15,9 +15,6 @@ public record SchedulePlaceResBody(
 	Integer dayOrder,
 	Integer orderInDay
 ) {
-	public static SchedulePlaceResBody from(SchedulePlace schedulePlace) {
-		return from(schedulePlace, null);
-	}
 
 	public static SchedulePlaceResBody from(SchedulePlace schedulePlace, String title) {
 		return new SchedulePlaceResBody(
