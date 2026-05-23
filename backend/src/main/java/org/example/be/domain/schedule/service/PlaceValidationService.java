@@ -1,11 +1,23 @@
 package org.example.be.domain.schedule.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.example.be.domain.place.accommodation.entity.Accommodation;
+import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.restaurant.entity.Restaurant;
+import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
+import org.example.be.domain.place.shared.type.PlaceType;
+import org.example.be.domain.place.touristspot.entity.TouristSpot;
+import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
+import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
-import org.example.be.domain.place.shared.type.PlaceType;
-import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
-import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -29,5 +41,41 @@ public class PlaceValidationService {
 			throw new BusinessException(ErrorCode.PLACE_NOT_FOUND,
 				"placeType: " + placeType + ", contentId: " + contentId);
 		}
+	}
+
+	public Map<String, String> getPlaceTitles(List<SchedulePlace> schedulePlaces) {
+		if (schedulePlaces == null || schedulePlaces.isEmpty()) {
+			return Collections.emptyMap();
+		}
+
+		Map<PlaceType, Set<String>> contentIdsByType = schedulePlaces.stream()
+			.collect(Collectors.groupingBy(
+				SchedulePlace::getPlaceType, Collectors.mapping(SchedulePlace::getContentId, Collectors.toSet())
+			));
+
+		Map<String, String> placeTitles = new HashMap<>();
+
+		// 관광지
+		Set<String> touristSpotIds = contentIdsByType.getOrDefault(PlaceType.TOURISTSPOT, Collections.emptySet());
+		if (!touristSpotIds.isEmpty()) {
+			placeTitles.putAll(touristSpotRepository.findAllByContentIdIn(new ArrayList<>(touristSpotIds))
+				.stream().collect(Collectors.toMap(TouristSpot::getContentId, TouristSpot::getTitle)));
+		}
+
+		// 음식점
+		Set<String> restaurantIds = contentIdsByType.getOrDefault(PlaceType.RESTAURANT, Collections.emptySet());
+		if (!restaurantIds.isEmpty()) {
+			placeTitles.putAll(restaurantRepository.findAllByContentIdIn(new ArrayList<>(restaurantIds))
+				.stream().collect(Collectors.toMap(Restaurant::getContentId, Restaurant::getTitle)));
+		}
+
+		// 숙박
+		Set<String> accommodationIds = contentIdsByType.getOrDefault(PlaceType.ACCOMMODATION, Collections.emptySet());
+		if (!accommodationIds.isEmpty()) {
+			placeTitles.putAll(accommodationRepository.findAllByContentIdIn(new ArrayList<>(accommodationIds))
+				.stream().collect(Collectors.toMap(Accommodation::getContentId, Accommodation::getTitle)));
+		}
+
+		return placeTitles;
 	}
 }
