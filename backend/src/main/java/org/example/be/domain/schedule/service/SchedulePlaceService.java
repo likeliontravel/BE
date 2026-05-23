@@ -1,6 +1,7 @@
 package org.example.be.domain.schedule.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
@@ -51,10 +52,11 @@ public class SchedulePlaceService {
 
 		List<SchedulePlace> savedPlaces = schedulePlaceRepository.saveAll(places);
 
-		return savedPlaces.stream()
-			.map(SchedulePlaceResBody::from)
-			.toList();
+		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedPlaces);
 
+		return savedPlaces.stream()
+			.map(place -> SchedulePlaceResBody.from(place, placeTitles.get(place.getContentId())))
+			.toList();
 	}
 
 	@Transactional
@@ -77,7 +79,9 @@ public class SchedulePlaceService {
 		);
 
 		try {
-			return SchedulePlaceResBody.from(schedulePlaceRepository.save(place));
+			SchedulePlace savedPlace = schedulePlaceRepository.save(place);
+			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(List.of(savedPlace));
+			return SchedulePlaceResBody.from(savedPlace, placeTitles.get(savedPlace.getContentId()));
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "세부 일정 수정 실패 - message: " + e.getMessage());
 		}
