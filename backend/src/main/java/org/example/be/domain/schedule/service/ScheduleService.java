@@ -27,7 +27,6 @@ import org.example.be.domain.place.theme.PlaceCategory;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
-import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
 import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
@@ -82,7 +81,9 @@ public class ScheduleService {
 
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.from(savedSchedule);
+			// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
+			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedSchedule.getSchedulePlaces());
+			return ScheduleResBody.from(savedSchedule, placeTitles);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
 		}
@@ -97,7 +98,9 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		return ScheduleResBody.from(schedule);
+		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(schedule.getSchedulePlaces());
+
+		return ScheduleResBody.from(schedule, placeTitles);
 	}
 
 	// 일정 요약 목록 조회
@@ -228,7 +231,10 @@ public class ScheduleService {
 
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			return ScheduleResBody.from(updatedSchedule);
+			
+			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(
+				updatedSchedule.getSchedulePlaces());
+			return ScheduleResBody.from(updatedSchedule, placeTitles);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
 		}

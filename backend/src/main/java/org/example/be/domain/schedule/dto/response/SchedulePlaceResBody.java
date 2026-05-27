@@ -8,15 +8,19 @@ import org.example.be.domain.schedule.entity.SchedulePlace;
 public record SchedulePlaceResBody(
 	Long id,
 	String contentId,
+	String title,
 	PlaceType placeType,
 	LocalDateTime visitStart,
-	LocalDateTime visitedEnd, Integer dayOrder,
+	LocalDateTime visitedEnd,
+	Integer dayOrder,
 	Integer orderInDay
 ) {
-	public static SchedulePlaceResBody from(SchedulePlace schedulePlace) {
+
+	public static SchedulePlaceResBody from(SchedulePlace schedulePlace, String title) {
 		return new SchedulePlaceResBody(
 			schedulePlace.getId(),
 			schedulePlace.getContentId(),
+			title,
 			schedulePlace.getPlaceType(),
 			schedulePlace.getVisitStart(),
 			schedulePlace.getVisitedEnd(),
