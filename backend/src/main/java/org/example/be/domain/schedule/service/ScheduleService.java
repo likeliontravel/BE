@@ -28,6 +28,7 @@ import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
+import org.example.be.domain.schedule.dto.response.PlaceSimpleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.domain.schedule.entity.Schedule;
@@ -82,9 +83,9 @@ public class ScheduleService {
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
 			// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
-			Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(
+			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
 				savedSchedule.getSchedulePlaces());
-			return ScheduleResBody.from(savedSchedule, placeTitles);
+			return ScheduleResBody.from(savedSchedule, placeDetails);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
 		}
@@ -99,9 +100,10 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(schedule.getSchedulePlaces());
+		Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
+			schedule.getSchedulePlaces());
 
-		return ScheduleResBody.from(schedule, placeTitles);
+		return ScheduleResBody.from(schedule, placeDetails);
 	}
 
 	// 일정 요약 목록 조회
@@ -232,10 +234,10 @@ public class ScheduleService {
 
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
-			
-			Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(
+
+			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
 				updatedSchedule.getSchedulePlaces());
-			return ScheduleResBody.from(updatedSchedule, placeTitles);
+			return ScheduleResBody.from(updatedSchedule, placeDetails);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
 		}
