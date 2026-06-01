@@ -48,9 +48,7 @@ public class SchedulePerformanceTest {
 			.orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
 		testUserId = member.getId();
 
-		Group group = new Group();
-		group.setGroupName("PERF_TEST_GROUP_" + System.currentTimeMillis());
-		group.setCreatedBy(member);
+		Group group = Group.create("PERF_TEST_GROUP_" + System.currentTimeMillis(), member, null);
 		groupRepository.save(group);
 		group.addMember(member);
 
