@@ -82,7 +82,8 @@ public class ScheduleService {
 		try {
 			Schedule savedSchedule = scheduleRepository.save(schedule);
 			// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
-			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedSchedule.getSchedulePlaces());
+			Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(
+				savedSchedule.getSchedulePlaces());
 			return ScheduleResBody.from(savedSchedule, placeTitles);
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
@@ -98,7 +99,7 @@ public class ScheduleService {
 		Schedule schedule = scheduleRepository.findByGroup(group)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
-		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(schedule.getSchedulePlaces());
+		Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(schedule.getSchedulePlaces());
 
 		return ScheduleResBody.from(schedule, placeTitles);
 	}
@@ -232,7 +233,7 @@ public class ScheduleService {
 		try {
 			Schedule updatedSchedule = scheduleRepository.save(schedule);
 			
-			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(
+			Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(
 				updatedSchedule.getSchedulePlaces());
 			return ScheduleResBody.from(updatedSchedule, placeTitles);
 		} catch (Exception e) {

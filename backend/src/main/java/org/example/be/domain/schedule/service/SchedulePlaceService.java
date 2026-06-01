@@ -52,7 +52,7 @@ public class SchedulePlaceService {
 
 		List<SchedulePlace> savedPlaces = schedulePlaceRepository.saveAll(places);
 
-		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedPlaces);
+		Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(savedPlaces);
 
 		return savedPlaces.stream()
 			.map(place -> SchedulePlaceResBody.from(place, placeTitles.get(place.getContentId())))
@@ -80,7 +80,7 @@ public class SchedulePlaceService {
 
 		try {
 			SchedulePlace savedPlace = schedulePlaceRepository.save(place);
-			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(List.of(savedPlace));
+			Map<String, String> placeTitles = placeValidationService.getPlaceSimpleDetails(List.of(savedPlace));
 			return SchedulePlaceResBody.from(savedPlace, placeTitles.get(savedPlace.getContentId()));
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "세부 일정 수정 실패 - message: " + e.getMessage());
