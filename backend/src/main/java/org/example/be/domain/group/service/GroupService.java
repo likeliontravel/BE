@@ -62,7 +62,6 @@ public class GroupService {
 		Member creator = memberService.getById(memberId);
 
 		Group group = Group.create(request.groupName(), creator, request.description());
-		group.addMember(creator);
 
 		Group savedGroup = groupRepository.save(group);
 
