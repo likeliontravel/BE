@@ -50,7 +50,6 @@ public class SchedulePerformanceTest {
 
 		Group group = Group.create("PERF_TEST_GROUP_" + System.currentTimeMillis(), member, null);
 		groupRepository.save(group);
-		group.addMember(member);
 
 		Schedule schedule = Schedule.create(LocalDateTime.now(), LocalDateTime.now().plusDays(3), group);
 		scheduleRepository.save(schedule);
