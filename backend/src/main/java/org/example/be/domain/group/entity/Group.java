@@ -62,11 +62,15 @@ public class Group extends Base {
 
 	// --- 팩토리 메서드 ---
 	// 그룹 생성용 정적 팩토리 메서드
+	// 이 메서드는 아래 두 가지 불변법칙을 엔티티에 캡슐화
+	// 1. 요청자는 그룹의 창설자다
+	// 2. 그룹 창설자는 그룹의 멤버다
 	public static Group create(String groupName, Member createdBy, String description) {
 		Group group = new Group();
 		group.groupName = groupName;
 		group.createdBy = createdBy;
 		group.description = description;
+		group.addMember(createdBy); // 창설자를 그룹 멤버로 자동 등록
 		return group;
 	}
 
