@@ -48,6 +48,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // 테스트코드에서도 Slf4j 사용을 위한 의존성
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
     implementation 'org.apache.commons:commons-text:1.10.0'
 
     // WebClient를 사용하기 위한 의존성 추가
