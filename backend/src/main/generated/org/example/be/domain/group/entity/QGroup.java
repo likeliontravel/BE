@@ -22,17 +22,26 @@ public class QGroup extends EntityPathBase<Group> {
 
     public static final QGroup group = new QGroup("group1");
 
+    public final org.example.be.global.entity.QBase _super = new org.example.be.global.entity.QBase(this);
+
     public final ListPath<org.example.be.domain.group.announcement.entity.GroupAnnouncement, org.example.be.domain.group.announcement.entity.QGroupAnnouncement> announcements = this.<org.example.be.domain.group.announcement.entity.GroupAnnouncement, org.example.be.domain.group.announcement.entity.QGroupAnnouncement>createList("announcements", org.example.be.domain.group.announcement.entity.GroupAnnouncement.class, org.example.be.domain.group.announcement.entity.QGroupAnnouncement.class, PathInits.DIRECT2);
 
     public final org.example.be.domain.member.entity.QMember createdBy;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdTime = _super.createdTime;
 
     public final StringPath description = createString("description");
 
     public final StringPath groupName = createString("groupName");
 
-    public final NumberPath<Long> id = createNumber("id", Long.class);
+    //inherited
+    public final NumberPath<Long> id = _super.id;
 
     public final SetPath<org.example.be.domain.member.entity.Member, org.example.be.domain.member.entity.QMember> members = this.<org.example.be.domain.member.entity.Member, org.example.be.domain.member.entity.QMember>createSet("members", org.example.be.domain.member.entity.Member.class, org.example.be.domain.member.entity.QMember.class, PathInits.DIRECT2);
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedTime = _super.updatedTime;
 
     public QGroup(String variable) {
         this(Group.class, forVariable(variable), INITS);

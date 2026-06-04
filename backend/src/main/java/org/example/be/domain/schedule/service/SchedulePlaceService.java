@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
+import org.example.be.domain.schedule.dto.response.PlaceSimpleResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
@@ -52,10 +53,10 @@ public class SchedulePlaceService {
 
 		List<SchedulePlace> savedPlaces = schedulePlaceRepository.saveAll(places);
 
-		Map<String, String> placeTitles = placeValidationService.getPlaceTitles(savedPlaces);
+		Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(savedPlaces);
 
 		return savedPlaces.stream()
-			.map(place -> SchedulePlaceResBody.from(place, placeTitles.get(place.getContentId())))
+			.map(place -> SchedulePlaceResBody.from(place, placeDetails.get(place.getContentId())))
 			.toList();
 	}
 
@@ -80,8 +81,11 @@ public class SchedulePlaceService {
 
 		try {
 			SchedulePlace savedPlace = schedulePlaceRepository.save(place);
-			Map<String, String> placeTitles = placeValidationService.getPlaceTitles(List.of(savedPlace));
-			return SchedulePlaceResBody.from(savedPlace, placeTitles.get(savedPlace.getContentId()));
+
+			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
+				List.of(savedPlace));
+
+			return SchedulePlaceResBody.from(savedPlace, placeDetails.get(savedPlace.getContentId()));
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "세부 일정 수정 실패 - message: " + e.getMessage());
 		}

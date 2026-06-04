@@ -13,15 +13,15 @@ public record ScheduleResBody(
 	String groupName,
 	List<SchedulePlaceResBody> schedulePlaces
 ) {
-	
-	public static ScheduleResBody from(Schedule schedule, Map<String, String> placeTitles) {
+
+	public static ScheduleResBody from(Schedule schedule, Map<String, PlaceSimpleResBody> placeDetails) {
 		return new ScheduleResBody(
 			schedule.getId(),
 			schedule.getStartSchedule(),
 			schedule.getEndSchedule(),
 			schedule.getGroup().getGroupName(),
 			schedule.getSchedulePlaces().stream()
-				.map(place -> SchedulePlaceResBody.from(place, placeTitles.get(place.getContentId())))
+				.map(place -> SchedulePlaceResBody.from(place, placeDetails.get(place.getContentId())))
 				.toList()
 		);
 	}

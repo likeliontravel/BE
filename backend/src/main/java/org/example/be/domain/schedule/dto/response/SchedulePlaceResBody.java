@@ -9,6 +9,8 @@ public record SchedulePlaceResBody(
 	Long id,
 	String contentId,
 	String title,
+	String img,
+	String address,
 	PlaceType placeType,
 	LocalDateTime visitStart,
 	LocalDateTime visitedEnd,
@@ -16,11 +18,13 @@ public record SchedulePlaceResBody(
 	Integer orderInDay
 ) {
 
-	public static SchedulePlaceResBody from(SchedulePlace schedulePlace, String title) {
+	public static SchedulePlaceResBody from(SchedulePlace schedulePlace, PlaceSimpleResBody resBody) {
 		return new SchedulePlaceResBody(
 			schedulePlace.getId(),
 			schedulePlace.getContentId(),
-			title,
+			resBody != null ? resBody.title() : "장소 정보를 불러올 수 없습니다.",
+			resBody != null ? resBody.img() : null,
+			resBody != null ? resBody.address() : "",
 			schedulePlace.getPlaceType(),
 			schedulePlace.getVisitStart(),
 			schedulePlace.getVisitedEnd(),
