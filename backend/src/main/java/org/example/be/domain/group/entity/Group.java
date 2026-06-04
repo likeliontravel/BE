@@ -7,35 +7,26 @@ import java.util.Set;
 
 import org.example.be.domain.group.announcement.entity.GroupAnnouncement;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.global.entity.Base;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user_groups")
-public class Group {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+public class Group extends Base {
 
 	@Column(nullable = false, unique = true)
 	private String groupName;   // 그룹명, 중복 불가
@@ -44,8 +35,8 @@ public class Group {
 	@JoinColumn(name = "created_by", nullable = false)
 	private Member createdBy;  // 그룹 창설자
 
-	// group_members라는 조인테이블 생성. groupId와 userId가 연결되어있는 테이블이 될것임.
-	// 자바 상으로는 UnifiedUser를 멤버로 가지는 Set으로 표현.
+	// user_groups_members라는 조인테이블 생성. groupId와 userId가 연결되어있는 테이블이 될것임.
+	// 자바 상으로는 Member를 멤버로 가지는 Set으로 표현.
 	@ManyToMany
 	@JoinTable(
 		name = "user_groups_members",
@@ -59,14 +50,33 @@ public class Group {
 	@OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<GroupAnnouncement> announcements = new ArrayList<>();
 
-	// UnifiedUser를 멤버에 추가해주는 함수
-	public void addMember(Member user) {
-		this.members.add(user);
+	// 그룹에 멤버를 추가한다. (조인 테이블 user_groups_members에 매핑 행 생성)
+	public void addMember(Member member) {
+		this.members.add(member);
 	}
 
-	// UnifiedUser를 멤버에서 제거해주는 함수
-	public void removeMember(Member user) {
-		this.members.remove(user);
+	// 그룹에서 멤버를 제거한다. (조인 테이블 user_groups_members에서 매핑 행 사라짐)
+	public void removeMember(Member member) {
+		this.members.remove(member);
+	}
+
+	// --- 팩토리 메서드 ---
+	// 그룹 생성용 정적 팩토리 메서드
+	// 이 메서드는 아래 두 가지 불변법칙을 엔티티에 캡슐화
+	// 1. 요청자는 그룹의 창설자다
+	// 2. 그룹 창설자는 그룹의 멤버다
+	public static Group create(String groupName, Member createdBy, String description) {
+		Group group = new Group();
+		group.groupName = groupName;
+		group.createdBy = createdBy;
+		group.description = description;
+		group.addMember(createdBy); // 창설자를 그룹 멤버로 자동 등록
+		return group;
+	}
+
+	// 그룹 설명 수정
+	public void updateDescription(String description) {
+		this.description = description;
 	}
 
 }

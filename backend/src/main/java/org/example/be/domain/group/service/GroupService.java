@@ -61,11 +61,7 @@ public class GroupService {
 
 		Member creator = memberService.getById(memberId);
 
-		Group group = new Group();
-		group.setGroupName(request.groupName());
-		group.setDescription(request.description());
-		group.setCreatedBy(creator);
-		group.addMember(creator);
+		Group group = Group.create(request.groupName(), creator, request.description());
 
 		Group savedGroup = groupRepository.save(group);
 
@@ -131,7 +127,7 @@ public class GroupService {
 		}
 
 		Group group = getGroupByName(groupName);
-		group.setDescription(description);
+		group.updateDescription(description);
 		groupRepository.save(group);
 
 		return new GroupModifyResBody(groupName, description);

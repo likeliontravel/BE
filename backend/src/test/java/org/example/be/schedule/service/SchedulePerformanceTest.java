@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @SpringBootTest
 @Transactional
 public class SchedulePerformanceTest {
@@ -44,15 +47,12 @@ public class SchedulePerformanceTest {
 
 	@BeforeEach
 	void setUp() {
-		Member member = memberRepository.findByEmail("yjc7241@naver.com")
+		Member member = memberRepository.findByEmail("yechani99@naver.com")
 			.orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
 		testUserId = member.getId();
 
-		Group group = new Group();
-		group.setGroupName("PERF_TEST_GROUP_" + System.currentTimeMillis());
-		group.setCreatedBy(member);
+		Group group = Group.create("PERF_TEST_GROUP_" + System.currentTimeMillis(), member, null);
 		groupRepository.save(group);
-		group.addMember(member);
 
 		Schedule schedule = Schedule.create(LocalDateTime.now(), LocalDateTime.now().plusDays(3), group);
 		scheduleRepository.save(schedule);
@@ -68,7 +68,7 @@ public class SchedulePerformanceTest {
 	@Test
 	@DisplayName("N+1 최적화 성능 벤치마크 (데이터 100건 기준)")
 	void comparePerformance() {
-		System.out.println("⏳ 기존 방식(N+1) 측정 시작...");
+		log.info("\n⏳ 기존 방식(N+1) 측정 시작...");
 		long startOld = System.currentTimeMillis();
 
 		List<SchedulePlace> places = schedulePlaceRepository.findAll();
@@ -79,7 +79,7 @@ public class SchedulePerformanceTest {
 		long endOld = System.currentTimeMillis();
 		long oldDuration = endOld - startOld;
 
-		System.out.println("⏳ 개선 방식(Batch) 측정 시작...");
+		log.info("\n⏳ 개선 방식(Batch) 측정 시작...");
 		long startNew = System.currentTimeMillis();
 
 		scheduleService.getScheduleList(testUserId);
@@ -89,14 +89,19 @@ public class SchedulePerformanceTest {
 
 		double improvement = ((double)(oldDuration - newDuration) / oldDuration) * 100;
 
-		System.out.println("\n================================================");
-		System.out.println("📊 [성능 테스트 결과 분석 - 데이터 " + DUMMY_COUNT + "건]");
-		System.out.println("------------------------------------------------");
-		System.out.println("❌ 기존 방식 (N+1 개별 조회): " + oldDuration + " ms");
-		System.out.println("✅ 개선 방식 (Batch 벌크 조회): " + newDuration + " ms");
-		System.out.println("------------------------------------------------");
-		System.out.println("🔥 성능 향상률: " + String.format("%.2f", improvement) + "%");
-		System.out.println("💡 쿼리 감소: " + (DUMMY_COUNT + "회 -> 약 6회 미만"));
-		System.out.println("================================================\n");
+		log.info("""
+				
+				================================================
+				📊 [성능 테스트 결과 분석 - 데이터 {}건]
+				------------------------------------------------
+				❌ 기존 방식 (N+1 개별 조회): {} ms
+				✅ 개선 방식 (Batch 벌크 조회): {} ms
+				------------------------------------------------
+				🔥 성능 향상률: {}%
+				💡 쿼리 감소: {}회 -> 약 6회 미만
+				================================================
+				""",
+			DUMMY_COUNT, oldDuration, newDuration, String.format("%.2f", improvement), DUMMY_COUNT);
+
 	}
 }
