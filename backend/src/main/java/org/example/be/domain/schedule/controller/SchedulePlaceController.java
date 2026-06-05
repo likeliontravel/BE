@@ -33,7 +33,7 @@ public class SchedulePlaceController {
 		@PathVariable Long scheduleId,
 		@Valid @RequestBody List<SchedulePlaceReqBody> reqBodies,
 		@AuthenticationPrincipal SecurityUser securityUser) {
-		List<SchedulePlaceResBody> response = schedulePlaceService.createSchedulePlace(scheduleId, reqBodies,
+		List<SchedulePlaceResBody> response = schedulePlaceService.createSchedulePlaces(scheduleId, reqBodies,
 			securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 생성 성공"));
 	}
