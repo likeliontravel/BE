@@ -47,7 +47,7 @@ public class PlaceValidationService {
 		}
 	}
 
-	// Map요청에 담긴 장소들이 실제로 DB에 존재하는지 한꺼번에 검증 (SchedulePlace 생성/수정이 공유)
+	// Map 입력에 담긴 장소들이 실제로 DB에 존재하는지 한꺼번에 검증 (SchedulePlace 생성/수정이 공유)
 	// Map<PlaceType, Set<String>> 구조 : 각 타입(관광지/식당/숙소) 별로 contentId를 set으로 묶어 같은 타입끼리 IN절 한번에 조회하기 위함
 	public void validateContentIdsExist(Map<PlaceType, Set<String>> contentIdsByType) {
 		contentIdsByType.forEach((placeType, requestedIds) -> {
