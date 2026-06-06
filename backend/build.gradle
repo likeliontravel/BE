@@ -101,10 +101,6 @@ dependencies {
     }
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["-parameters"]
 }
@@ -120,3 +116,38 @@ tasks.withType(JavaCompile).configureEach {
 //sourceSets {
 //    main.java.srcDirs += querydslDir
 //}
+
+testing {
+    suites {
+        // 단위 테스트: src/test/java. 빠른 피드백 (Mockito, 슬라이스). DB/스프링 컨텍스트 없음
+        test {
+            useJUnitJupiter()
+        }
+
+        // 통합 테스트: src/integrationTest/java. @SpringBootTest / @DataJpaTest 등 실제 컨텍스트로 계층 결합 검증
+        integrationTest(JvmTestSuite) {
+            useJUnitJupiter()
+
+            dependencies {
+                implementation project()  // 운영 코드 + 런타임 의존성 접근
+                implementation 'org.springframework.boot:spring-boot-starter-test'
+                implementation 'org.springframework.security:spring-security-test'
+                runtimeOnly 'org.junit.platform:junit-platform-launcher'
+                compileOnly 'org.projectlombok:lombok'
+                annotationProcessor 'org.projectlombok:lombok'
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        shouldRunAfter(test)  // 단위 테스트가 먼저 돈 뒤 통합 테스트 실행
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(testing.suites.named('integrationTest'))
+}
