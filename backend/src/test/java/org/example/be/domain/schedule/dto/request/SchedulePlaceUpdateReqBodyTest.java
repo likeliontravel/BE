@@ -98,7 +98,7 @@ class SchedulePlaceUpdateReqBodyTest {
 	}
 
 	@Test
-	@DisplayName("orderInDay가 null이면 위반 (@NotBlank)")
+	@DisplayName("orderInDay가 null이면 위반 (@NotNull)")
 	void nullOrderInDay_violation() {
 		SchedulePlaceUpdateReqBody reqBody = new SchedulePlaceUpdateReqBody(
 			1L, "C1", PlaceType.TOURISTSPOT, NOW, NOW.plusHours(1), 1, null);
