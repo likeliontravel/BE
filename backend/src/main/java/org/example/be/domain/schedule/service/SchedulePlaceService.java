@@ -33,6 +33,7 @@ public class SchedulePlaceService {
 	private final PlaceValidationService placeValidationService;
 	private final GroupService groupService;
 
+	// 일정 블록 생성 메서드 - 최초 "일정 저장하기" 시 처리 로직
 	@Transactional
 	public List<SchedulePlaceResBody> createSchedulePlaces(Long scheduleId, List<SchedulePlaceReqBody> reqBodies,
 		Long userId) {
@@ -129,51 +130,19 @@ public class SchedulePlaceService {
 		return toResBodies(schedule.getSchedulePlaces());
 	}
 
-	// 단건 수정 - TODO: PUT /detail/{scheduleId} 일괄 수정(updateSchedulePlaces)으로 대체 예정. 사용처 제거 후 삭제 검토
+	// 특정 일정(scheduleId)의 세부 장소 전체 삭제. (전용 DELETE /schedule/detail/{scheduleId}
+	// 전부 삭제가 목적이므로 컬렉션을 clear() -> orphanRemoval이 실제 DELETE 수행
 	@Transactional
-	public SchedulePlaceResBody updateSchedulePlace(Long placeId, SchedulePlaceReqBody reqBody, Long userId) {
-		var place = schedulePlaceRepository.findById(placeId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
-
-		// 권한 검증: 그룹 창설자만 세부 일정을 수정할 수 있음
-		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
-
-		placeValidationService.validateContentIdByPlaceType(reqBody.placeType(), reqBody.contentId());
-
-		place.update(
-			reqBody.contentId(),
-			reqBody.placeType(),
-			reqBody.visitStart(),
-			reqBody.visitedEnd(),
-			reqBody.dayOrder(),
-			reqBody.orderInDay()
-		);
-
-		try {
-			SchedulePlace savedPlace = schedulePlaceRepository.save(place);
-
-			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
-				List.of(savedPlace));
-
-			return SchedulePlaceResBody.from(savedPlace, placeDetails.get(savedPlace.getContentId()));
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "세부 일정 수정 실패 - message: " + e.getMessage());
-		}
-	}
-
-	@Transactional
-	public void deleteSchedulePlace(Long placeId, Long userId) {
-		var place = schedulePlaceRepository.findById(placeId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND, "placeId: " + placeId));
+	public void deleteAllSchedulePlaces(Long scheduleId, Long userId) {
+		Schedule schedule = scheduleRepository.findById(scheduleId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 삭제할 수 있음
-		groupService.validateGroupCreator(place.getSchedule().getGroup().getGroupName(), userId);
+		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
-		try {
-			schedulePlaceRepository.delete(place);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "세부 일정 삭제 실패 - message: " + e.getMessage());
-		}
+		schedule.getSchedulePlaces().clear();
+
+		// 실제 DELETE는 
 	}
 
 	// === 보조 내부 메서드 ===
