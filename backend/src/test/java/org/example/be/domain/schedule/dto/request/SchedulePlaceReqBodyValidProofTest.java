@@ -17,8 +17,15 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 // [증명] @Valid 는 '맨 List' 의 원소 규칙을 검사하지 않는다 (POST 생성 DTO contentId @NotBlank 예시)
-// POST /schedule/detail/{scheduleId} 의 @Valid @RequestBody List<SchedulePlaceReqBody> 가
-// 실제로 타는 경로(=List 를 통째로 검증)를 그대로 재현한다.
+// POST /schedule/detail/{scheduleId} 가 '예전에' 베어 List(@Valid @RequestBody List<SchedulePlaceReqBody>)로
+// 받던 시절, 원소 검증이 왜 샜는지를 코드로 증언하기 위해 '보존'하는 테스트다.
+//
+// ※ 주의: 이 테스트는 래퍼 전환(현재 코드) 후에도 계속 GREEN 이다 — 의도된 상태다.
+//   컨트롤러를 거치지 않고 validator.validate(List<>) 를 '직접' 호출하는 순수 단위 테스트라,
+//   우리가 바꾼 것(컨트롤러 파라미터 List→래퍼)과 무관하게 "베어 List 는 원소를 순회하지 않는다"는
+//   Bean Validation 스펙만을 보여준다. 즉 GREEN = "(규칙은 옳은데) 베어 List 경로에선 검증이 누락된다"는
+//   증거이지, 현재 코드가 버그라는 뜻이 아니다.
+//   현재 코드의 정방향 보장(래퍼는 원소까지 cascade 됨)은 SchedulePlaceCreateListReqBodyTest 가 맡는다.
 @DisplayName("[증명] @Valid는 Controller에서 입력받은 List<>에 대해 원소 규칙을 검사하지 않고 있다(POST 생성 DTO contentId @NotBlank)")
 class SchedulePlaceReqBodyValidProofTest {
 	private static Validator validator;
