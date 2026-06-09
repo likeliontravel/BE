@@ -12,6 +12,7 @@ import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceReqBody;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceUpdateReqBody;
 import org.example.be.domain.schedule.dto.response.PlaceSimpleResBody;
+import org.example.be.domain.schedule.dto.response.SchedulePlaceDeleteResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
@@ -133,16 +134,23 @@ public class SchedulePlaceService {
 	// 특정 일정(scheduleId)의 세부 장소 전체 삭제. (전용 DELETE /schedule/detail/{scheduleId}
 	// 전부 삭제가 목적이므로 컬렉션을 clear() -> orphanRemoval이 실제 DELETE 수행
 	@Transactional
-	public void deleteAllSchedulePlaces(Long scheduleId, Long userId) {
+	public List<SchedulePlaceDeleteResBody> deleteAllSchedulePlaces(Long scheduleId, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 삭제할 수 있음
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
+		// clear() 전에 스냅샷을 복사해놓기(대상 블록 정보 응답용)
+		List<SchedulePlaceDeleteResBody> deleted = schedule.getSchedulePlaces().stream()
+			.map(SchedulePlaceDeleteResBody::from)
+			.toList();
+
+		// 실제 DELETE는 @Transactional 타고 커밋 시점에 orphanRemoval이 DELETE쿼리 수행
 		schedule.getSchedulePlaces().clear();
 
-		// 실제 DELETE는 
+		return deleted;
+
 	}
 
 	// === 보조 내부 메서드 ===
