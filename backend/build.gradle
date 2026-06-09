@@ -117,16 +117,8 @@ tasks.withType(JavaCompile).configureEach {
 //    main.java.srcDirs += querydslDir
 //}
 
-testing {
-    suites {
-        // 단위 테스트: src/test/java. JUnit5 플랫폼 사용. (태그 필터는 아래 test 태스크에서)
-        test {
-            useJUnitJupiter()
-        }
-    }
-}
-
-// 단위 테스트: integration·performance 태그를 '제외'하고 빠르게 (기본 test 태스크)
+// 단위 테스트: src/test/java. integration·performance 태그를 '제외'하고 빠르게 (JUnit5 플랫폼)
+// (testing.suites 블록과 useJUnitPlatform 이 중복되면 excludeTags 가 리셋되므로, test 구성은 여기 한 곳으로 일원화)
 tasks.named('test') {
     useJUnitPlatform {
         excludeTags 'integration', 'performance'
