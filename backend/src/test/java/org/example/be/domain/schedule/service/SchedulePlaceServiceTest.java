@@ -13,6 +13,7 @@ import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.place.shared.type.PlaceType;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceUpdateReqBody;
+import org.example.be.domain.schedule.dto.response.SchedulePlaceDeleteResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
@@ -118,8 +119,11 @@ class SchedulePlaceServiceTest {
 	}
 
 	@Test
-	@DisplayName("빈 배열: 일정의 모든 블록이 삭제되어야 함")
+	@DisplayName("[특성] 빈 배열로 직접 호출 시 전체 삭제됨 — 단, 실제 API는 컨트롤러 @NotEmpty가 400으로 차단해 여기 도달 안 함")
 	void emptyList_deletesAll() {
+		// 주의: 이 동작은 updateSchedulePlaces '서비스 단독 호출' 시의 특성일 뿐이다.
+		// PUT /detail/{scheduleId} 는 SchedulePlaceUpdateListReqBody 의 @NotEmpty 로 빈 배열을 400 거부하므로,
+		// 정상 경로에서는 이 분기에 도달하지 않는다. 전체 삭제는 전용 deleteAllSchedulePlaces 가 담당한다.
 		Schedule schedule = newSchedule();
 		addExisting(schedule, 1L, "C1", 1, 1);
 		addExisting(schedule, 2L, "C2", 1, 2);
@@ -127,10 +131,48 @@ class SchedulePlaceServiceTest {
 
 		List<SchedulePlaceResBody> result = schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, List.of(), USER_ID);
 
-		// 스케줄 내 일정이 비어있는지 확인
 		assertThat(schedule.getSchedulePlaces()).isEmpty();
 		assertThat(result).isEmpty();
 		verify(schedulePlaceRepository).flush();
+	}
+
+	@Test
+	@DisplayName("전체 삭제: 모든 블록을 비우고, 삭제된 블록들의 경량 스냅샷을 반환한다")
+	void deleteAll_clearsAndReturnsSnapshot() {
+		Schedule schedule = newSchedule();
+		addExisting(schedule, 1L, "C1", 1, 1);
+		addExisting(schedule, 2L, "C2", 1, 2);
+		when(scheduleRepository.findById(SCHEDULE_ID)).thenReturn(Optional.of(schedule));
+
+		List<SchedulePlaceDeleteResBody> result = schedulePlaceService.deleteAllSchedulePlaces(SCHEDULE_ID, USER_ID);
+
+		// 반환: 삭제된 2건의 스냅샷 (schedulePlaceId·contentId 보존)
+		assertThat(result).extracting(SchedulePlaceDeleteResBody::schedulePlaceId).containsExactlyInAnyOrder(1L, 2L);
+		assertThat(result).extracting(SchedulePlaceDeleteResBody::contentId).containsExactlyInAnyOrder("C1", "C2");
+		// 컬렉션은 비워짐 (orphanRemoval이 커밋 시점에 실제 DELETE 수행)
+		assertThat(schedule.getSchedulePlaces()).isEmpty();
+	}
+
+	@Test
+	@DisplayName("전체 삭제: 일정이 존재하지 않으면 SCHEDULE_NOT_FOUND 전파")
+	void deleteAll_scheduleNotFound_throws() {
+		when(scheduleRepository.findById(SCHEDULE_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> schedulePlaceService.deleteAllSchedulePlaces(SCHEDULE_ID, USER_ID))
+			.isInstanceOf(BusinessException.class)
+			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("전체 삭제: 이미 빈 일정이면 빈 목록을 반환한다 (멱등)")
+	void deleteAll_emptySchedule_returnsEmpty() {
+		Schedule schedule = newSchedule();
+		when(scheduleRepository.findById(SCHEDULE_ID)).thenReturn(Optional.of(schedule));
+
+		List<SchedulePlaceDeleteResBody> result = schedulePlaceService.deleteAllSchedulePlaces(SCHEDULE_ID, USER_ID);
+
+		assertThat(result).isEmpty();
+		assertThat(schedule.getSchedulePlaces()).isEmpty();
 	}
 
 	// === 검증 실패 케이스 ===
