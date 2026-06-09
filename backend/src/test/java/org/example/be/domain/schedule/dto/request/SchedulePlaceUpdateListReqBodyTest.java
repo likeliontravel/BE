@@ -55,7 +55,7 @@ class SchedulePlaceUpdateListReqBodyTest {
 
 		Set<ConstraintViolation<SchedulePlaceUpdateListReqBody>> violations = validator.validate(body);
 
-		// validator의 검증 결과 위반 정보 객체 내 "schedulePlaces" 형태의 텍스트가 포함되어 있는지 확인
+		// validator의 검증 결과 위반들의 필드 경로(propertyPath) 중에 "schedulePlaces" (@NotEmpty 위반 위치) 가 포함되어 있는지 확인
 		assertThat(violations).extracting(v -> v.getPropertyPath().toString()).contains("schedulePlaces");
 	}
 
