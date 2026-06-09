@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.example.be.domain.schedule.dto.request.SchedulePlaceCreateListReqBody;
 import org.example.be.domain.schedule.dto.request.SchedulePlaceUpdateListReqBody;
+import org.example.be.domain.schedule.dto.response.SchedulePlaceDeleteResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.service.SchedulePlaceService;
 import org.example.be.global.response.CommonResponse;
@@ -53,13 +54,14 @@ public class SchedulePlaceController {
 		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 일괄 수정 성공"));
 	}
 
-	// 일정 블록 전체 삭제
+	// 특정 일정 내 블록 전체 삭제
 	// 단건 삭제는 리스트 수정에서 삭제 가능, 전체 삭제는 해당 일정의 scheduleId만 받아 처리
 	@DeleteMapping("/detail/{scheduleId}")
-	public ResponseEntity<CommonResponse<Void>> deleteAllSchedulePlaces(
+	public ResponseEntity<CommonResponse<List<SchedulePlaceDeleteResBody>>> deleteAllSchedulePlaces(
 		@PathVariable Long scheduleId,
 		@AuthenticationPrincipal SecurityUser securityUser) {
-		schedulePlaceService.deleteAllSchedulePlaces(scheduleId, securityUser.getId());
-		return ResponseEntity.ok(CommonResponse.success(null, "세부 일정 삭제 성공"));
+		List<SchedulePlaceDeleteResBody> response = schedulePlaceService.deleteAllSchedulePlaces(scheduleId,
+			securityUser.getId());
+		return ResponseEntity.ok(CommonResponse.success(response, "세부 일정 삭제 성공"));
 	}
 }
