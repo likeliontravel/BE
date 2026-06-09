@@ -35,7 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
 			.exposedHeaders("Set-Cookie")
 			.allowedOrigins("https://localhost:3000", "https://toleave.cloud")
 			.allowedHeaders("*")
-			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+			.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 			.allowCredentials(true);
 
 		corsRegistry.addMapping("/ws/**")
