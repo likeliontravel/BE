@@ -39,12 +39,12 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<CommonResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
-		// 필드별 위반 메시지를 모아 하나의 문자열로 변환 (예: schdulePlaces[0].contentId: 장소 ID를 입력해주세요."
+		// 필드별 위반 메시지를 모아 하나의 문자열로 변환 (예: schedulePlaces[0].contentId: 장소 ID를 입력해주세요."
 		String message = e.getBindingResult().getFieldErrors().stream()
 			.map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
 			.collect(Collectors.joining(", "));
 		if (message.isBlank()) {
-			// 원소(필드)가 아닌 객체 레벨 위반(일정 블록 수정 리스트 래퍼객체 @NotEmpty 등 일부) 풀백
+			// 원소(필드)가 아닌 객체 레벨 위반(일정 블록 수정 리스트 래퍼객체 @NotEmpty 등 일부) fallback
 			message = e.getBindingResult().getAllErrors().stream()
 				.map(ObjectError::getDefaultMessage)
 				.collect(Collectors.joining(", "));
