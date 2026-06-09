@@ -30,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 // SchedulePlaceService.updateSchedulePlaces(id 키 in-place 머지) 단위 테스트
+// + deleteAllSchedulePlaces 단위테스트
 // 협력자(repository / PlaceValidationService / GroupService)를 mock으로 끊고 머지 로직만 검증한다.
 @DisplayName("SchedulePlaceService 일괄 수정(머지) 단위 테스트")
 @ExtendWith(MockitoExtension.class)
