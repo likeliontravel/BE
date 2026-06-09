@@ -34,19 +34,6 @@ public class PlaceValidationService {
 	private final RestaurantRepository restaurantRepository;
 	private final AccommodationRepository accommodationRepository;
 
-	public void validateContentIdByPlaceType(PlaceType placeType, String contentId) {
-		boolean exists = switch (placeType) {
-			case TOURISTSPOT -> touristSpotRepository.findByContentId(contentId).isPresent();
-			case RESTAURANT -> restaurantRepository.findByContentId(contentId).isPresent();
-			case ACCOMMODATION -> accommodationRepository.findByContentId(contentId).isPresent();
-		};
-
-		if (!exists) {
-			throw new BusinessException(ErrorCode.PLACE_NOT_FOUND,
-				"placeType: " + placeType + ", contentId: " + contentId);
-		}
-	}
-
 	// Map 입력에 담긴 장소들이 실제로 DB에 존재하는지 한꺼번에 검증 (SchedulePlace 생성/수정이 공유)
 	// Map<PlaceType, Set<String>> 구조 : 각 타입(관광지/식당/숙소) 별로 contentId를 set으로 묶어 같은 타입끼리 IN절 한번에 조회하기 위함
 	public void validateContentIdsExist(Map<PlaceType, Set<String>> contentIdsByType) {
@@ -70,9 +57,9 @@ public class PlaceValidationService {
 			}
 		});
 	}
-	
+
 	// 주어진 placeType의 contentId 묶음 중, 해당 테이블에 실제로 존재하는 contentId 집합만 반환
-	// placeType에 따라 조회할 테이블이 달라지므로 validateContentIdByPlaceType()처럼 switch로 분기하며,
+	// placeType에 따라 조회할 테이블이 달라지므로 switch로 분기하며,
 	// findAllByContentIdIn(IN절 사용)으로 묶음을 한 번에 조회해 N+1 해소
 	private Set<String> findExistingContentIds(PlaceType placeType, Set<String> contentIds) {
 		List<String> idList = new ArrayList<>(contentIds);
