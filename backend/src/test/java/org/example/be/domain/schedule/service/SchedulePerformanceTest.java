@@ -1,4 +1,4 @@
-package org.example.be.schedule.service;
+package org.example.be.domain.schedule.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +13,6 @@ import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
-import org.example.be.domain.schedule.service.ScheduleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

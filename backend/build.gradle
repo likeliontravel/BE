@@ -119,35 +119,44 @@ tasks.withType(JavaCompile).configureEach {
 
 testing {
     suites {
-        // 단위 테스트: src/test/java. 빠른 피드백 (Mockito, 슬라이스). DB/스프링 컨텍스트 없음
+        // 단위 테스트: src/test/java. JUnit5 플랫폼 사용. (태그 필터는 아래 test 태스크에서)
         test {
             useJUnitJupiter()
-        }
-
-        // 통합 테스트: src/integrationTest/java. @SpringBootTest / @DataJpaTest 등 실제 컨텍스트로 계층 결합 검증
-        integrationTest(JvmTestSuite) {
-            useJUnitJupiter()
-
-            dependencies {
-                implementation project()  // 운영 코드 + 런타임 의존성 접근
-                implementation 'org.springframework.boot:spring-boot-starter-test'
-                implementation 'org.springframework.security:spring-security-test'
-                runtimeOnly 'org.junit.platform:junit-platform-launcher'
-                compileOnly 'org.projectlombok:lombok'
-                annotationProcessor 'org.projectlombok:lombok'
-            }
-
-            targets {
-                all {
-                    testTask.configure {
-                        shouldRunAfter(test)  // 단위 테스트가 먼저 돈 뒤 통합 테스트 실행
-                    }
-                }
-            }
         }
     }
 }
 
+// 단위 테스트: integration·performance 태그를 '제외'하고 빠르게 (기본 test 태스크)
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags 'integration', 'performance'
+    }
+}
+
+// 통합 테스트: @Tag("integration") 만 실행. src/test 소스셋을 공유한다.
+tasks.register('integrationTest', Test) {
+    description = '통합 테스트(@Tag("integration")) 실행'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+// 성능 테스트: @Tag("performance") 만 실행. 느리고 환경 민감하므로 check 에 묶지 않고 필요 시 수동 실행.
+tasks.register('performanceTest', Test) {
+    description = '성능 테스트(@Tag("performance")) 실행'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'performance'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
 tasks.named('check') {
-    dependsOn(testing.suites.named('integrationTest'))
+    dependsOn 'integrationTest'   // 성능 테스트는 무거워 check 에서 제외 (수동: ./gradlew performanceTest)
 }
