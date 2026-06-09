@@ -53,6 +53,8 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/auth/join", "/auth/login", "/auth/password/reset/request",
 					"/auth/password/reset/").permitAll()
+				.requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info",
+					"/actuator/prometheus").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
 				.requestMatchers("/favicon.ico").permitAll()
 				.requestMatchers("/.well-known/**").permitAll()
