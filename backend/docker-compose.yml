@@ -119,7 +119,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.1.2
     container_name: toleave-grafana
     ports:
       - "3000:3000"
