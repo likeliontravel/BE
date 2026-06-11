@@ -11,11 +11,13 @@ export const options = {
 
 // 존재하는 게시글 ID 목록
 const boardIds = [2, 5, 7, 8];
+const BASE_URL = 'https://api.toleave.cloud';
+// const BASE_URL = 'http://localhost:8080'; // 로컬 서버 주소
 
 export default function () {
     // 배열에서 랜덤하게 하나를 선택
     const randomBoardId = boardIds[Math.floor(Math.random() * boardIds.length)];
-    const url = `https://api.toleave.cloud/board/${randomBoardId}`;
+    const url = `${BASE_URL}/board/${randomBoardId}`;
 
     const res = http.get(url);
 
