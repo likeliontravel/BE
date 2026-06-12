@@ -1,8 +1,12 @@
 package org.example.be.global.exception;
 
+import java.util.stream.Collectors;
+
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -29,6 +33,29 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 *  요청 본문 검증 실패 처리 - @Valid 위반을 400으로 응답
+	 *  (래퍼의 @NotEmpty, 원소의 @NotBlank/@NotNull/@Min 등 cascade 위반도 모두 여기로 들어옴)
+	 *  앱 전역 영향: 이 핸들러 추가 전에는 @Valid 실패가 catch-all(Exception)에 잡혀서 500 INTERNAL_SERVER_ERROR로 나가고 있었다.
+	 */
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<CommonResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
+		// 필드별 위반 메시지를 모아 하나의 문자열로 변환 (예: schedulePlaces[0].contentId: 장소 ID를 입력해주세요."
+		String message = e.getBindingResult().getFieldErrors().stream()
+			.map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+			.collect(Collectors.joining(", "));
+		if (message.isBlank()) {
+			// 원소(필드)가 아닌 객체 레벨 위반(일정 블록 수정 리스트 래퍼객체 @NotEmpty 등 일부) fallback
+			message = e.getBindingResult().getAllErrors().stream()
+				.map(ObjectError::getDefaultMessage)
+				.collect(Collectors.joining(", "));
+		}
+		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+		log.warn("[ValidationException] {}", message);
+		return ResponseEntity.status(errorCode.getStatus())
+			.body(CommonResponse.error(errorCode.getStatus().value(), message));
+	}
+
+	/**
 	 *  예상치 못한 예외 처리 - 500 응답
 	 */
 	@ExceptionHandler(Exception.class)
@@ -38,8 +65,5 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.getMessage()));
 	}
-
-	//
-	// ## RuntimeException도 확인해보기
 
 }

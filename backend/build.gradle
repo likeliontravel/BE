@@ -105,10 +105,6 @@ dependencies {
     }
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["-parameters"]
 }
@@ -124,3 +120,39 @@ tasks.withType(JavaCompile).configureEach {
 //sourceSets {
 //    main.java.srcDirs += querydslDir
 //}
+
+// 단위 테스트: src/test/java. integration·performance 태그를 '제외'하고 빠르게 (JUnit5 플랫폼)
+// (testing.suites 블록과 useJUnitPlatform 이 중복되면 excludeTags 가 리셋되므로, test 구성은 여기 한 곳으로 일원화)
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags 'integration', 'performance'
+    }
+}
+
+// 통합 테스트: @Tag("integration") 만 실행. src/test 소스셋을 공유한다.
+tasks.register('integrationTest', Test) {
+    description = '통합 테스트(@Tag("integration")) 실행'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+// 성능 테스트: @Tag("performance") 만 실행. 느리고 환경 민감하므로 check 에 묶지 않고 필요 시 수동 실행.
+tasks.register('performanceTest', Test) {
+    description = '성능 테스트(@Tag("performance")) 실행'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'performance'
+    }
+    shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+    dependsOn 'integrationTest'   // 성능 테스트는 무거워 check 에서 제외 (수동: ./gradlew performanceTest)
+}

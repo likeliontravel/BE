@@ -1,4 +1,4 @@
-package org.example.be.schedule.service;
+package org.example.be.domain.schedule.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +13,9 @@ import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
-import org.example.be.domain.schedule.service.ScheduleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
+@Tag("performance")
 @Transactional
 public class SchedulePerformanceTest {
 
