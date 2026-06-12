@@ -126,6 +126,7 @@ jobs:
 
       - name: Copy deployment files to deployment directory
         run: |
+          sudo rm -rf $HOME/toleave_yechan/prometheus.yml
           cp backend/docker-compose.prod.yml $HOME/toleave_yechan/docker-compose.prod.yml
           cp -r backend/nginx $HOME/toleave_yechan/
           cp backend/prometheus.yml $HOME/toleave_yechan/prometheus.yml
