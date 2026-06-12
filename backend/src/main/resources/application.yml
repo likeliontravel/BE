@@ -148,6 +148,12 @@ gcs:
     profile: ${GCS_BUCKET_PROFILE}
     chat: ${GCS_BUCKET_CHAT}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+
 api:
   url: ${API_URL}
 

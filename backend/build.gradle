@@ -93,6 +93,10 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
 
+    // 프로메테우스, spring actuator 의존성 추가
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     dependencyManagement {
         imports {
             mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:${springCloudGcpVersion}"

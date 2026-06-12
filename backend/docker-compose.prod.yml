@@ -88,6 +88,26 @@ services:
       - toleave-network
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: toleave-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - toleave-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.2
+    container_name: toleave-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - toleave-network
+    restart: unless-stopped
+
 volumes:
   mysql-data:
   redis-data:
