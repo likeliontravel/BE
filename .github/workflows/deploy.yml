@@ -128,6 +128,7 @@ jobs:
         run: |
           cp backend/docker-compose.prod.yml $HOME/toleave_yechan/docker-compose.prod.yml
           cp -r backend/nginx $HOME/toleave_yechan/
+          cp backend/prometheus.yml $HOME/toleave_yechan/prometheus.yml
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
