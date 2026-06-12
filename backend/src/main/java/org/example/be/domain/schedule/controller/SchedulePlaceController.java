@@ -42,7 +42,8 @@ public class SchedulePlaceController {
 	}
 
 	// 특정 일정(scheduleId)의 세부 장소 전체 상태를 일괄 수정 (추가 / 수정 / 삭제 / 순서변경 일괄 반영)
-	// 바디: 편집된 전체 장소 목록. 기존 블록이면 schedulePlaceId 포함, 신규면 null, 빈 배열: 전체 삭제
+	// 바디: 편집된 전체 장소 목록. 기존 블록이면 schedulePlaceId 포함, 신규면 null
+	// 빈 배열은 @NotEmpty로 400 거부, 전체 삭제는 전용 DELETE /detail/{scheduleId}가 담당한다.
 	@PutMapping("/detail/{scheduleId}")
 	public ResponseEntity<CommonResponse<List<SchedulePlaceResBody>>> updateSchedulePlaces(
 		@PathVariable Long scheduleId,
