@@ -17,7 +17,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 // SchedulePlaceCreateListReqBody (POST 래퍼)의 Bean Validation 단위 테스트.
-// PUT 래퍼와의 결정적 차이: @NotEmpty 미부착이라 빈 배열은 위반 0건(no-op 허용).
+// PUT 래퍼와 동일하게 @NotEmpty(min-1) + @Valid(원소 cascade)를 검증한다.
 // 단, @Valid 를 통한 원소 cascade 검증은 PUT 과 동일하게 살아 있어야 한다(schedulePlaces[i].xxx).
 @DisplayName("SchedulePlaceCreateListReqBody (POST 래퍼)의 Bean Validation 단위 테스트")
 class SchedulePlaceCreateListReqBodyTest {
@@ -50,12 +50,26 @@ class SchedulePlaceCreateListReqBodyTest {
 
 	@Test
 	@DisplayName("빈 배열이어도 위반이 없다 (@NotEmpty 미부착 → no-op 허용, PUT 과 정반대)")
-	void emptyList_noViolations() {
+	void emptyList_notEmptyViolations() {
 		SchedulePlaceCreateListReqBody body = new SchedulePlaceCreateListReqBody(List.of());
 
 		Set<ConstraintViolation<SchedulePlaceCreateListReqBody>> violations = validator.validate(body);
 
-		assertThat(violations).isEmpty();
+		assertThat(violations)
+			.extracting(v -> v.getPropertyPath().toString())
+			.contains("schedulePlaces");
+	}
+
+	@Test
+	@DisplayName("null 목록이면 위반 (@NotEmpty는 null도 거부해야 함)")
+	void nullList_notEmptyViolation() {
+		SchedulePlaceCreateListReqBody body = new SchedulePlaceCreateListReqBody(null);
+
+		Set<ConstraintViolation<SchedulePlaceCreateListReqBody>> violations = validator.validate(body);
+
+		assertThat(violations)
+			.extracting(v -> v.getPropertyPath().toString())
+			.contains("schedulePlaces");
 	}
 
 	@Test
