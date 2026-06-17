@@ -18,4 +18,4 @@
 - 2024 - 12 - 19 : jwt 패키지 생성
 - 2024 - 12 - 19 : jwtFilter, JWTUtil 클래스 생성
 
-![img.png](img.png)
+![img_2.png](img_2.png)
