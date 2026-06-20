@@ -77,6 +77,7 @@ Frontend Repo: https://github.com/likeliontravel/FE
 
 ![GitHub](https://shieldcn.dev/badge/-GitHub-181717.svg?logo=github&logoColor=fff&variant=branded)
 ![Notion](https://shieldcn.dev/badge/-Notion-000000.svg?logo=notion&logoColor=fff&variant=branded)
+![Discord](https://shieldcn.dev/badge/-Discord-5865F2.svg?logo=discord&logoColor=fff&variant=branded)
 
 <br>
 
