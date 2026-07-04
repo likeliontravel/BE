@@ -121,7 +121,6 @@ Frontend Repo: https://github.com/likeliontravel/FE
 
 </details>
 
-
 ## 🧯 Troubleshooting Archive
 
 <!-- 개발 중 겪은 주요 기술 과제와 해결 과정 정리/링크 -->
@@ -131,14 +130,21 @@ Frontend Repo: https://github.com/likeliontravel/FE
 <summary><strong>여행지 필터링 조회 API 응답시간 개선</strong></summary>
 
 ### 문제 상황
+
 문제상황 예시
 
 ### 원인 분석 과정
+
 ### 1. ㅡㅡㅡ
+
 ### 2. ㅡㅡㅡ
+
 ### 해결 방안
+
 ### 1. ㅡㅡㅡ
+
 ### 2. ㅡㅡㅡ
+
 ### 3. ㅡㅡㅡ
 
 </details>
@@ -149,16 +155,22 @@ Frontend Repo: https://github.com/likeliontravel/FE
 <summary><strong>,,,</strong></summary>
 
 ### 문제 상황
+
 문제상황 예시
 
 ### 원인 분석 과정
-### 1. ㅡㅡㅡ
-### 2. ㅡㅡㅡ
-### 해결 방안
-### 1. ㅡㅡㅡ
-### 2. ㅡㅡㅡ
-### 3. ㅡㅡㅡ
 
+### 1. ㅡㅡㅡ
+
+### 2. ㅡㅡㅡ
+
+### 해결 방안
+
+### 1. ㅡㅡㅡ
+
+### 2. ㅡㅡㅡ
+
+### 3. ㅡㅡㅡ
 
 </details>
 
@@ -171,10 +183,10 @@ Frontend Repo: https://github.com/likeliontravel/FE
 <table align="center">
   <tr>
     <td align="center" width="160">
-      <a href="https://github.com/github-id">
-        <img src="https://github.com/github-id.png" width="100" height="100" style="border-radius: 50%;" />
+      <a href="https://www.behance.net/59540b0d">
+        <img src="https://pps.services.adobe.com/api/profile/image/default/c2b0057a-2512-4f9c-acff-b4b342208d8f/230" width="100" height="100" style="border-radius: 50%;" />
         <br />
-        <strong>이름</strong>
+        <strong>안혜린</strong>
       </a>
       <br />
       <sub>Design</sub>
@@ -251,7 +263,6 @@ Frontend Repo: https://github.com/likeliontravel/FE
 <summary>
 <h2 style="display: inline;"> 🚀 Getting Started</h2>
 </summary>
-
 
 ### Environment Variables
 
