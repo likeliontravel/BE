@@ -85,7 +85,7 @@ Frontend Repo: https://github.com/likeliontravel/FE
 
 ### 배포 서버 Architecture
 
-![architect01](/images/system%20architecture.png)
+![architect01](/images/system-architecture.png)
 
 <br>
 
