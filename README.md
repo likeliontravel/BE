@@ -113,6 +113,8 @@ Frontend Repo: https://github.com/likeliontravel/FE
 
 <summary><strong>flyway 도입과 DB 마이그레이션</strong></summary>
 
+flyway는 개발 하는 와중에 sql문을 강제로 삽입해서 테이블을 수정해야하는 번거로움이 생겨서 도입했다고 하면 될라나
+
 </details>
 
 <details>
