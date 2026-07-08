@@ -9,6 +9,7 @@ public record GroupSchedulePlaceDTO(
 	String contentId,
 	PlaceType placeType,    // 장소 타입 (관광지 / 숙소 / 식당)
 	String title,
+	String img,
 	String address,
 	LocalDateTime visitStart,
 	LocalDateTime visitEnd,

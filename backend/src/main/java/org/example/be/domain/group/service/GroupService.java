@@ -261,6 +261,7 @@ public class GroupService {
 				place.getContentId(),
 				place.getPlaceType(),
 				resolveTitle(place),
+				resolveImg(place),
 				resolveAddress(place),
 				place.getVisitStart(),
 				place.getVisitedEnd(),
@@ -283,6 +284,17 @@ public class GroupService {
 				.map(r -> r.getTitle()).orElse("(없거나 삭제된 장소)");
 			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
 				.map(a -> a.getTitle()).orElse("(없거나 삭제된 장소)");
+		};
+	}
+
+	private String resolveImg(SchedulePlace place) {
+		return switch (place.getPlaceType()) {
+			case TOURISTSPOT -> touristSpotRepository.findByContentId(place.getContentId())
+				.map(t -> t.getThumbnailImageUrl()).orElse(null);
+			case RESTAURANT -> restaurantRepository.findByContentId(place.getContentId())
+				.map(r -> r.getThumbnailImageUrl()).orElse(null);
+			case ACCOMMODATION -> accommodationRepository.findByContentId(place.getContentId())
+				.map(a -> a.getThumbnailImageUrl()).orElse(null);
 		};
 	}
 
