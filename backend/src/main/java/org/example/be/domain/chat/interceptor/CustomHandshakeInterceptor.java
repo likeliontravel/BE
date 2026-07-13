@@ -1,6 +1,7 @@
 package org.example.be.domain.chat.interceptor;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		WebSocketHandler wsHandler, Map<String, Object> attributes) {
 
 		HttpServletRequest servletRequest = ((ServletServerHttpRequest)request).getServletRequest();
-		String accessToken = servletRequest.getParameter("accessToken");
+		String accessToken = extractCookie(servletRequest, "accessToken");
 		String groupName = servletRequest.getParameter("groupName");
 
 		log.debug("[WebSocket Debug] Handshake attempt - groupName: {}", groupName);
@@ -71,6 +72,17 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		log.debug("[WebSocket Debug] Handshake successful");
 
 		return true;
+	}
+
+	private String extractCookie(HttpServletRequest request, String name) {
+		if (request.getCookies() == null) {
+			return null;
+		}
+		return Arrays.stream(request.getCookies())
+			.filter(cookie -> cookie.getName().equals(name))
+			.map(jakarta.servlet.http.Cookie::getValue)
+			.findFirst()
+			.orElse(null);
 	}
 
 	private boolean failHandshake(ServerHttpResponse response, String message) {
