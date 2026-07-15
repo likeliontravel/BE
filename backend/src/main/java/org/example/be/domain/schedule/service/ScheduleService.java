@@ -1,5 +1,7 @@
 package org.example.be.domain.schedule.service;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +31,7 @@ import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
+import org.example.be.domain.schedule.dto.response.NearestScheduleResBody;
 import org.example.be.domain.schedule.dto.response.PlaceSimpleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
@@ -55,6 +59,7 @@ public class ScheduleService {
 	private final TourRegionRepository tourRegionRepository;
 	private final PlaceCategoryRepository placeCategoryRepository;
 	private final MemberService memberService;
+	private final Clock clock;
 
 	// 일정 생성
 	@Transactional
@@ -212,6 +217,19 @@ public class ScheduleService {
 
 			})
 			.toList();
+	}
+
+	// 가장 가까운 예정 일정 조회
+	@Transactional(readOnly = true)
+	public Optional<NearestScheduleResBody> getNearestSchedule(Long userId) {
+		LocalDate today = LocalDate.now(clock);
+
+		return scheduleRepository
+			.findNearestUpcomingByMemberId(
+				userId,
+				today.atStartOfDay()
+			)
+			.map(schedule -> NearestScheduleResBody.from(schedule, today));
 	}
 
 	// 일정 수정
