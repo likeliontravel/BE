@@ -1,8 +1,10 @@
 package org.example.be.domain.schedule.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.example.be.domain.schedule.dto.request.ScheduleReqBody;
+import org.example.be.domain.schedule.dto.response.NearestScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.domain.schedule.service.ScheduleService;
@@ -56,6 +58,19 @@ public class ScheduleController {
 	) {
 		List<ScheduleSummaryResBody> summaries = scheduleService.getScheduleList(securityUser.getId());
 		return ResponseEntity.ok(CommonResponse.success(summaries, "일정 요약 목록 조회 성공"));
+	}
+
+	// 가장 가까운 예정 일정 조회
+	@GetMapping("/nearest")
+	public ResponseEntity<CommonResponse<NearestScheduleResBody>> getNearestSchedule(
+		@AuthenticationPrincipal SecurityUser securityUser
+	) {
+		Optional<NearestScheduleResBody> response = scheduleService.getNearestSchedule(securityUser.getId());
+		if (response.isEmpty()) {
+			return ResponseEntity.ok(CommonResponse.success(null, "시작될 일정이 없습니다."));
+		}
+
+		return ResponseEntity.ok(CommonResponse.success(response.get(), "가장 가까운 일정 조회 성공"));
 	}
 
 	// 일정 수정하기

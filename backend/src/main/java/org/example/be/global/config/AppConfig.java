@@ -1,5 +1,8 @@
 package org.example.be.global.config;
 
+import java.time.Clock;
+import java.time.ZoneId;
+
 import org.example.be.global.jwt.util.JsonUt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +15,14 @@ import jakarta.annotation.PostConstruct;
 
 @Configuration
 public class AppConfig {
+	private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
+
 	public static ObjectMapper objectMapper;
+
+	@Bean
+	public Clock clock() {
+		return Clock.system(SERVICE_ZONE_ID);
+	}
 
 	@Bean
 	public RestTemplate restTemplate() {
