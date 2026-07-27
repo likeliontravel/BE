@@ -52,10 +52,12 @@ public class ChatMessageController {
 	}
 
 	// 키워드 기반 메시지 조회 ( 메시지 검색, lastMessageId 기준 direction 방향으로 20개씩 페이지네이션 )
+	// direction=BOTH + lastMessageId만 넘기면 keyword 없이 그 메시지를 중심으로 전후 메시지를 한 번에 조회
+	// ( 검색 결과 클릭 시 그 채팅 위치로 점프하는 용도 )
 	@GetMapping("/{groupName}/messages/search")
 	public ResponseEntity<CommonResponse<Map<String, Object>>> searchMessages(
 		@DecodedPathVariable String groupName,
-		@RequestParam String keyword,
+		@RequestParam(required = false) String keyword,
 		@RequestParam(required = false) Long lastMessageId,
 		@RequestParam(required = false, defaultValue = "BEFORE") SearchDirection direction,
 		@AuthenticationPrincipal SecurityUser user
