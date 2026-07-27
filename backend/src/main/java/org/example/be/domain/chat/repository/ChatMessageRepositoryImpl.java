@@ -9,8 +9,10 @@ import java.util.Optional;
 
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.entity.QChatMessage;
+import org.example.be.domain.chat.type.SearchDirection;
 import org.example.be.domain.group.entity.Group;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -72,17 +74,35 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 	}
 
 	@Override
-	public List<ChatMessage> searchMessagesWithKeyword(Group targetGroup, String keyword) {
+	public List<ChatMessage> searchMessagesWithKeyword(Group targetGroup, String keyword, Long lastMessageId,
+		SearchDirection direction, int limit) {
 		return queryFactory
 			.selectFrom(chatMessage)
 			.join(chatMessage.group, group).fetchJoin()
 			.join(chatMessage.sender, member).fetchJoin()
 			.where(
 				chatMessage.group.eq(targetGroup),
-				chatMessage.content.containsIgnoreCase(keyword)
+				chatMessage.content.containsIgnoreCase(keyword),
+				cursorCondition(lastMessageId, direction)
 			)
-			.orderBy(chatMessage.createdTime.desc())
+			.orderBy(cursorOrder(direction))
+			.limit(limit)
 			.fetch();
+	}
+
+	// lastMessageId가 없으면(첫 페이지) 조건 없음, BEFORE면 과거 매치, AFTER면 최신 매치
+	private BooleanExpression cursorCondition(Long lastMessageId, SearchDirection direction) {
+		if (lastMessageId == null) {
+			return null;
+		}
+		return direction == SearchDirection.AFTER
+			? chatMessage.id.gt(lastMessageId)
+			: chatMessage.id.lt(lastMessageId);
+	}
+
+	// AFTER는 커서와 가장 가까운 최신 매치부터 limit개 뽑기 위해 오름차순, 그 외(BEFORE, 첫 페이지)는 내림차순
+	private OrderSpecifier<Long> cursorOrder(SearchDirection direction) {
+		return direction == SearchDirection.AFTER ? chatMessage.id.asc() : chatMessage.id.desc();
 	}
 
 	@Override
