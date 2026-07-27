@@ -17,6 +17,7 @@ public interface ChatMessageRepositoryCustom {
 	List<ChatMessage> findPreviousMessages(Group group, Long lastMessageId, int limit);
 
 	// 키워드 검색 ( 커서 기반 페이지네이션, direction으로 이전/다음 매치 조회, fetch join 적용 )
+	// direction=BOTH면 keyword 무시하고 lastMessageId(클릭한 메시지) 기준 전후 메시지를 한 번에 조회
 	List<ChatMessage> searchMessagesWithKeyword(Group group, String keyword, Long lastMessageId,
 		SearchDirection direction, int limit);
 
