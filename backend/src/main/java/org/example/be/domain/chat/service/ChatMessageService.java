@@ -12,6 +12,7 @@ import org.example.be.domain.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.chat.type.MessageType;
+import org.example.be.domain.chat.type.SearchDirection;
 import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.response.MemberDto;
@@ -64,12 +65,14 @@ public class ChatMessageService {
 		return buildMessageWithProfiles(messages);
 	}
 
-	// 키워드 기반 메시지 검색
+	// 키워드 기반 메시지 검색 ( 커서(lastMessageId) 기준 방향(direction)으로 20개씩 페이지네이션 )
 	@Transactional(readOnly = true)
-	public Map<String, Object> searchMessages(String groupName, String keyword, Long memberId) {
+	public Map<String, Object> searchMessages(String groupName, String keyword, Long lastMessageId,
+		SearchDirection direction, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
-		List<ChatMessage> messages = chatMessageRepository.searchMessagesWithKeyword(group, keyword);
+		List<ChatMessage> messages = chatMessageRepository.searchMessagesWithKeyword(group, keyword, lastMessageId,
+			direction, 20);
 
 		return buildMessageWithProfiles(messages);
 	}

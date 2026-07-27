@@ -6,6 +6,7 @@ import java.util.Map;
 import org.example.be.domain.chat.dto.ChatMessageResBody;
 import org.example.be.domain.chat.dto.ChatRoomListWithLatestMessageResBody;
 import org.example.be.domain.chat.service.ChatMessageService;
+import org.example.be.domain.chat.type.SearchDirection;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.config.SecurityUser;
 import org.example.be.global.util.DecodedPathVariable;
@@ -50,14 +51,17 @@ public class ChatMessageController {
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "이전 메시지 추가 20개 조회 성공"));
 	}
 
-	// 키워드 기반 메시지 조회 ( 메시지 검색 )
+	// 키워드 기반 메시지 조회 ( 메시지 검색, lastMessageId 기준 direction 방향으로 20개씩 페이지네이션 )
 	@GetMapping("/{groupName}/messages/search")
 	public ResponseEntity<CommonResponse<Map<String, Object>>> searchMessages(
 		@DecodedPathVariable String groupName,
 		@RequestParam String keyword,
+		@RequestParam(required = false) Long lastMessageId,
+		@RequestParam(required = false, defaultValue = "BEFORE") SearchDirection direction,
 		@AuthenticationPrincipal SecurityUser user
 	) {
-		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, user.getId());
+		Map<String, Object> result = chatMessageService.searchMessages(groupName, keyword, lastMessageId, direction,
+			user.getId());
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(result, "메시지 검색 성공"));
 	}
 
