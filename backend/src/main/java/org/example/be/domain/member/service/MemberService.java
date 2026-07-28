@@ -141,6 +141,7 @@ public class MemberService {
 		for (Group group : joinedGroups) {
 			group.removeMember(member);
 		}
+		groupRepository.flush();
 
 		chatMessageRepository.deleteBySender(member);
 		commentRepository.deleteByWriter(member);
