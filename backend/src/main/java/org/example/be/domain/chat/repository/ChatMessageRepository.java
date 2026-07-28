@@ -2,6 +2,7 @@ package org.example.be.domain.chat.repository;
 
 import org.example.be.domain.chat.entity.ChatMessage;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,9 +14,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long>,
 
 	@Modifying
 	@Query("DELETE FROM ChatMessage c WHERE c.group = :group")
-	void deleteByGroup(@Param("groupId") Group group);
+	void deleteByGroup(@Param("group") Group group);
 
 	@Modifying
 	@Query("DELETE From ChatMessage c WHERE c.sender = :sender")
-	void deleteBySender(@Param("sender") String sender);
+	void deleteBySender(@Param("sender") Member sender);
 }

@@ -2,15 +2,22 @@ package org.example.be.domain.member.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import org.example.be.domain.board.repository.BoardRepository;
+import org.example.be.domain.board.repository.CommentRepository;
+import org.example.be.domain.chat.repository.ChatMessageRepository;
+import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.request.MemberJoinReqBody;
 import org.example.be.domain.member.dto.request.PasswordUpdateReqBody;
 import org.example.be.domain.member.dto.response.MemberProfileResBody;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
-import org.example.be.storage.gcs.GCSService;
 import org.example.be.domain.member.type.OauthProvider;
+import org.example.be.domain.schedule.repository.ScheduleRepository;
+import org.example.be.storage.gcs.GCSService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +33,11 @@ public class MemberService {
 	private final MemberRepository memberRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final GCSService gcsService;
+	private final GroupRepository groupRepository;
+	private final BoardRepository boardRepository;
+	private final ChatMessageRepository chatMessageRepository;
+	private final CommentRepository commentRepository;
+	private final ScheduleRepository scheduleRepository;
 
 	public Member join(MemberJoinReqBody reqBody) {
 		if (memberRepository.existsByEmail(reqBody.email())) {
@@ -114,8 +126,25 @@ public class MemberService {
 		member.updateSubscribed(subscribed);
 	}
 
+	@Transactional
 	public void deleteMember(long memberId) {
 		Member member = getById(memberId);
+
+		List<Group> ownedGroups = groupRepository.findAllByCreatedBy(member);
+		for (Group group : ownedGroups) {
+			chatMessageRepository.deleteByGroup(group);
+			scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
+			groupRepository.delete(group);
+		}
+
+		List<Group> joinedGroups = groupRepository.findByMembersContaining(member);
+		for (Group group : joinedGroups) {
+			group.removeMember(member);
+		}
+
+		chatMessageRepository.deleteBySender(member);
+		commentRepository.deleteByWriter(member);
+		boardRepository.deleteByWriter(member);
 
 		if (member.getProfileImageUrl() != null) {
 			gcsService.deleteProfileImage(member.getProfileImageUrl());
