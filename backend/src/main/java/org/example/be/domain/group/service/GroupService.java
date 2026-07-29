@@ -3,6 +3,7 @@ package org.example.be.domain.group.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementSummaryDTO;
 import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepository;
 import org.example.be.domain.group.dto.GroupMemberDTO;
@@ -49,6 +50,7 @@ public class GroupService {
 	private final TouristSpotRepository touristSpotRepository;
 	private final AccommodationRepository accommodationRepository;
 	private final RestaurantRepository restaurantRepository;
+	private final ChatMessageRepository chatMessageRepository;
 
 	// 그룹 생성하기
 	@Transactional
@@ -163,6 +165,10 @@ public class GroupService {
 		String groupName = request.groupName();
 
 		Group group = validateGroupCreator(groupName, memberId);
+
+		chatMessageRepository.deleteByGroup(group);
+		scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
+
 		groupRepository.delete(group);
 
 		return new GroupDeleteResBody(groupName);
