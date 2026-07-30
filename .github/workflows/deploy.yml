@@ -140,6 +140,22 @@ jobs:
       - name: Deploy with Docker Compose
         run: docker compose -f $HOME/toleave_yechan/docker-compose.prod.yml up -d
 
+      - name: Reload Nginx configuration
+        run: |
+          set -e
+          
+          if [ "$(docker inspect -f '{{.State.Running}}' toleave-nginx 2>/dev/null)" != "true" ]; then
+            echo "::error::toleave-nginx 컨테이너가 실행 중이 아닙니다. Nginx 설정을 reload할 수 없습니다."
+            echo "::error::docker compose -f \$HOME/toleave_yechan/docker-compose.prod.yml ps 로 상태 확인 필요"
+            exit 1
+          fi
+          
+          docker exec toleave-nginx nginx -t
+          
+          docker exec toleave-nginx nginx -s reload
+          
+          echo "Nginx 설정 reload 완료"
+
       - name: verify deployment
         run: |
           set -e

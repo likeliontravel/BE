@@ -4,21 +4,38 @@ import java.util.stream.Collectors;
 
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 // 전역 예외처리 핸들러
 // 메시지는 서비스레이어에서 던지는대로 응답까지 전달
 // 예외처리 아키텍쳐 : 기본 RestControllerAdvice사용, 일반@Controller로 잡혀도 JSON응답하도록 메서드에 @ResponseBody 붙이기
 //  @MessageMapping붙은 웹소켓 예외는 감지 안되니 추후 다시 생각할 예정
+// TODO: 프레임워크 예외 (MethodArgumentNotValidException, MaxUploadSizeExceededException)을 별도 advice로 분리해야 할 것 같음.
+//   - 왜 지금 안 하는가: 이 둘은 우리가 throw하는 BusinessException과 성격이 다르지만(스프링/톰캣이 던짐),
+//     분리는 업로드 상한 정상화 작업 범위를 넘는 리팩터링이라 별도 작업으로 미룸
+//   - 올바른 해결: RequestExceptionHandler(@RestControllerAdvice + @Order(Ordered.HIGHEST_PRECEDENCE)) 신설 후
+//     위 두 핸들러를 이관. 이 클래스에는 BusinessException + catch-all(Exception)만 남긴다.
+//     @Order가 필수인 이유: advice 사이에서는 최적 매칭이 아니라 선착순이므로,
+//     catch-all을 가진 이 클래스가 먼저 조회되면 구체적 핸들러가 흡수되어 500으로 나간다.
+//   - 언제: 예외 핸들러 정리 작업 시 (ErrorCode의 도메인별 인터페이스 분리와 함께 검토)
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+	// 업로드 크기 초과 안내 메시지에 실제 설정값을 담기 위해 주입한다.
+	// ( spring.servlet.multipart.* 를 바인딩해둔 스프링 부트 자동설정 빈 )
+	// 상한값을 하드코딩하지 않으므로 application.yml을 바꾸면 안내 메시지도 함께 따라간다.
+	private final MultipartProperties multipartProperties;
 
 	/**
 	 *  비즈니스 예외 처리 - ErrorCode에 정의된 모든 에러를 여기서 처리
@@ -51,6 +68,22 @@ public class GlobalExceptionHandler {
 		}
 		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
 		log.warn("[ValidationException] {}", message);
+		return ResponseEntity.status(errorCode.getStatus())
+			.body(CommonResponse.error(errorCode.getStatus().value(), message));
+	}
+
+	/**
+	 * 업로드 파일 크기 초과 처리 - multipart 상한 (max-file-size) 초과를 413으로 응답
+	 * MaxUploadSizeExceededException은 스프링/톰캣이 multipart 파싱 단계에서 던지는 런타임 예외이므로
+	 * 우리 코드가 BusinessException으로 감싸 던질 지점이 없다. 따라서 여기서 ErrorCode로 매핑한다.
+	 * 이 핸들러가 없으면 아래 catch-all에 잡혀 500으로 나가고 사용자는 용량 초과라는 사실 자체를 알 수 없다.
+	 */
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<CommonResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+		ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
+		long maxFileSizeMb = multipartProperties.getMaxFileSize().toMegabytes();
+		String message = errorCode.getMessage() + " (최대 " + maxFileSizeMb + "MB)";
+		log.warn("[MaxUploadSizeExceededException] maxFileSize={}MB, detail={}", maxFileSizeMb, e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), message));
 	}
