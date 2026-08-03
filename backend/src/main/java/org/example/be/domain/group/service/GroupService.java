@@ -19,6 +19,7 @@ import org.example.be.domain.group.dto.response.GroupExitResBody;
 import org.example.be.domain.group.dto.response.GroupModifyResBody;
 import org.example.be.domain.group.dto.response.GroupResBody;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.invitation.repository.GroupInvitationRepository;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.service.MemberService;
@@ -45,6 +46,7 @@ public class GroupService {
 	private final MemberService memberService;
 	private final EntityManager entityManager;
 	private final GroupAnnouncementRepository groupAnnouncementRepository;
+	private final GroupInvitationRepository groupInvitationRepository;
 	private final ScheduleRepository scheduleRepository;
 	private final SchedulePlaceRepository schedulePlaceRepository;
 	private final TouristSpotRepository touristSpotRepository;
@@ -168,6 +170,8 @@ public class GroupService {
 
 		chatMessageRepository.deleteByGroup(group);
 		scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
+		groupInvitationRepository.deleteByGroup(group);
+		groupAnnouncementRepository.deleteByGroup(group);
 
 		groupRepository.delete(group);
 

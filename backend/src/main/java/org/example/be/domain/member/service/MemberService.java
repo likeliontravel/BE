@@ -8,7 +8,9 @@ import java.util.Optional;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.board.repository.CommentRepository;
 import org.example.be.domain.chat.repository.ChatMessageRepository;
+import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepository;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.invitation.repository.GroupInvitationRepository;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.request.MemberJoinReqBody;
 import org.example.be.domain.member.dto.request.PasswordUpdateReqBody;
@@ -34,6 +36,8 @@ public class MemberService {
 	private final PasswordEncoder passwordEncoder;
 	private final GCSService gcsService;
 	private final GroupRepository groupRepository;
+	private final GroupInvitationRepository groupInvitationRepository;
+	private final GroupAnnouncementRepository groupAnnouncementRepository;
 	private final BoardRepository boardRepository;
 	private final ChatMessageRepository chatMessageRepository;
 	private final CommentRepository commentRepository;
@@ -134,6 +138,8 @@ public class MemberService {
 		for (Group group : ownedGroups) {
 			chatMessageRepository.deleteByGroup(group);
 			scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
+			groupInvitationRepository.deleteByGroup(group);
+			groupAnnouncementRepository.deleteByGroup(group);
 			groupRepository.delete(group);
 		}
 
