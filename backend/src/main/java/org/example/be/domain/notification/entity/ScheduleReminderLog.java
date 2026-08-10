@@ -15,7 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// 스케줄 리마인더 중복 발송 방지용 로그. (schedule_id, reminder_type, reminder_date) 조합이 유니크 (V5 DDL에서 제약)
+// 스케줄 리마인더 중복 발송 방지용 로그.
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
