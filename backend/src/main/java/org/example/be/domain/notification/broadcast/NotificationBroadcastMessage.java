@@ -1,4 +1,4 @@
-package org.example.be.domain.notification.sse;
+package org.example.be.domain.notification.broadcast;
 
 import org.example.be.domain.notification.dto.response.NotificationResBody;
 

@@ -1,9 +1,10 @@
-package org.example.be.domain.notification.sse;
+package org.example.be.domain.notification.broadcast;
 
 import java.io.IOException;
 import java.util.Map;
 
 import org.example.be.domain.notification.dto.response.NotificationResBody;
+import org.example.be.domain.notification.sse.SseEmitterRepository;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;

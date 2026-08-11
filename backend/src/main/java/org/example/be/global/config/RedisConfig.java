@@ -1,7 +1,7 @@
 package org.example.be.global.config;
 
-import org.example.be.domain.notification.sse.NotificationRedisSubscriber;
-import org.example.be.domain.notification.sse.RedisPubSubNotificationSender;
+import org.example.be.domain.notification.broadcast.NotificationRedisSubscriber;
+import org.example.be.domain.notification.broadcast.RedisPubSubNotificationSender;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
