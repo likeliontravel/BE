@@ -15,6 +15,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 	//읽지 않은 알림 갯수 조회
 	long countByReceiverIdAndReadFalse(Long receiverId);
 
+	// SSE 재연결 시 Last-Event-ID 갭 복구용 - 그 이후로 온 알림을 오름차순 최대 50건
+	List<Notification> findTop50ByReceiverIdAndIdGreaterThanOrderByIdAsc(Long receiverId, Long lastEventId);
+
 	// 알림 모두 읽음 처리
 	@Modifying
 	@Query("UPDATE Notification n SET n.read = true, n.readAt = :now WHERE n.receiver.id = :receiverId AND n.read = false")
