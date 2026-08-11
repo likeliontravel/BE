@@ -56,6 +56,10 @@ spring:
       max-file-size: 10MB
       max-request-size: 11MB
 
+  mvc:
+    async:
+      request-timeout: -1 # SseEmitter 자체 타임아웃(60분)만 기준으로 삼기 위함
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
