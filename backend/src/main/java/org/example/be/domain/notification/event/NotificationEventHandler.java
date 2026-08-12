@@ -17,7 +17,7 @@ public class NotificationEventHandler {
 	private final NotificationService notificationService;
 
 	@Async("notificationTaskExecutor")
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) //메인 작업이 실패해서 롤백이 되면 알림 리스너는 작동이 되면 안된다.
 	public void handle(NotificationEvent event) {
 		try {
 			notificationService.createAndSend(event);

@@ -73,7 +73,7 @@ public class NotificationService {
 		notificationRepository.delete(notification);
 	}
 
-	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	@Transactional(propagation = Propagation.REQUIRES_NEW) // 이걸 넣어야지 알림 생성 실패시 댓글이나 그룹등 다른 로직에 영향을 주지 않는다
 	public void createAndSend(NotificationEvent event) {
 		Member actor = event.actorId() != null
 			? memberRepository.findById(event.actorId()).orElse(null)
@@ -92,7 +92,8 @@ public class NotificationService {
 			@Override
 			public void afterCommit() {
 				saved.forEach(notification ->
-					notificationSender.send(notification.getReceiver().getId(), NotificationResBody.from(notification)));
+					notificationSender.send(notification.getReceiver().getId(),
+						NotificationResBody.from(notification)));
 			}
 		});
 	}
