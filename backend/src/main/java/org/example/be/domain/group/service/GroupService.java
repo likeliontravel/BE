@@ -26,6 +26,7 @@ import org.example.be.domain.member.service.MemberService;
 import org.example.be.domain.notification.event.NotificationEvent;
 import org.example.be.domain.notification.event.NotificationEventPublisher;
 import org.example.be.domain.notification.message.NotificationMessageFactory;
+import org.example.be.domain.notification.service.NotificationCleanupService;
 import org.example.be.domain.notification.type.NotificationType;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
@@ -61,6 +62,7 @@ public class GroupService {
 	private final ChatMessageRepository chatMessageRepository;
 	private final NotificationEventPublisher notificationEventPublisher;
 	private final NotificationMessageFactory messageFactory;
+	private final NotificationCleanupService notificationCleanupService;
 
 	// 그룹 생성하기
 	@Transactional
@@ -194,6 +196,9 @@ public class GroupService {
 		String groupName = request.groupName();
 
 		Group group = validateGroupCreator(groupName, memberId);
+
+		Long scheduleId = scheduleRepository.findByGroup(group).map(Schedule::getId).orElse(null);
+		notificationCleanupService.deleteByGroup(group.getId(), scheduleId);
 
 		chatMessageRepository.deleteByGroup(group);
 		scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
