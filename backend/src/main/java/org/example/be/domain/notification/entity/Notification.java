@@ -47,9 +47,9 @@ public class Notification extends Base {
 	@Column(name = "target_id")
 	private Long targetId;
 
-	// groupName 기반 라우팅(/group/{groupName}/detail)이라 groupId만으로는 프론트가 이동할 수 없어 함께 저장. COMMENT/REPLY는 null
-	@Column(name = "target_name")
-	private String targetName;
+	// 그룹은 groupId가 아닌 groupName으로 라우팅(/group/{groupName}/detail)되므로 함께 저장. COMMENT/REPLY는 null
+	@Column(name = "group_name")
+	private String groupName;
 
 	@Column(name = "is_read", nullable = false)
 	private Boolean read = false;
@@ -58,8 +58,8 @@ public class Notification extends Base {
 	private LocalDateTime readAt;
 
 	public static Notification create(Member receiver, Member actor, NotificationType type,
-		String message, Long targetId, String targetName) {
-		return new Notification(receiver, actor, type, message, targetId, targetName, false, null);
+		String message, Long targetId, String groupName) {
+		return new Notification(receiver, actor, type, message, targetId, groupName, false, null);
 	}
 
 	public void markAsRead(LocalDateTime now) {

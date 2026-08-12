@@ -9,16 +9,16 @@ public record NotificationEvent(
 	Long actorId,
 	NotificationType type,
 	Long targetId,
-	String targetName,
+	String groupName,
 	String message
 ) {
 	public static NotificationEvent of(Long receiverId, Long actorId, NotificationType type, Long targetId,
-		String targetName, String message) {
-		return new NotificationEvent(List.of(receiverId), actorId, type, targetId, targetName, message);
+		String groupName, String message) {
+		return new NotificationEvent(List.of(receiverId), actorId, type, targetId, groupName, message);
 	}
 
 	public static NotificationEvent ofMany(List<Long> receiverIds, Long actorId, NotificationType type, Long targetId,
-		String targetName, String message) {
-		return new NotificationEvent(receiverIds, actorId, type, targetId, targetName, message);
+		String groupName, String message) {
+		return new NotificationEvent(receiverIds, actorId, type, targetId, groupName, message);
 	}
 }

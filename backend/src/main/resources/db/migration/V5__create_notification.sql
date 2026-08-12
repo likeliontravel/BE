@@ -6,7 +6,7 @@ CREATE TABLE `notification`
     `type`        VARCHAR(50)  NOT NULL,
     `message`     VARCHAR(500) NOT NULL,
     `target_id`   BIGINT NULL,
-    `target_name` VARCHAR(255) NULL,
+    `group_name`  VARCHAR(255) NULL,
     `is_read`     TINYINT(1)   NOT NULL DEFAULT 0,
     `read_at`     DATETIME NULL,
     `created_at`  DATETIME,

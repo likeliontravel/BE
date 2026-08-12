@@ -83,7 +83,7 @@ public class NotificationService {
 
 		List<Notification> notifications = receivers.stream()
 			.map(receiver -> Notification.create(receiver, actor, event.type(), event.message(),
-				event.targetId(), event.targetName()))
+				event.targetId(), event.groupName()))
 			.toList();
 
 		List<Notification> saved = notificationRepository.saveAll(notifications);
