@@ -23,6 +23,10 @@ import org.example.be.domain.group.invitation.repository.GroupInvitationReposito
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.service.MemberService;
+import org.example.be.domain.notification.event.NotificationEvent;
+import org.example.be.domain.notification.event.NotificationEventPublisher;
+import org.example.be.domain.notification.message.NotificationMessageFactory;
+import org.example.be.domain.notification.type.NotificationType;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
@@ -37,7 +41,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -53,6 +59,8 @@ public class GroupService {
 	private final AccommodationRepository accommodationRepository;
 	private final RestaurantRepository restaurantRepository;
 	private final ChatMessageRepository chatMessageRepository;
+	private final NotificationEventPublisher notificationEventPublisher;
+	private final NotificationMessageFactory messageFactory;
 
 	// 그룹 생성하기
 	@Transactional
@@ -115,7 +123,26 @@ public class GroupService {
 		group.addMember(user);
 		groupRepository.save(group);
 
+		publishGroupJoinNotification(group, user);
+
 		return new GroupAddMemberResBody(user.getId(), user.getEmail(), user.getName(), groupName);
+	}
+
+	private void publishGroupJoinNotification(Group group, Member user) {
+		try {
+			Long creatorId = group.getCreatedBy().getId();
+			if (creatorId.equals(user.getId())) {
+				return;
+			}
+
+			String message = messageFactory.render(NotificationType.GROUP_JOIN, user.getName(), group.getGroupName());
+
+			notificationEventPublisher.publish(
+				NotificationEvent.of(creatorId, user.getId(), NotificationType.GROUP_JOIN,
+					group.getId(), group.getGroupName(), message));
+		} catch (Exception e) {
+			log.error("[Notification] 그룹 가입 알림 발행 실패 - groupId={}, memberId={}", group.getId(), user.getId(), e);
+		}
 	}
 
 	// 그룹 설명 변경
