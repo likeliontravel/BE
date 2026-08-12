@@ -18,6 +18,9 @@ import org.example.be.domain.member.dto.response.MemberProfileResBody;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.type.OauthProvider;
+import org.example.be.domain.notification.service.NotificationCleanupService;
+import org.example.be.domain.notification.sse.SseEmitterRepository;
+import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
 import org.example.be.storage.gcs.GCSService;
 import org.springframework.http.HttpStatus;
@@ -42,6 +45,8 @@ public class MemberService {
 	private final ChatMessageRepository chatMessageRepository;
 	private final CommentRepository commentRepository;
 	private final ScheduleRepository scheduleRepository;
+	private final NotificationCleanupService notificationCleanupService;
+	private final SseEmitterRepository sseEmitterRepository;
 
 	public Member join(MemberJoinReqBody reqBody) {
 		if (memberRepository.existsByEmail(reqBody.email())) {
@@ -136,6 +141,9 @@ public class MemberService {
 
 		List<Group> ownedGroups = groupRepository.findAllByCreatedBy(member);
 		for (Group group : ownedGroups) {
+			Long scheduleId = scheduleRepository.findByGroup(group).map(Schedule::getId).orElse(null);
+			notificationCleanupService.deleteByGroup(group.getId(), scheduleId);
+
 			chatMessageRepository.deleteByGroup(group);
 			scheduleRepository.findByGroup(group).ifPresent(scheduleRepository::delete);
 			groupInvitationRepository.deleteByGroup(group);
@@ -156,6 +164,9 @@ public class MemberService {
 		if (member.getProfileImageUrl() != null) {
 			gcsService.deleteProfileImage(member.getProfileImageUrl());
 		}
+
+		sseEmitterRepository.deleteAllByMemberId(memberId);
+		notificationCleanupService.deleteByMember(memberId);
 
 		memberRepository.delete(member);
 	}
