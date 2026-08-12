@@ -14,6 +14,10 @@ import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.board.repository.CommentRepository;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.notification.event.NotificationEvent;
+import org.example.be.domain.notification.event.NotificationEventPublisher;
+import org.example.be.domain.notification.message.NotificationMessageFactory;
+import org.example.be.domain.notification.type.NotificationType;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.PageResponse;
@@ -23,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -31,6 +37,8 @@ public class CommentService {
 	private final CommentRepository commentRepository;
 	private final BoardRepository boardRepository;
 	private final MemberRepository memberRepository;
+	private final NotificationEventPublisher notificationEventPublisher;
+	private final NotificationMessageFactory messageFactory;
 
 	// 해당 게시글 댓글 조회
 	@Transactional(readOnly = true)
@@ -82,11 +90,32 @@ public class CommentService {
 				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
 			}
 		}
+		Comment saved;
 		try {
-			Comment comment = Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment);
-			return CommentResBody.from(commentRepository.save(comment));
+			saved = commentRepository.save(Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment));
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "댓글 작성 실패 - message: " + e.getMessage());
+		}
+
+		publishCommentNotification(boardEntity, parentComment, writer);
+
+		return CommentResBody.from(saved);
+	}
+
+	private void publishCommentNotification(Board board, Comment parentComment, Member writer) {
+		try {
+			Long receiverId = parentComment == null ? board.getWriter().getId() : parentComment.getWriter().getId();
+			if (receiverId.equals(writer.getId())) {
+				return;
+			}
+
+			NotificationType type = parentComment == null ? NotificationType.COMMENT : NotificationType.REPLY;
+			String message = messageFactory.render(type, writer.getName());
+
+			notificationEventPublisher.publish(
+				NotificationEvent.of(receiverId, writer.getId(), type, board.getId(), null, message));
+		} catch (Exception e) {
+			log.error("[Notification] 댓글 알림 발행 실패 - boardId={}, writerId={}", board.getId(), writer.getId(), e);
 		}
 	}
 
