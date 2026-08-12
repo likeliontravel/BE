@@ -10,6 +10,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import lombok.RequiredArgsConstructor;
@@ -86,6 +87,24 @@ public class GlobalExceptionHandler {
 		log.warn("[MaxUploadSizeExceededException] maxFileSize={}MB, detail={}", maxFileSizeMb, e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), message));
+	}
+
+	/**
+	 * SSE 등 비동기 요청이 타임아웃된 경우 - 이미 스트림이 끊긴 상태라 응답 바디를 쓰지 않는다.
+	 * 없으면 catch-all(Exception)이 잡아 매번 500 스택트레이스를 남긴다.
+	 */
+	@ExceptionHandler(AsyncRequestTimeoutException.class)
+	public void handleAsyncTimeout(AsyncRequestTimeoutException e) {
+		log.debug("[AsyncRequestTimeoutException] {}", e.getMessage());
+	}
+
+	/**
+	 * SSE 클라이언트가 브라우저 종료·네트워크 끊김 등으로 이탈한 경우 - 정상적인 시나리오라 응답 바디를 쓰지 않는다.
+	 * ClientAbortException도 IOException 하위 타입이라 여기서 함께 처리된다.
+	 */
+	@ExceptionHandler(java.io.IOException.class)
+	public void handleBrokenPipe(java.io.IOException e) {
+		log.debug("[IOException] SSE 클라이언트 이탈 - {}", e.getMessage());
 	}
 
 	/**
