@@ -125,7 +125,7 @@ public class SecurityConfig {
 		configuration.setAllowedOrigins(
 			List.of("https://localhost:3000", "https://localhost:5500", "https://toleave.cloud")); // 허용할 Origin
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
+		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type", "Last-Event-ID"));
 		configuration.setAllowCredentials(true); // 쿠키 허용
 		configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
