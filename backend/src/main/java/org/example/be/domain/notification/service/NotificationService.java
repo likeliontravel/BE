@@ -4,15 +4,22 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.notification.broadcast.NotificationSender;
 import org.example.be.domain.notification.dto.response.NotificationListResBody;
 import org.example.be.domain.notification.dto.response.NotificationResBody;
 import org.example.be.domain.notification.dto.response.NotificationUnreadCountResBody;
 import org.example.be.domain.notification.entity.Notification;
+import org.example.be.domain.notification.event.NotificationEvent;
 import org.example.be.domain.notification.repository.NotificationRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 
 	private final NotificationRepository notificationRepository;
+	private final MemberRepository memberRepository;
+	private final NotificationSender notificationSender;
 	private final Clock clock;
 
 	@Transactional(readOnly = true)
@@ -62,6 +71,30 @@ public class NotificationService {
 	public void deleteNotification(Long notificationId, Long memberId) {
 		Notification notification = findByIdAndValidateOwner(notificationId, memberId);
 		notificationRepository.delete(notification);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void createAndSend(NotificationEvent event) {
+		Member actor = event.actorId() != null
+			? memberRepository.findById(event.actorId()).orElse(null)
+			: null;
+
+		List<Member> receivers = memberRepository.findAllById(event.receiverIds());
+
+		List<Notification> notifications = receivers.stream()
+			.map(receiver -> Notification.create(receiver, actor, event.type(), event.message(),
+				event.targetId(), event.targetName()))
+			.toList();
+
+		List<Notification> saved = notificationRepository.saveAll(notifications);
+
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				saved.forEach(notification ->
+					notificationSender.send(notification.getReceiver().getId(), NotificationResBody.from(notification)));
+			}
+		});
 	}
 
 	private Notification findByIdAndValidateOwner(Long notificationId, Long memberId) {
