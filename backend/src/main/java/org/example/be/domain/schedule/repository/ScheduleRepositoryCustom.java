@@ -11,4 +11,6 @@ public interface ScheduleRepositoryCustom {
 	List<Schedule> findAllByGroupsFetchJoin(List<Group> groups);
 
 	Optional<Schedule> findNearestUpcomingByMemberId(Long memberId, LocalDateTime startOfToday);
+
+	List<Schedule> findAllStartingBetweenWithMembers(LocalDateTime from, LocalDateTime to);
 }

@@ -50,4 +50,15 @@ public class ScheduleRepositoryCustomImpl implements ScheduleRepositoryCustom {
 				.fetchFirst()
 		);
 	}
+
+	@Override
+	public List<Schedule> findAllStartingBetweenWithMembers(LocalDateTime from, LocalDateTime to) {
+		return queryFactory
+			.selectFrom(schedule)
+			.join(schedule.group, group).fetchJoin()
+			.leftJoin(group.members, member).fetchJoin()
+			.where(schedule.startSchedule.goe(from), schedule.startSchedule.lt(to))
+			.distinct()
+			.fetch();
+	}
 }

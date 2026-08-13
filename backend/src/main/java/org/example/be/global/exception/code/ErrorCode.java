@@ -94,7 +94,12 @@ public enum ErrorCode {
 	INVALID_IMAGE_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다: 이미지 필요"),
 	INVALID_VIDEO_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다: 영상 필요"),
 	INVALID_RECORD_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다: 음원 또는 음성 필요"),
-	FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다.");
+	FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."),
+
+	// --- 알림	(Notification) ---
+	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 알림입니다."),
+	NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 알림만 접근할 수 있습니다."),
+	NOTIFICATION_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림 전송에 실패했습니다.");
 
 	private final HttpStatus status;
 	private final String message;
