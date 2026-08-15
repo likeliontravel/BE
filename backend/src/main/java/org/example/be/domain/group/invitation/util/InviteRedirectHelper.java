@@ -38,8 +38,6 @@ public class InviteRedirectHelper {
 
 	// 프론트엔드 그룹 상세 페이지 (가입 성공 또는 이미 멤버인 경우의 도착지)
 	public String groupPageUrl(Long groupId, String joined) {
-		// Location 헤더는 ASCII 기반이라 한글 그룹명은 인코딩 필수.
-		// 경로에는 URLEncoder 금지(공백을 '+'로 바꿔버림) - UriUtils 사용
 		return frontendBaseUrl + "/group/" + groupId + "?joined=" + joined;
 	}
 
