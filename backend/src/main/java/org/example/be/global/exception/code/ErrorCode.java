@@ -69,6 +69,7 @@ public enum ErrorCode {
 	INVALID_PARENT_COMMENT(HttpStatus.BAD_REQUEST, "부모 댓글을 찾을 수 없습니다."),
 	BOARD_TITLE_BLANK(HttpStatus.BAD_REQUEST, "게시글 제목은 비어있을 수 없습니다."),
 	BOARD_CONTENT_BLANK(HttpStatus.BAD_REQUEST, "게시글 내용은 비어있을 수 없습니다."),
+	BOARD_IMAGE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "게시글 이미지는 최대 5장까지 업로드할 수 있습니다."),
 
 	// --- 일정 (Schedule) ---
 	SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "일정이 존재하지 않습니다."),
