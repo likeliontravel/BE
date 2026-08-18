@@ -45,11 +45,10 @@ public class InvitationJoinController {
 		HttpServletResponse response) throws IOException {
 
 		// 이미 멤버인 경우에도 그룹 페이지로 보내야 하므로 catch 블록에서 참조할 수 있게 try 밖에 선언
-		Long groupId = null;
-
+		String groupName = null;
 		try {
 			GroupInvitation invitation = invitationService.getValidInvitation(invitationCode);
-			groupId = invitation.getGroup().getId();
+			groupName = invitation.getGroup().getGroupName();
 
 			// 로그인 여부는 반드시 user의 null 여부로 판단해야 한다.
 			// CustomAuthenticationFilter가 비로그인 요청에도 AnonymousAuthenticationToken을 넣는데
@@ -74,15 +73,15 @@ public class InvitationJoinController {
 			// 로그인 상태: 자동 가입 처리 후 그룹 상세 페이지로
 			groupService.addMemberToGroup(invitation.getGroup().getGroupName(), user.getId());
 			response.sendRedirect(
-				inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_NEW));
+				inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_NEW));
 
 		} catch (BusinessException e) {
 			// 이미 그룹에 속한 사용자가 링크를 다시 클릭한 경우.
 			// 사용자 입장에서는 "그룹에 속해 있다"는 결과가 같으므로 실패가 아닌 성공으로 취급한다.
-			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupId != null) {
-				log.info("[invite] 이미 그룹 멤버 - invitationCode={}, groupId={}", invitationCode, groupId);
+			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
+				log.info("[invite] 이미 그룹 멤버 - invitationCode={}, groupName={}", invitationCode, groupName);
 				response.sendRedirect(
-					inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_ALREADY));
+					inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_ALREADY));
 				return;
 			}
 

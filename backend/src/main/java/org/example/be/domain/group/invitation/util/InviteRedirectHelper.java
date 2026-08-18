@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriUtils;
 
 /**
  * 초대 링크 처리 결과에 따라 브라우저를 프론트엔드로 되돌려보낼 리다이렉트 URL을 만드는 헬퍼
@@ -37,8 +38,9 @@ public class InviteRedirectHelper {
 	}
 
 	// 프론트엔드 그룹 상세 페이지 (가입 성공 또는 이미 멤버인 경우의 도착지)
-	public String groupPageUrl(Long groupId, String joined) {
-		return frontendBaseUrl + "/group/" + groupId + "?joined=" + joined;
+	public String groupPageUrl(String groupName, String joined) {
+		String encodedGroupName = UriUtils.encodePathSegment(groupName, StandardCharsets.UTF_8);
+		return frontendBaseUrl + "/group/" + encodedGroupName + "?joined=" + joined;
 	}
 
 	// 초대 처리 실패 시 홈으로 보내며 사유 전달 ( errorCode는 ErrorCode.name() )
