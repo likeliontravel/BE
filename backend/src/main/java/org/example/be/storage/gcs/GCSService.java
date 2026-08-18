@@ -27,6 +27,9 @@ public class GCSService {
 	@Value("${gcs.bucket.chat}")
 	private String chatImageBucketName;
 
+	@Value("${gcs.bucket.toleave}")
+	private String boardImageBucketName;
+
 	/**
 	 * 프로필 사진 GCS 업로드 메서드
 	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
@@ -96,6 +99,23 @@ public class GCSService {
 		}
 	}
 
-	// legacy/board/GcsUploader에 기존에 설계되었던 GcsUploader 담아둡니다. Board GCS 사용 방식 결정되면 그 때 이 클래스에 클라이언트 코드 추가하세요. - 2026.04.14
+	/**
+	 * 게시글 이미지 GCS 업로드 메서드
+	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
+	 * @return : 저장 성공 후 반환받은 public URL
+	 */
+	public String uploadBoardImage(MultipartFile file, Long memberUd) {
+		try {
+			validateImageFile(file);
+			String fileName = "board_" + memberUd + "_" + UUID.randomUUID();
+			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
+			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
+			storage.create(blobInfo, file.getBytes());
+
+			return String.format("https://storage.googleapis.com/%s/%s", boardImageBucketName, fileName);
+		} catch (IOException e) {
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "게시글 이미지 업로드 실패. \nmessage: " + e.getMessage());
+		}
+	}
 
 }
