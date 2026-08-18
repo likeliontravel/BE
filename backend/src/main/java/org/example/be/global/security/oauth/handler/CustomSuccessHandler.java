@@ -5,10 +5,13 @@ import java.util.Map;
 
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
+import org.example.be.domain.group.invitation.util.InviteRedirectHelper;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.service.AuthTokenService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.security.oauth.userinfo.GoogleUserInfo;
 import org.example.be.global.security.oauth.userinfo.KakaoUserInfo;
 import org.example.be.global.security.oauth.userinfo.NaverUserInfo;
@@ -39,8 +42,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 	private final CookieHelper cookieHelper;
 	private final GroupInvitationService groupInvitationService;
 	private final GroupService groupService;
-
-	private static final String FE_REDIRECT_URL = "https://toleave.cloud/";
+	private final InviteRedirectHelper inviteRedirectHelper;
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -66,40 +68,72 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 		cookieHelper.setCookie("refreshToken", refreshToken);
 		log.debug("JWT 토큰 생성 완료 및 쿠키 설정 완료");
 
-		// pendingInvitationCode 쿠키 확인 (비로그인 상태에서 초대링크 클릭 후 소셜 로그인한 경우)
-		String invitationCode = null;
-		if (request.getCookies() != null) {
-			for (Cookie cookie : request.getCookies()) {
-				if ("pendingInvitationCode".equals(cookie.getName())) {
-					invitationCode = cookie.getValue();
-					break;
-				}
-			}
-		}
+		// 초대 쿠키가 없는 일반 로그인은 홈으로 보낸다.
+		String redirectUrl = inviteRedirectHelper.homeUrl();
 
+		// pendingInvitationCode 쿠키 확인 (비로그인 상태에서 초대링크 클릭 후 소셜로그인한 경우)
+		String invitationCode = extractPendingInvitationCode(request);
 		if (invitationCode != null) {
 			try {
-				GroupInvitation invitation = groupInvitationService.getValidInvitation(invitationCode);
-				groupService.addMemberToGroup(invitation.getGroup().getGroupName(), member.getId());
-			} catch (Exception e) {
-				// 그룹 자동 가입 실패 시 로그인 자체는 유지
-				log.warn("OAuth2 로그인 후 자동 그룹 가입 실패: {}", e.getMessage());
+				redirectUrl = joinGroupAndResolveRedirectUrl(invitationCode, member.getId());
 			} finally {
 				// 가입 성공/실패 여부 무관하게 쿠키 즉시 삭제
-				ResponseCookie deleteCookie = ResponseCookie.from("pendingInvitationCode", "")
-					.httpOnly(true)
-					.secure(true)
-					.path("/")
-					.maxAge(0)    // 쿠키 즉시 삭제
-					.sameSite("Lax")
-					.build();
-				response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+				deletePendingInvitationCodeCookie(response);
 			}
 		}
+		response.sendRedirect(redirectUrl);
+	}
 
-		// 최종 리다이렉트
-		response.sendRedirect(FE_REDIRECT_URL);
+	// 초대 코드로 그룹 가입을 시도하고 그 결과에 맞는 리다이렉트 URL을 돌려준다.
+	// 로그인 자체는 이미 성공한 상태이므로 초대 처리 실패가 로그인을 깨서는 안된다.
+	private String joinGroupAndResolveRedirectUrl(String invitationCode, Long memberId) {
+		Long groupId = null;
 
+		try {
+			GroupInvitation invitation = groupInvitationService.getValidInvitation(invitationCode);
+			// GroupInvitation.group은 @ManyToOne(기본 EAGER)이라 트랜잭션 밖인 이 필터 계층에서도 접근이 안전하다.
+			// 이후 LAZY로 변경되면 이 지점이 깨지므로 주의할 것.
+			groupId = invitation.getGroup().getId();
+
+			groupService.addMemberToGroup(invitation.getGroup().getGroupName(), memberId);
+			return inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_NEW);
+		} catch (BusinessException e) {
+			// 이미 멤버인 경우는 실패가 아니라 성공으로 취급한다. (InvitationJoinController와 동일한 정책)
+			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupId != null) {
+				log.info("[invite] 소셜 로그인 후 이미 그룹 멤버 - memberId={}, groupId={}", memberId, groupId);
+				return inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_ALREADY);
+			}
+
+			log.warn("[invite] 소셜 로그인 후 그룹 자동 가입 실패 - memberId={}, errorCode={}, message={}",
+				memberId, e.getErrorCode(), e.getMessage());
+			return inviteRedirectHelper.inviteErrorUrl(e.getErrorCode().name());
+		} catch (Exception e) {
+			log.error("[invite] 소셜 로그인 후 그룹 자동 가입 중 예기지 못한 오류 - memberId={}", memberId, e);
+			return inviteRedirectHelper.inviteErrorUrl(ErrorCode.INTERNAL_SERVER_ERROR.name());
+		}
+	}
+
+	private String extractPendingInvitationCode(HttpServletRequest request) {
+		if (request.getCookies() == null) {
+			return null;
+		}
+		for (Cookie cookie : request.getCookies()) {
+			if ("pendingInvitationCode".equals(cookie.getName())) {
+				return cookie.getValue();
+			}
+		}
+		return null;
+	}
+
+	private void deletePendingInvitationCodeCookie(HttpServletResponse response) {
+		ResponseCookie deleteCookie = ResponseCookie.from("pendingInvitationCode", "")
+			.httpOnly(true)
+			.secure(true)
+			.path("/")
+			.maxAge(0)    // 쿠키 즉시 삭제
+			.sameSite("Lax")
+			.build();
+		response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
 	}
 
 	private OAuth2UserInfo getOAuth2UserInfo(String providerTypeCode, Map<String, Object> attributes) {
