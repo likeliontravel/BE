@@ -104,10 +104,10 @@ public class GCSService {
 	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
 	 * @return : 저장 성공 후 반환받은 public URL
 	 */
-	public String uploadBoardImage(MultipartFile file, Long memberUd) {
+	public String uploadBoardImage(MultipartFile file, Long memberId) {
 		try {
 			validateImageFile(file);
-			String fileName = "board_" + memberUd + "_" + UUID.randomUUID();
+			String fileName = "board_" + memberId + "_" + UUID.randomUUID();
 			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
 			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
 			storage.create(blobInfo, file.getBytes());
