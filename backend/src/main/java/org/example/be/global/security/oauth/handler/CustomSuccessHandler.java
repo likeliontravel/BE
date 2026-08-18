@@ -87,21 +87,21 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 	// 초대 코드로 그룹 가입을 시도하고 그 결과에 맞는 리다이렉트 URL을 돌려준다.
 	// 로그인 자체는 이미 성공한 상태이므로 초대 처리 실패가 로그인을 깨서는 안된다.
 	private String joinGroupAndResolveRedirectUrl(String invitationCode, Long memberId) {
-		Long groupId = null;
+		String groupName = null;
 
 		try {
 			GroupInvitation invitation = groupInvitationService.getValidInvitation(invitationCode);
 			// GroupInvitation.group은 @ManyToOne(기본 EAGER)이라 트랜잭션 밖인 이 필터 계층에서도 접근이 안전하다.
 			// 이후 LAZY로 변경되면 이 지점이 깨지므로 주의할 것.
-			groupId = invitation.getGroup().getId();
+			groupName = invitation.getGroup().getGroupName();
 
 			groupService.addMemberToGroup(invitation.getGroup().getGroupName(), memberId);
-			return inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_NEW);
+			return inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_NEW);
 		} catch (BusinessException e) {
 			// 이미 멤버인 경우는 실패가 아니라 성공으로 취급한다. (InvitationJoinController와 동일한 정책)
-			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupId != null) {
-				log.info("[invite] 소셜 로그인 후 이미 그룹 멤버 - memberId={}, groupId={}", memberId, groupId);
-				return inviteRedirectHelper.groupPageUrl(groupId, InviteRedirectHelper.JOINED_ALREADY);
+			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
+				log.info("[invite] 소셜 로그인 후 이미 그룹 멤버 - memberId={}, groupName={}", memberId, groupName);
+				return inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_ALREADY);
 			}
 
 			log.warn("[invite] 소셜 로그인 후 그룹 자동 가입 실패 - memberId={}, errorCode={}, message={}",
