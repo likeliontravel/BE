@@ -151,16 +151,14 @@ public class BoardService {
 
 	//게시글 이미지 업로드
 	public List<String> uploadBoardImages(List<MultipartFile> files, Long writerId) {
-		if (files.size() > MAX_BOARD_IMAGE_COUNT) {
-			throw new BusinessException(ErrorCode.BOARD_IMAGE_COUNT_EXCEEDED, "요청 이미지 개수: " + files.size());
-		}
+		validateBoardImages(files);
+
 		return files.stream()
 			.map(file -> gcsService.uploadBoardImage(file, writerId))
 			.toList();
 	}
 
 	// ========== 내부 메서드 ==========
-
 	private List<BoardResBody> mapToBoardResBody(List<Board> boards) {
 		return boards.stream()
 			.map(board -> BoardResBody.from(board, board.getWriter().getProfileImageUrl()))
@@ -170,6 +168,19 @@ public class BoardService {
 	private void validateBoardCreate(BoardCreateReqBody req) {
 		validateTheme(req.theme());
 		validateRegion(req.region());
+	}
+
+	private void validateBoardImages(List<MultipartFile> files) {
+		if (files == null || files.isEmpty()) {
+			throw new BusinessException(ErrorCode.BOARD_IMAGE_EMPTY);
+		}
+
+		if (files.size() > MAX_BOARD_IMAGE_COUNT) {
+			throw new BusinessException(ErrorCode.BOARD_IMAGE_COUNT_EXCEEDED,
+				"최대 " + MAX_BOARD_IMAGE_COUNT + "장, 요청 이미지 개수: " + files.size());
+		}
+
+		files.forEach(gcsService::validateImageFile);
 	}
 
 	private void validateBoardUpdate(BoardUpdateReqBody req) {
