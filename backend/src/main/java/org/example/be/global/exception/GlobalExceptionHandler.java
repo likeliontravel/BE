@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
@@ -90,6 +91,20 @@ public class GlobalExceptionHandler {
 			maxFileSizeMb, maxRequestSizeMb, e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), message));
+	}
+
+	/**
+	 * 필수 요청 파라미터 누락 처리 - 400으로 응답
+	 * 같은 클래스 안에서는 Spring이 예외 계층상 가장 구체적인 @ExceptionHandler를 고르므로,
+	 * 이 핸들러가 없으면 아래 catch-all(Exception)에 잡혀 500으로 나간다.
+	 */
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<CommonResponse<Void>> handleMissingServletRequestParameterException(
+		MissingServletRequestParameterException e) {
+		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+		log.warn("[MissingServletRequestParameterException] {}", e.getMessage());
+		return ResponseEntity.status(errorCode.getStatus())
+			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.getMessage()));
 	}
 
 	/**
