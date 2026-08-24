@@ -122,4 +122,27 @@ public class GCSService {
 		}
 	}
 
+	/**
+	 * 게시글 이미지 버킷에서 삭제 메서드
+	 * param : image public URL
+	 */
+	public void deleteBoardImage(String imageUrl) {
+		if (imageUrl == null || !imageUrl.contains(boardImageBucketName)) {
+			return;
+		}
+
+		try {
+			String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
+			boolean deleted = storage.delete(blobId);
+
+			if (!deleted) {
+				System.out.println("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
+			}
+		} catch (Exception e) {
+			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED,
+				"image url: " + imageUrl + ", message: " + e.getMessage());
+		}
+	}
+
 }
