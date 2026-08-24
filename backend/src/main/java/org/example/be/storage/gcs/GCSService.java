@@ -92,7 +92,8 @@ public class GCSService {
 	}
 
 	// 입력받은 파일이 이미지 파일인지 확인 ( 이미지 파일이 아닐 경우 예외 발생 )
-	private void validateImageFile(MultipartFile file) {
+	// 게시글 이미지 업로드에서 전량으로 사진을 검증하기 위해서 public으로 변경
+	public void validateImageFile(MultipartFile file) {
 		String contentType = file.getContentType();
 		if (contentType == null || !contentType.startsWith("image/")) {
 			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "입력된 파일 contentType: " + contentType);
