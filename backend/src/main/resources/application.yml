@@ -7,7 +7,7 @@ server:
     include-stacktrace: never
     include-binding-errors: never
   tomcat:
-    max-swallow-size: 12MB
+    max-swallow-size: 58MB
 
 spring:
   application:
