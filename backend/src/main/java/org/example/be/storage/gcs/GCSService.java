@@ -27,6 +27,9 @@ public class GCSService {
 	@Value("${gcs.bucket.chat}")
 	private String chatImageBucketName;
 
+	@Value("${gcs.bucket.toleave}")
+	private String boardImageBucketName;
+
 	/**
 	 * 프로필 사진 GCS 업로드 메서드
 	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
@@ -89,13 +92,57 @@ public class GCSService {
 	}
 
 	// 입력받은 파일이 이미지 파일인지 확인 ( 이미지 파일이 아닐 경우 예외 발생 )
-	private void validateImageFile(MultipartFile file) {
+	// 게시글 이미지 업로드에서 전량으로 사진을 검증하기 위해서 public으로 변경
+	public void validateImageFile(MultipartFile file) {
+		if (file == null || file.isEmpty()) {
+			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "빈 파일은 업로드할 수 없습니다.");
+		}
 		String contentType = file.getContentType();
 		if (contentType == null || !contentType.startsWith("image/")) {
 			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "입력된 파일 contentType: " + contentType);
 		}
 	}
 
-	// legacy/board/GcsUploader에 기존에 설계되었던 GcsUploader 담아둡니다. Board GCS 사용 방식 결정되면 그 때 이 클래스에 클라이언트 코드 추가하세요. - 2026.04.14
+	/**
+	 * 게시글 이미지 GCS 업로드 메서드
+	 * param : 저장할 이미지파일, 업로드하는 회원의 memberId
+	 * @return : 저장 성공 후 반환받은 public URL
+	 */
+	public String uploadBoardImage(MultipartFile file, Long memberId) {
+		try {
+			validateImageFile(file);
+			String fileName = "board_" + memberId + "_" + UUID.randomUUID();
+			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
+			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
+			storage.create(blobInfo, file.getBytes());
+
+			return String.format("https://storage.googleapis.com/%s/%s", boardImageBucketName, fileName);
+		} catch (IOException e) {
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "게시글 이미지 업로드 실패. \nmessage: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * 게시글 이미지 버킷에서 삭제 메서드
+	 * param : image public URL
+	 */
+	public void deleteBoardImage(String imageUrl) {
+		if (imageUrl == null || !imageUrl.contains(boardImageBucketName)) {
+			return;
+		}
+
+		try {
+			String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
+			boolean deleted = storage.delete(blobId);
+
+			if (!deleted) {
+				System.out.println("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
+			}
+		} catch (Exception e) {
+			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED,
+				"image url: " + imageUrl + ", message: " + e.getMessage());
+		}
+	}
 
 }

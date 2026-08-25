@@ -1,5 +1,7 @@
 package org.example.be.domain.board.controller;
 
+import java.util.List;
+
 import org.example.be.domain.board.dto.request.BoardCreateReqBody;
 import org.example.be.domain.board.dto.request.BoardSearchReqBody;
 import org.example.be.domain.board.dto.request.BoardUpdateReqBody;
@@ -8,6 +10,7 @@ import org.example.be.domain.board.service.BoardService;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.response.PageResponse;
 import org.example.be.global.security.config.SecurityUser;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +21,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -99,4 +104,14 @@ public class BoardController {
 		boardService.deleteBoard(id, user.getId());
 		return ResponseEntity.ok(CommonResponse.success(null, "게시글 삭제 성공"));
 	}
+
+	//게시글 이미지 업로드
+	@PostMapping("/images")
+	public ResponseEntity<CommonResponse<List<String>>> uploadBoardImages(
+		@RequestParam("files") List<MultipartFile> files,
+		@AuthenticationPrincipal SecurityUser user) {
+		List<String> urls = boardService.uploadBoardImages(files, user.getId());
+		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(urls, "게시글 이미지 업로드 성공"));
+	}
+
 }

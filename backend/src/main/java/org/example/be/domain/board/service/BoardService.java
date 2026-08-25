@@ -16,12 +16,14 @@ import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.PageResponse;
+import org.example.be.storage.gcs.GCSService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
@@ -34,9 +36,11 @@ public class BoardService {
 	private final MemberRepository memberRepository;
 	private final TourRegionService tourRegionService;
 	private final PlaceCategoryService placeCategoryService;
+	private final GCSService gcsService;
 
 	private static final int DEFAULT_PAGE = 0;
 	private static final int DEFAULT_SIZE = 30;
+	private static final int MAX_BOARD_IMAGE_COUNT = 5;
 
 	// ======================= 게시글 상세 조회 ======================= //
 	@Transactional
@@ -145,8 +149,16 @@ public class BoardService {
 		}
 	}
 
-	// ========== 내부 메서드 ==========
+	//게시글 이미지 업로드
+	public List<String> uploadBoardImages(List<MultipartFile> files, Long writerId) {
+		validateBoardImages(files);
 
+		return files.stream()
+			.map(file -> gcsService.uploadBoardImage(file, writerId))
+			.toList();
+	}
+
+	// ========== 내부 메서드 ==========
 	private List<BoardResBody> mapToBoardResBody(List<Board> boards) {
 		return boards.stream()
 			.map(board -> BoardResBody.from(board, board.getWriter().getProfileImageUrl()))
@@ -156,6 +168,19 @@ public class BoardService {
 	private void validateBoardCreate(BoardCreateReqBody req) {
 		validateTheme(req.theme());
 		validateRegion(req.region());
+	}
+
+	private void validateBoardImages(List<MultipartFile> files) {
+		if (files == null || files.isEmpty()) {
+			throw new BusinessException(ErrorCode.BOARD_IMAGE_EMPTY);
+		}
+
+		if (files.size() > MAX_BOARD_IMAGE_COUNT) {
+			throw new BusinessException(ErrorCode.BOARD_IMAGE_COUNT_EXCEEDED,
+				"최대 " + MAX_BOARD_IMAGE_COUNT + "장, 요청 이미지 개수: " + files.size());
+		}
+
+		files.forEach(gcsService::validateImageFile);
 	}
 
 	private void validateBoardUpdate(BoardUpdateReqBody req) {

@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
@@ -74,19 +75,36 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * 업로드 파일 크기 초과 처리 - multipart 상한 (max-file-size) 초과를 413으로 응답
-	 * MaxUploadSizeExceededException은 스프링/톰캣이 multipart 파싱 단계에서 던지는 런타임 예외이므로
-	 * 우리 코드가 BusinessException으로 감싸 던질 지점이 없다. 따라서 여기서 ErrorCode로 매핑한다.
-	 * 이 핸들러가 없으면 아래 catch-all에 잡혀 500으로 나가고 사용자는 용량 초과라는 사실 자체를 알 수 없다.
+	 * 업로드 파일 크기 초과 처리 - multipart 상한 초과를 413으로 응답
+	 * MaxUploadSizeExceededException은 max-file-size 초과와 max-request-size 초과 양쪽에서 던져진다.
+	 * 예외 객체만으로는 둘을 구분할 수 없으므로(구분하려면 톰캣 내부 예외 타입에 의존해야 함)
+	 * 두 상한을 함께 안내해 사용자가 어느 쪽을 어겼는지 스스로 판단할 수 있게 한다.
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
 		ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
 		long maxFileSizeMb = multipartProperties.getMaxFileSize().toMegabytes();
-		String message = errorCode.getMessage() + " (최대 " + maxFileSizeMb + "MB)";
-		log.warn("[MaxUploadSizeExceededException] maxFileSize={}MB, detail={}", maxFileSizeMb, e.getMessage());
+		long maxRequestSizeMb = multipartProperties.getMaxRequestSize().toMegabytes();
+		String message = String.format("%s (파일 1개당 최대 %dMB, 요청 전체 최대 %dMB)",
+			errorCode.getMessage(), maxFileSizeMb, maxRequestSizeMb);
+		log.warn("[MaxUploadSizeExceededException] maxFileSize={}MB, maxRequestSize={}MB, detail={}",
+			maxFileSizeMb, maxRequestSizeMb, e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), message));
+	}
+
+	/**
+	 * 필수 요청 파라미터 누락 처리 - 400으로 응답
+	 * 같은 클래스 안에서는 Spring이 예외 계층상 가장 구체적인 @ExceptionHandler를 고르므로,
+	 * 이 핸들러가 없으면 아래 catch-all(Exception)에 잡혀 500으로 나간다.
+	 */
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<CommonResponse<Void>> handleMissingServletRequestParameterException(
+		MissingServletRequestParameterException e) {
+		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+		log.warn("[MissingServletRequestParameterException] {}", e.getMessage());
+		return ResponseEntity.status(errorCode.getStatus())
+			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.getMessage()));
 	}
 
 	/**
