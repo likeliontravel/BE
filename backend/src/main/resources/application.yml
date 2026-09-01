@@ -142,6 +142,11 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+# 인증 메일 발신 주소. SES 전환 대비로 spring.mail.username과 분리 (SES에선 username이 SMTP 자격증명이라 From으로 못 씀)
+app:
+  mail:
+    from: ${MAIL_FROM}
+
 logging:
   level:
     org.springframework.security: INFO
