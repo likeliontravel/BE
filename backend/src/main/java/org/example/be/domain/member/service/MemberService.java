@@ -1,6 +1,5 @@
 package org.example.be.domain.member.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -100,7 +99,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public String updateProfileImageUrl(Long memberId, MultipartFile file) throws IOException {
+	public String updateProfileImageUrl(Long memberId, MultipartFile file) {
 		Member member = getById(memberId);
 
 		if (member.getProfileImageUrl() != null) {
