@@ -3,10 +3,10 @@ package org.example.be.domain.mail.service;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import org.example.be.domain.mail.dto.MailVerifyReqBody;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.mail.dto.MailVerifyReqBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -23,7 +23,7 @@ public class MailService {
 	private final MemberRepository memberRepository;
 	private final StringRedisTemplate stringRedisTemplate;
 
-	@Value("${spring.mail.username}")
+	@Value("${app.mail.from}")
 	private String fromEmail;
 
 	private static final int CODE_EXPIRATION_MINUTES = 5; // 인증 코드 유효시간 (5분)
