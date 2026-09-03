@@ -52,7 +52,7 @@ public class SecurityConfig {
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/auth/join", "/auth/login", "/auth/password/reset/request",
-					"/auth/password/reset/").permitAll()
+					"/auth/password/reset").permitAll()
 				.requestMatchers("/actuator/health", "/actuator/**", "/actuator/health/**", "/actuator/info",
 					"/actuator/prometheus").permitAll()
 				.requestMatchers("/oauth2/**").permitAll()
