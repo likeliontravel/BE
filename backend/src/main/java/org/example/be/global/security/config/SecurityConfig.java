@@ -3,8 +3,8 @@ package org.example.be.global.security.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.example.be.global.jwt.util.JsonUt;
-import org.example.be.global.response.CommonResponse;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.support.ErrorResponseWriter;
 import org.example.be.global.security.filter.CustomAuthenticationFilter;
 import org.example.be.global.security.oauth.handler.CustomFailureHandler;
 import org.example.be.global.security.oauth.handler.CustomSuccessHandler;
@@ -22,7 +22,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -34,6 +33,7 @@ public class SecurityConfig {
 	private final CustomSuccessHandler customSuccessHandler;
 	private final CustomAuthenticationFilter customAuthenticationFilter;
 	private final CustomFailureHandler customFailureHandler;
+	private final ErrorResponseWriter errorResponseWriter;
 
 	// @Bean
 	// public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -96,22 +96,12 @@ public class SecurityConfig {
 			.exceptionHandling(
 				exceptionHandling -> exceptionHandling
 					.authenticationEntryPoint(
-						(request, response, authException) -> {
-							response.setContentType("application/json;charset=UTF-8");
-							response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-							CommonResponse<Void> errorResponse = CommonResponse.error(401, "로그인 후 이용해주세요.");
-							response.getWriter().write(JsonUt.toString(errorResponse));
-							response.getWriter().flush();
-						}
+						(request, response, authException) ->
+							errorResponseWriter.write(response, ErrorCode.UNAUTHORIZED)
 					)
 					.accessDeniedHandler(
-						(request, response, accessDeniedException) -> {
-							response.setContentType("application/json;charset=UTF-8");
-							response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-							CommonResponse<Void> errorResponse = CommonResponse.error(403, "권한이 없습니다.");
-							response.getWriter().write(JsonUt.toString(errorResponse));
-							response.getWriter().flush();
-						}
+						(request, response, deniedException) ->
+							errorResponseWriter.write(response, ErrorCode.FORBIDDEN)
 					)
 			);
 		return http.build();
@@ -125,7 +115,8 @@ public class SecurityConfig {
 		configuration.setAllowedOrigins(
 			List.of("https://localhost:3000", "https://localhost:5500", "https://toleave.cloud")); // 허용할 Origin
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type", "Last-Event-ID"));
+		configuration.setAllowedHeaders(
+			Arrays.asList("Authorization", "Refresh-Token", "Content-Type", "Last-Event-ID"));
 		configuration.setAllowCredentials(true); // 쿠키 허용
 		configuration.setExposedHeaders(Arrays.asList("Authorization", "Refresh-Token", "Content-Type"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
