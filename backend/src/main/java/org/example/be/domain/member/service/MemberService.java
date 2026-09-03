@@ -1,6 +1,5 @@
 package org.example.be.domain.member.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,13 +21,13 @@ import org.example.be.domain.notification.service.NotificationCleanupService;
 import org.example.be.domain.notification.sse.SseEmitterRepository;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.storage.gcs.GCSService;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,17 +49,18 @@ public class MemberService {
 
 	public Member join(MemberJoinReqBody reqBody) {
 		if (memberRepository.existsByEmail(reqBody.email())) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다.");
+			throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED, "중복 가입 시도 - email: " + reqBody.email());
 		}
 		String password = passwordEncoder.encode(reqBody.password());
 		Member member = Member.createForJoin(reqBody.email(), reqBody.name(), password);
 		return memberRepository.save(member);
-
 	}
 
 	public Member authenticateAndGetMember(String email, String password) {
+		// 계정 존재 여부를 노출하지 않기 위해 비밀번호 불일치(checkPassword)와 같은 LOGIN_FAILED 를 쓴다.
+		// 구분에 필요한 정보는 두 번째 인자(debugMessage)로 로그에만 남는다.
 		Member member = findByEmail(email)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED, "존재하지 않는 이메일 로그인 시도 - email: " + email));
 		checkPassword(member, password);
 		return member;
 	}
@@ -69,7 +69,7 @@ public class MemberService {
 	@Transactional
 	public void resetPassword(String email, String newPassword) {
 		Member member = findByEmail(email)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "사용자를 찾을 수 없습니다. email: " + email));
 
 		String newEncodedPassword = passwordEncoder.encode(newPassword);
 		member.changePassword(newEncodedPassword);
@@ -100,7 +100,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public String updateProfileImageUrl(Long memberId, MultipartFile file) throws IOException {
+	public String updateProfileImageUrl(Long memberId, MultipartFile file) {
 		Member member = getById(memberId);
 
 		if (member.getProfileImageUrl() != null) {
@@ -181,14 +181,25 @@ public class MemberService {
 	}
 
 	public void checkPassword(Member member, String password) {
+		// 소셜 가입 계정은 password가 비어 있어서 그대로 인코더에 넘기면
+		// IllegalArgumentException("There is no PasswordEncoder mapped for the id \"null\"") 이 나고
+		// catch-all 에 잡혀 500이 된다. 예외를 잡아 번역하지 말고 사전 조건으로 막는다.
+		if (member.getPassword() == null || member.getPassword().isBlank()) {
+			throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_LOGIN_REQUIRED,
+				"소셜 가입 계정의 이메일 로그인 시도 - email: " + member.getEmail());
+		}
+
 		if (!passwordEncoder.matches(password, member.getPassword())) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
+			// '없는 이메일'(authenticateAndGetMember)과 같은 LOGIN_FAILED 를 쓴다.
+			// 문구가 갈리면 계정 존재 여부가 응답으로 노출된다.
+			throw new BusinessException(ErrorCode.LOGIN_FAILED,
+				"비밀번호 불일치 - email: " + member.getEmail());
 		}
 	}
 
 	public Member getById(long id) {
 		return memberRepository.findById(id)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + id));
 	}
 
 	public boolean isPasswordExpired(Member member) {

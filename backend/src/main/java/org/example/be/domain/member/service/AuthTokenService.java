@@ -6,12 +6,12 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.example.be.domain.member.entity.Member;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.jwt.util.JsonUt;
 import org.example.be.global.jwt.util.JwtUt;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,17 +64,18 @@ public class AuthTokenService {
 	public String rotateRefresh(String oldJti) {
 		String payload = refreshTokenStore.findRefreshPayload(oldJti);
 		if (payload == null)
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
+			throw new BusinessException(ErrorCode.INVALID_TOKEN, "refresh payload 없음 - jti: " + oldJti);
 
 		Map<String, Object> payloadMap;
 		try {
 			payloadMap = JsonUt.parse(payload, Map.class);
 		} catch (IllegalArgumentException e) {
 			// 파싱 실패한 jti를 메시지에 추가하고 JsonUt.parse()에서 던져진 cause 체인 유지
+			// 우리가 저장한 데이터가 깨진 것이므로 서버 오류(500)가 맞다. BusinessException으로 바꾸지 말 것.
 			throw new IllegalArgumentException("rotateRefresh payload 파싱 실패. jti=" + oldJti, e);
 		}
 		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
+			throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN, "payload에 userId 없음 - jti: " + oldJti);
 		}
 		long userId = ((Number)payloadMap.get("userId")).longValue();
 		refreshTokenStore.deleteRefresh(oldJti, userId);
@@ -92,18 +93,19 @@ public class AuthTokenService {
 	public long findRefreshOwner(String jti) {
 		String payload = refreshTokenStore.findRefreshPayload(jti);
 		if (payload == null)
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 Token 입니다.");
+			throw new BusinessException(ErrorCode.INVALID_TOKEN, "refresh payload 없음 - jti: " + jti);
 
 		Map<String, Object> payloadMap;
 		try {
 			payloadMap = JsonUt.parse(payload, Map.class);
 		} catch (IllegalArgumentException e) {
 			// 파싱 실패한 jti를 메시지에 추가하고 JsonUt.parse()에서 던져진 cause 체인 유지
+			// 우리가 저장한 데이터가 깨진 것이므로 서버 오류(500)가 맞다. BusinessException으로 바꾸지 말 것.
 			throw new IllegalArgumentException("findRefreshOwner payload 파싱 실패. jti=" + jti, e);
 		}
 		if (payloadMap == null || !payloadMap.containsKey("userId") || payloadMap.get("userId") == null) {
 			log.error("Refresh token payload is missing userId: {}", payload);
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "손상된 Refresh Token 입니다.");
+			throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN, "payload에 userId 없음 - jti: " + jti);
 		}
 		return ((Number)payloadMap.get("userId")).longValue();
 	}
