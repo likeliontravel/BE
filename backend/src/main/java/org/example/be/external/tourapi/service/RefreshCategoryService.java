@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.theme.PlaceCategory;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.external.tourapi.dto.CategoryCodeDTO;
@@ -14,6 +12,8 @@ import org.example.be.external.tourapi.dto.SaveResult;
 import org.example.be.external.tourapi.util.CategoryClassifier;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.external.tourapi.util.TourApiParser;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,7 +105,7 @@ public class RefreshCategoryService {
 		} catch (Exception e) {
 			log.error("[RefreshCategory] 카테고리 갱신 실패", e);
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
-				"Place 카테고리 갱신 실패 - message: " + e.getMessage());
+				"Place 카테고리 갱신 실패", e);
 		}
 	}
 

@@ -85,15 +85,11 @@ public class ScheduleService {
 
 		Schedule schedule = Schedule.create(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		try {
-			Schedule savedSchedule = scheduleRepository.save(schedule);
-			// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
-			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
-				savedSchedule.getSchedulePlaces());
-			return ScheduleResBody.from(savedSchedule, placeDetails);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "일정 생성 실패 - message: " + e.getMessage());
-		}
+		Schedule savedSchedule = scheduleRepository.save(schedule);
+		// 일정 생성 직후에는 장소가 없을 가능성이 높지만 일관성을 위해 조회
+		Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
+			savedSchedule.getSchedulePlaces());
+		return ScheduleResBody.from(savedSchedule, placeDetails);
 	}
 
 	// 일정 조회
@@ -250,15 +246,11 @@ public class ScheduleService {
 
 		schedule.update(reqBody.startSchedule(), reqBody.endSchedule(), group);
 
-		try {
-			Schedule updatedSchedule = scheduleRepository.save(schedule);
+		Schedule updatedSchedule = scheduleRepository.save(schedule);
 
-			Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
-				updatedSchedule.getSchedulePlaces());
-			return ScheduleResBody.from(updatedSchedule, placeDetails);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "일정 수정 실패 - message: " + e.getMessage());
-		}
+		Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
+			updatedSchedule.getSchedulePlaces());
+		return ScheduleResBody.from(updatedSchedule, placeDetails);
 	}
 
 	// 일정 삭제
@@ -269,12 +261,8 @@ public class ScheduleService {
 
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 
-		try {
-			scheduleRepository.delete(schedule);
-			scheduleRepository.flush(); // 즉시 DB 제약 조건 확인
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "일정 삭제 실패 - message: " + e.getMessage());
-		}
+		scheduleRepository.delete(schedule);
+		scheduleRepository.flush(); // 즉시 DB 제약 조건 확인
 	}
 
 	// --- N+1 해결을 위한 새로운 헬퍼 메서드들 ---

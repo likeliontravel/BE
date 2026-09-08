@@ -140,11 +140,8 @@ public class ChatMessageService {
 		Member sender = findMember(memberId);
 
 		ChatMessage chatMessage = ChatMessage.create(group, sender, type, content);
-		try {
-			return chatMessageRepository.save(chatMessage);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
-		}
+
+		return chatMessageRepository.save(chatMessage);
 	}
 
 	// ==================== 내부 사용 메서드 ====================

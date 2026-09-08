@@ -84,20 +84,14 @@ public class BoardService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
-		try {
+		// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
+		String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
 
-			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
-			String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
+		// 저장할 엔티티로 변환, 작성자 정보 기입
+		Board board = Board.toCreateEntity(reqBody, member, escapedContent);
 
-			// 저장할 엔티티로 변환, 작성자 정보 기입
-			Board board = Board.toCreateEntity(reqBody, member, escapedContent);
-
-			Board savedBoard = boardRepository.save(board);
-			return BoardResBody.from(savedBoard, member.getProfileImageUrl());
-
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "게시글 저장 실패 - message: " + e.getMessage());
-		}
+		Board savedBoard = boardRepository.save(board);
+		return BoardResBody.from(savedBoard, member.getProfileImageUrl());
 	}
 
 	// 게시글 수정
@@ -111,18 +105,15 @@ public class BoardService {
 		if (!memberId.equals(originalBoard.getWriter().getId())) {
 			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
 		}
+
 		// 들어온 수정데이터 유효성 확인
 		validateBoardUpdate(reqBody);
 
-		try {
-			// HTML escape처리
-			String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
-			originalBoard.toUpdateEntity(reqBody, escapedContent);
+		// HTML escape처리
+		String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
+		originalBoard.toUpdateEntity(reqBody, escapedContent);
 
-			return BoardResBody.from(originalBoard, originalBoard.getWriter().getProfileImageUrl());
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "게시글 수정 실패 - message: " + e.getMessage());
-		}
+		return BoardResBody.from(originalBoard, originalBoard.getWriter().getProfileImageUrl());
 	}
 
 	// 게시글 삭제
@@ -138,13 +129,9 @@ public class BoardService {
 		// 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
 		board.getCommentList().size();
 
-		try {
-			boardRepository.delete(board);
-			// 실제 삭제 쿼리 강제 실행
-			boardRepository.flush();
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "게시글 삭제 실패 - message: " + e.getMessage());
-		}
+		boardRepository.delete(board);
+		// 실제 삭제 쿼리 강제 실행
+		boardRepository.flush();
 	}
 
 	//게시글 이미지 업로드
