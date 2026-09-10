@@ -90,12 +90,8 @@ public class CommentService {
 				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
 			}
 		}
-		Comment saved;
-		try {
-			saved = commentRepository.save(Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment));
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "댓글 작성 실패 - message: " + e.getMessage());
-		}
+
+		Comment saved = commentRepository.save(Comment.toCreateEntity(reqBody, writer, boardEntity, parentComment));
 
 		publishCommentNotification(boardEntity, parentComment, writer);
 
@@ -130,12 +126,9 @@ public class CommentService {
 			throw new BusinessException(ErrorCode.COMMENT_NOT_WRITER, "memberId: " + userId);
 		}
 
-		try {
-			comment.toUpdateEntity(reqBody);
-			return CommentResBody.from(comment);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "댓글 수정 실패 - message: " + e.getMessage());
-		}
+		comment.toUpdateEntity(reqBody);
+
+		return CommentResBody.from(comment);
 	}
 
 	@Transactional
@@ -146,11 +139,8 @@ public class CommentService {
 		if (!comment.getWriter().getId().equals(userId)) {
 			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
 		}
-		try {
-			commentRepository.delete(comment);
-			commentRepository.flush();
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "댓글 삭제 실패 - message: " + e.getMessage());
-		}
+
+		commentRepository.delete(comment);
+		commentRepository.flush();
 	}
 }
