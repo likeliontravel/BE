@@ -26,14 +26,16 @@ import lombok.extern.slf4j.Slf4j;
  * emitter.completeWithError()는 /error INCLUDE 디스패치를 일으키는데,
  * 그 시점의 핸들러는 NotificationController가 아니라 BasicErrorController다.
  *
- * advice 조회 순서 - advice 사이에서는 예외 타입의 최적 매칭이 아니라 @Order 선착순이다.
- * 그래서 순서를 코드에 명시한다. 아래 셋은 advice 분리 작업에서 신설되고,
- * 그때까지는 GlobalExceptionHandler가 그 역할을 겸한다 (@Order 없음 = LOWEST_PRECEDENCE)
+ * advice 조회 순서 (4개 파일 상단에 글자 그대로 동일하게 유지할 것)
+ *        @Order(0) SseExceptionHandler : SSE 클라이언트 이탈, 비동기 타임아웃
+ *        @Order(10) BusinessExceptionHandler : 우리 코드가 throw 한 BusinessException
+ *        @Order(20) RequestExceptionHandler : 스프링, 톰캣이 throw한 프레임워크 예외
+ *        @Order(LOWEST_PRECEDENCE) FallbackExceptionHandler : catch-all (Exception)
  *
- * 	0					SseExceptionHandler			(이 파일)
- * 	10					BusinessExceptionHandler
- * 	20					RequestExceptionHandler		(프레임워크 예외)
- * 	LOWEST_PRECEDENCE	FallbackExceptionHandler	(catch-all)
+ * advice 사이에서는 '가장 구체적인 핸들러'가 아니라 '@Order 선착순'으로 결정된다.
+ * catch-all 을 가진 Fallback 이 앞에 오면 나머지 advice 가 통째로 무력화되어 모든 응답이 500이 된다.
+ * 순서가 '필수'인 것은 Fallback 이 마지막이라는 점 하나뿐이다. (나머지 셋은 잡는 예외가 서로 달라 겹치지 않음)
+ *
  */
 @Slf4j
 @Order(0)

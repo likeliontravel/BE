@@ -24,7 +24,7 @@ public class MailController {
 	// 메일 인증 코드 발급 받기
 	//
 	// try-catch를 두지 않는다. 실패는 MailService가 BusinessException으로 던지고
-	// GlobalExceptionHandler가 ErrorCode의 상태, 문구로 규격 응답을 만든다
+	// BusinessExceptionHandler가 ErrorCode의 상태, 문구로 규격 응답을 만든다
 	// 여기서 잡으면 문제 세가지
 	// 1. 상태코드가 임의로 뭉개짐 (가입된 이메일이 400이 아닌 500으로 나감)
 	// 2. 예외 원문 (SMTP, Redis 연결 문자열)이 그대로 응답에 실림

@@ -22,10 +22,10 @@ public class JsonUt {
 		try {
 			return objectMapper.readValue(json, type);
 		} catch (JsonProcessingException e) {
-			// 변경: Exception -> JsonProcessingException으로 구체화하여 변경하고 호출부로는 IllegalArgumentException으로 넘김
-			// e.getMessage()가 아닌 e 전체를 cause로 담아 예외 체이닝, 타입 정보와 함께 담아서 에러 원인 보존
-			// AuthTokenService의 메서드에서는 예외가 발생해도 GlobalExceptionHandler에 도달하지 않는다.(그 이전에 필터가 처리하고 따로 response를 만들지 않음)
-			// RefreshTokenStore.revokeRefresh()는 아직 사용하지 않는 메서드로 보여서 기존대로 그냥 return;하도록 하되, 에러 로그만 추가
+			// 변경: Exception -> JsonProcessingException 으로 구체화하여 변경하고 호출부로는 IllegalArgumentException으로 넘김
+			// e.getMessage()가 아닌 e 전체를 cause 로 담아 예외 체이닝, 타입 정보와 함께 담아서 에러 원인 보존
+			// 이 메서드를 쓰는 AuthTokenService.rotateRefresh()/findRefreshOwner()는 인증 필터에서만 호출되므로 예외가 advice(@RestControllerAdvice)에 도달하지 않는다.
+			// 필터는 BusinessException 만 잡으므로, 이 IllegalArgumentException 은 컨테이너 /error 로 넘어가 500(스프링 기본 바디)이 된다.
 			throw new IllegalArgumentException("Json 파싱 실패 - type=" + type.getSimpleName(), e);
 		}
 	}
