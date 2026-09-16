@@ -43,6 +43,7 @@ public enum ErrorCode {
 	DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "이미 존재하거나 제약 조건에 위배되는 데이터입니다."),
 	MISSING_REQUIRED_PART(HttpStatus.BAD_REQUEST, "필수 첨부 파일이 누락되었습니다."),
 	INVALID_MULTIPART_REQUEST(HttpStatus.BAD_REQUEST, "파일 업로드 형식의 요청이 아닙니다."),
+	UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 요청 형식(Content-Type)입니다."),
 
 	// --- 인증 / 인가 (Auth) ---
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
