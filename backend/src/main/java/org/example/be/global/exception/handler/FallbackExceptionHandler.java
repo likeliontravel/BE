@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * advice 사이에서는 '가장 구체적인 핸들러'가 아니라 '@Order 선착순'으로 결정된다.
  * catch-all 을 가진 Fallback 이 앞에 오면 나머지 세 advice 가 통째로 무력화되어 모든 응답이 500이 된다.
  * 순서가 '필수'인 것은 Fallback 이 마지막이라는 점 하나뿐이다. (나머지 셋은 잡는 예외가 서로 달라 겹치지 않음)
+ * 이 순서 계약은 ExceptionHandlerOrderIT 가 고정한다. (Fallback 을 앞으로 옮기거나 부모-자식 타입 쌍을 다른 advice 로 가르면 그 테스트가 실패한다)
  *
  * 그 '필수' 제약이 바로 이 파일이다. @Order(Ordered.LOWEST_PRECEDENCE) 를 절대 앞당기지 말 것.
  * Exception.class 는 모든 예외에 '직접' 매칭되므로, 이 advice 가 먼저 조회되는 순간 뒤의 advice 는 기회조차 없다.
