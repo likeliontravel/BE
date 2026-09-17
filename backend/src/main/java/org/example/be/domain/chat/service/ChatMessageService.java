@@ -152,7 +152,7 @@ public class ChatMessageService {
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;

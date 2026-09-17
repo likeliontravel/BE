@@ -92,7 +92,7 @@ public class GroupService {
 
 		// 그룹 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -155,7 +155,7 @@ public class GroupService {
 
 		// 그룹 내 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -176,7 +176,7 @@ public class GroupService {
 		Member user = memberService.getById(memberId);
 
 		if (!group.getMembers().contains(user)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 

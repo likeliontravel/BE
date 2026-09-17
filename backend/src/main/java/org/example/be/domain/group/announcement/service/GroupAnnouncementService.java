@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.example.be.domain.member.service.MemberService;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementCreateReqBody;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementDeleteReqBody;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementDeleteResBody;
@@ -19,6 +16,9 @@ import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepo
 import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.group.service.GroupService;
+import org.example.be.domain.member.service.MemberService;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +47,7 @@ public class GroupAnnouncementService {
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND, " groupName: " + groupName);
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED, " groupName: " + groupName);
 		}
 
 		GroupAnnouncement newAnnouncement = new GroupAnnouncement();
@@ -67,7 +67,7 @@ public class GroupAnnouncementService {
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -86,7 +86,7 @@ public class GroupAnnouncementService {
 	public List<GroupAnnouncementResBody> getAllGroupAnnouncements(String groupName, Long memberId) {
 		// 요청자가 그룹 멤버인지 검증
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -124,7 +124,7 @@ public class GroupAnnouncementService {
 
 		// 요청자가 해당 그룹의 멤버인지 확인
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 

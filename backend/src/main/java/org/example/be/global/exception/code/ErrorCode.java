@@ -48,7 +48,6 @@ public enum ErrorCode {
 	// --- 인증 / 인가 (Auth) ---
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-	USER_NOT_AUTHENTICATED(HttpStatus.INTERNAL_SERVER_ERROR, "인증된 사용자 정보를 불러올 수 없습니다."),
 
 	// --- 회원 (Member) ---
 	EMAIL_ALREADY_REGISTERED(HttpStatus.BAD_REQUEST, "이미 가입된 이메일입니다."),
@@ -70,12 +69,12 @@ public enum ErrorCode {
 	GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 그룹입니다."),
 	GROUP_NAME_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 그룹명입니다."),
 	GROUP_NOT_CREATOR(HttpStatus.FORBIDDEN, "해당 그룹의 창설자만 접근할 수 있습니다."),
-	GROUP_MEMBER_NOT_FOUND(HttpStatus.FORBIDDEN, "해당 그룹의 멤버가 아닙니다."),
+	GROUP_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 그룹의 멤버가 아닙니다."),
 	GROUP_ALREADY_MEMBER(HttpStatus.BAD_REQUEST, "이미 그룹에 속해 있는 사용자입니다."),
 	INVALID_INVITATION(HttpStatus.BAD_REQUEST, "유효하지 않거나 만료된 초대 코드입니다."),
 	INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "초대 링크가 만료되었습니다. 새로 생성하세요."),
 	INVITATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "초대 링크가 없습니다. 초대 링크를 생성하세요."),
-	GROUP_CREATOR_CANNOT_EXIT(HttpStatus.UNPROCESSABLE_ENTITY, "그룹 창설자는 그룹을 나갈 수 없습니다. 그룹 삭제 기능을 이용해주세요."),
+	GROUP_CREATOR_CANNOT_EXIT(HttpStatus.BAD_REQUEST, "그룹 창설자는 그룹을 나갈 수 없습니다. 그룹 삭제 기능을 이용해주세요."),
 	GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없어 최신 그룹 공지가 없습니다."),
 	GROUP_ANNOUNCEMENT_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없습니다."),
 
