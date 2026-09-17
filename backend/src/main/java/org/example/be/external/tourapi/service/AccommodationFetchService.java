@@ -29,8 +29,7 @@ public class AccommodationFetchService {
 	private String serviceKey;
 
 	// 컨트롤러 입력 -> 페이지 입력에 따라 데이터 저장 함수 분기
-	public List<AccommodationResBody> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws
-		Exception {
+	public List<AccommodationResBody> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) {
 		int contentTypeId = 32; // 숙소 ContentTypeId 32 고정
 		if (pageNo <= 0) {
 			return getAllData(areaCode, state, contentTypeId, numOfRows);
@@ -41,7 +40,7 @@ public class AccommodationFetchService {
 
 	// Page 입력 시 해당 단위 데이터 저장
 	private List<AccommodationResBody> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
-		int pageNo) throws Exception {
+		int pageNo) {
 		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
 		log.debug("[TourAPI JSON 응답 - 숙소] \n {}", json);
 		List<Map<String, Object>> items = tourApiParser.parseItems(json);
@@ -55,8 +54,7 @@ public class AccommodationFetchService {
 	}
 
 	// Page 미입력 시 전체 결과 저장
-	private List<AccommodationResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
-		Exception {
+	private List<AccommodationResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) {
 		int pageNo = 1;
 		List<AccommodationResBody> allItems = new ArrayList<>();
 

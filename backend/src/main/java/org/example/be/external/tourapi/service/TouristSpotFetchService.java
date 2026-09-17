@@ -43,7 +43,7 @@ public class TouristSpotFetchService {
 	private String serviceKey;
 
 	public List<TouristSpotResBody> getTouristSpots(int areaCode, String state, int contentTypeId, int numOfRows,
-		int pageNo) throws Exception {
+		int pageNo) {
 		if (pageNo <= 0) {
 			return getAllData(areaCode, state, contentTypeId, numOfRows);
 		} else {
@@ -53,7 +53,7 @@ public class TouristSpotFetchService {
 
 	// 페이지 입력 시 fetch
 	private List<TouristSpotResBody> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
-		int pageNo) throws Exception {
+		int pageNo) {
 		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
 		log.debug("[TourAPI JSON 응답] {}", json);
 		List<Map<String, Object>> items = tourApiParser.parseItems(json);
@@ -67,8 +67,7 @@ public class TouristSpotFetchService {
 	}
 
 	// 페이지 미입력시 전체 데이터 fetch
-	private List<TouristSpotResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
-		Exception {
+	private List<TouristSpotResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) {
 		int pageNo = 1;
 		List<TouristSpotResBody> allItems = new ArrayList<>();
 

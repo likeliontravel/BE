@@ -28,8 +28,7 @@ public class RestaurantFetchService {
 	private String serviceKey;
 
 	//식당 데이터를 가져와 저장 및 DTO 리스트 반환하기
-	public List<RestaurantResBody> getData(int areaCode, int contentTypeId, int numOfRows, int pageNo) throws
-		Exception {
+	public List<RestaurantResBody> getData(int areaCode, int contentTypeId, int numOfRows, int pageNo) {
 		String rawJson = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo,
 			serviceKey); //tourApiClient에서 정보에 맞는 데이터를 가져옴
 

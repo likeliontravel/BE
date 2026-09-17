@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,13 +47,9 @@ public class GCSService {
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", profileBucketName, fileName);
-			// TODO: StorageException(GCS SDK 장애 - 인증, 버킷, 권한, 네트워크)은 RuntimeException이라 이 catch에 걸리지 않는다.
-			// -> 진짜 GCS 장애는 GCS_UPLOAD_FAILED 가 아니라 catch-all의 INTERNAL_SERVER_ERROR 로 나간다.
-			// -> 왜 지금 안 하는가: 응답 code가 바뀌는 프론트엔드 계약 변경이라 이후 작업 Phase에서 다룬다.
-			// -> 올바른 해결: catch (IOException | StorageException e) 로 넓혀 GCS_UPLOAD_FAILED로 통일한다.
-			//    (validateImageFile을 try 밖으로 뺐으므로 넓혀도 400이 500으로 승격되지 않는다)
-			// -> 언제: Phase 2 의 3번째 작업 외부 API 경계 예외 정리하기로 결정함
-		} catch (IOException e) {
+		} catch (IOException | StorageException e) {
+			// StorageException(인증, 버킷, 권한, 네트워크 등 GCS SDK 장애)은 RuntimeException 이라 여기에 명시해야 잡힌다.
+			// validateImageFile 이 try 밖에 있어야 400(잘못된 파일)이 GCS_UPLOAD_FAILED(500)로 승격되지 않는다.
 			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
@@ -99,10 +96,7 @@ public class GCSService {
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", chatImageBucketName, fileName);
-			// TODO: StorageException 은 RuntimeException이라 이 catch에 걸리지 않는다. (상세: 위 uploadProfileImage 의 같은 TODO).
-			// - 올바른 해결: catch (IOException | StorageException e) 로 통일
-			// - 언제: Phase 2 - 3 Task
-		} catch (IOException e) {
+		} catch (IOException | StorageException e) {
 			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
 				"채팅 이미지 업로드 실패. groupName: " + groupName + ", senderId: " + senderId, e);
 		}
@@ -136,11 +130,9 @@ public class GCSService {
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", boardImageBucketName, fileName);
-			// TODO: StorageException 은 RuntimeException이라 이 catch에 걸리지 않는다. (상세: 위 uploadProfileImage 의 같은 TODO).
-			// - 올바른 해결: catch (IOException | StorageException e) 로 통일
-			// - 언제: Phase 2 - 3 Task
-		} catch (IOException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "게시글 이미지 업로드 실패. memberId: " + memberId, e);
+		} catch (IOException | StorageException e) {
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
+				"게시글 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
 

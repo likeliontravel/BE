@@ -39,17 +39,16 @@ public class TourismController {
 	// 관광지 정보 저장
 	@GetMapping("/fetch/touristSpot/{areaCode}")
 	public ResponseEntity<List<TouristSpotResBody>> fetchTouristSpots(
-		@PathVariable String areaCode,
+		@PathVariable int areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
-	) throws Exception {
-		int code = Integer.parseInt(areaCode);
-		String state = areaCodeResolver.getState(code);
+	) {
+		String state = areaCodeResolver.getState(areaCode);
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 
 		List<TouristSpotResBody> result = touristSpotFetchService.getTouristSpots(
-			code, state, 12, 1000, pageNo
+			areaCode, state, 12, 1000, pageNo
 		);
 
 		return ResponseEntity.ok(result);
@@ -58,15 +57,14 @@ public class TourismController {
 	// 숙소 정보(Accommodation)를 TourAPI에서 가져와 중복을 제거하고 저장하는 엔드포인트
 	@GetMapping("/fetch/accommodation/{areaCode}")
 	public ResponseEntity<List<AccommodationResBody>> fetchAccommodations(
-		@PathVariable String areaCode, @RequestParam(defaultValue = "1") int pageNo
-	) throws Exception {
-		int code = Integer.parseInt(areaCode);
-		String state = areaCodeResolver.getState(code);
+		@PathVariable int areaCode, @RequestParam(defaultValue = "1") int pageNo
+	) {
+		String state = areaCodeResolver.getState(areaCode);
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 		List<AccommodationResBody> result = accommodationFetchService.getAccommodations(
-			code, state, 1000, pageNo
+			areaCode, state, 1000, pageNo
 		);
 
 		return ResponseEntity.ok(result);
@@ -75,16 +73,15 @@ public class TourismController {
 	// 식당 정보 저장
 	@GetMapping("/fetch/restaurant/{areaCode}")
 	public ResponseEntity<List<RestaurantResBody>> fetchRestaurants(
-		@PathVariable String areaCode,
+		@PathVariable int areaCode,
 		@RequestParam(defaultValue = "1") int pageNo
-	) throws Exception {
-		int code = Integer.parseInt(areaCode);
-		String state = areaCodeResolver.getState(code);
+	) {
+		String state = areaCodeResolver.getState(areaCode);
 
 		if (state == null) {
 			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
-		List<RestaurantResBody> result = restaurantFetchService.getData(code, 39, 1000, pageNo);
+		List<RestaurantResBody> result = restaurantFetchService.getData(areaCode, 39, 1000, pageNo);
 		return ResponseEntity.ok(result);
 	}
 
