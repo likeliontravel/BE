@@ -7,14 +7,21 @@ import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
+import org.springframework.core.log.LogFormatUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
+@Slf4j
 public class TourApiClient {
+
+	// 오류 응답 바디를 로그에 남길 최대 길이. TourAPI 오류 바디는 짧지만 게이트웨이 HTML 오류 페이지가 오면 로그가 넘친다.
+	private static final int MAX_LOGGED_BODY_LENGTH = 500;
 
 	private final RestTemplate restTemplate = new RestTemplate();
 	private final TourApiParser tourApiParser;
@@ -81,8 +88,7 @@ public class TourApiClient {
 		try {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException ex) {
-			System.out.println("[TourAPI Error] status=" + ex.getRawStatusCode()
-				+ " body=" + ex.getResponseBodyAsString());
+			logErrorResponse("areaBasedList2", ex);
 			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 관광정보 조회 실패. areaCode: " + areaCode + ", contentTypeId: " + contentTypeId
 					+ ", pageNo: " + pageNo, ex);
@@ -113,8 +119,7 @@ public class TourApiClient {
 		try {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
-			System.out.println("[TourAPI Error] status=" + e.getRawStatusCode()
-				+ " body=" + e.getResponseBodyAsString());
+			logErrorResponse("areaCode2(지역)", e);
 			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED, "TourAPI 지역코드 조회 실패", e);
 		} catch (RestClientException e) {
 			// 연결 거부 또는 타임아웃, DNS 실패 (상세: fetchTourData 의 같은 catch)
@@ -141,8 +146,7 @@ public class TourApiClient {
 		try {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
-			System.out.println("[TourAPI Error] status=" + e.getRawStatusCode()
-				+ " body=" + e.getResponseBodyAsString());
+			logErrorResponse("areaCode2(시군구)", e);
 			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 시군구코드 조회 실패. areaCode: " + areaCode, e);
 		} catch (RestClientException e) {
@@ -180,8 +184,7 @@ public class TourApiClient {
 		try {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
-			System.out.println("[TourAPI Error] status=" + e.getRawStatusCode()
-				+ " body=" + e.getResponseBodyAsString());
+			logErrorResponse("categoryCode2", e);
 			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 분류코드 조회 실패. contentTypeId: " + contentTypeId + ", cat1: " + cat1 + ", cat2: " + cat2, e);
 		} catch (RestClientException e) {
@@ -190,6 +193,14 @@ public class TourApiClient {
 				"TourAPI 분류코드 조회 실패. contentTypeId: " + contentTypeId + ", cat1: " + cat1 + ", cat2: " + cat2, e);
 		}
 
+	}
+
+	// TourAPI 가 4xx / 5xx 로 응답했을 때 응답 바디 (실패 사유) 를 남긴다.
+	// 스택은 남기지 않는다 - 예외는 BusinessException 으로 감싸 던지므로 스택은 받는 쪽(HTTP 는 BusinessExceptionHandler) 이 남긴다.
+	// debug 가 아니라 warn 인 이유: 전 프로필이 org.example.be=INFO 라 debug 로 내리면 운영에서 바디가 사라진다.
+	private void logErrorResponse(String api, RestClientResponseException e) {
+		log.warn("[TourApiClient] {} 응답 오류 - status={}, body={}", api, e.getStatusCode().value(),
+			LogFormatUtils.formatValue(e.getResponseBodyAsString(), MAX_LOGGED_BODY_LENGTH, true));
 	}
 
 }

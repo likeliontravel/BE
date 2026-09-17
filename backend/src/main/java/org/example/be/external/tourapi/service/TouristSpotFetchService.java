@@ -73,7 +73,6 @@ public class TouristSpotFetchService {
 
 		while (true) {
 			String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
-			System.out.println("[Debug] Raw Json from tour api: \n" + json);
 			log.debug("[Debug] Raw Json from tour api: \n {}", json);
 			List<Map<String, Object>> items = tourApiParser.parseItems(json);
 			log.debug("[Debug] parsed items size: {} ", items.size());

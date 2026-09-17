@@ -15,9 +15,11 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GCSService {
 
 	private final Storage storage;
@@ -69,11 +71,9 @@ public class GCSService {
 			boolean deleted = storage.delete(blobId);
 
 			if (!deleted) {
-				// TODO: System.out을 로거로 교체해야 한다.
-				// - 왜 지금 안 하는가: Task 1-4는 예외 재포장을 다루고, 이 줄은 예외가 아니라 로깅 결함이다.
-				// - 올바른 해결: log.warn으로 교체 + '삭제 대상 없음' 이 정상(멱등)인지 이상인지 확정
-				// - 언제: Task 2-6 로깅 정비
-				System.out.println("[GCS 프로필 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
+				// 호출처는 프로필 교체 또는 삭제(MemberService)다. 삭제 대상이 없다는 것은 DB에 저장된 URL 이
+				// 버킷의 실제 객체와 어긋났다는 데이터 불일치 신호이므로, 멱등으로 넘기지 않고 WARN 으로 남긴다.
+				log.warn("[GCS 프로필 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: {}", fileName);
 			}
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
@@ -151,8 +151,8 @@ public class GCSService {
 			boolean deleted = storage.delete(blobId);
 
 			if (!deleted) {
-				// TODO: System.out 을 로거로 교체해야 한다 ( 상세: deleteProfileImage() 와 같은 TODO.)
-				System.out.println("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
+				// WARN 인 이유: deleteProfileImage() 의 같은 분기 주석 참조
+				log.warn("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: {}", fileName);
 			}
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);

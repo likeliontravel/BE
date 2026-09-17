@@ -229,14 +229,7 @@ public class GroupService {
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
-		System.out.println("[GroupService에서 검증 로그] 그룹 이름: " + groupName);
-		System.out.println("[검증 로그] 요청자 memberId: " + memberId);
-		System.out.println("[검증 로그] 그룹 멤버 목록:");
-		group.getMembers().forEach(member ->
-			System.out.println(" - " + member.getId())
-		);
-
-		return group.getMembers().stream().anyMatch(m -> m.getId().equals(memberId));   // return; 있다면 true, 없다면 false
+		return group.getMembers().stream().anyMatch(m -> m.getId().equals(memberId));
 	}
 
 	// Convert to GroupResponseBody

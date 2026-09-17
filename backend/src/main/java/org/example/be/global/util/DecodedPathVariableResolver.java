@@ -39,8 +39,6 @@ public class DecodedPathVariableResolver implements HandlerMethodArgumentResolve
 		}
 
 		String rawValue = uriTemplateVars.get(parameterName);
-		System.out.println("[DecodedPathVariableResolver] parameterName: " + parameterName);
-		System.out.println("[DecodedPathVariableResolver] uriTemplateVars: " + uriTemplateVars);
 		if (rawValue == null) {
 			throw new BusinessException(ErrorCode.INVALID_URI_VARIABLES,
 				"PathVariable '" + parameterName + "' not found in URI variables. " + "Avaialable keys: "

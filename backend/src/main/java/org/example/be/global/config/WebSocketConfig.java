@@ -4,6 +4,7 @@ import org.example.be.domain.chat.handler.CustomHandshakeHandler;
 import org.example.be.domain.chat.interceptor.CustomHandshakeInterceptor;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.service.AuthTokenService;
+import org.example.be.global.exception.support.ErrorResponseWriter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -19,12 +20,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 	private final AuthTokenService authTokenService;
 	private final GroupRepository groupRepository;
+	private final ErrorResponseWriter errorResponseWriter;
 
 	// 클라이언트가 접속할 WebSocket 엔드포인트 등록
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint("/ws")
-			.addInterceptors(new CustomHandshakeInterceptor(authTokenService, groupRepository))
+			.addInterceptors(new CustomHandshakeInterceptor(authTokenService, groupRepository, errorResponseWriter))
 			.setHandshakeHandler(new CustomHandshakeHandler())
 			.setAllowedOrigins("https://localhost:3000", "https://localhost:5500", "https://toleave.cloud")
 			.withSockJS();  // SockJS fallback 지원
