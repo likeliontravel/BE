@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.region.TourRegion;
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.external.tourapi.dto.AreaDTO;
@@ -15,6 +13,8 @@ import org.example.be.external.tourapi.dto.SigunguDTO;
 import org.example.be.external.tourapi.util.RegionClassifier;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.external.tourapi.util.TourApiParser;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,7 +107,7 @@ public class RefreshRegionService {
 		} catch (Exception e) {
 			log.error("[RefreshRegion] 지역코드 갱신 실패", e);
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
-				"Place 지역 갱신 실패 - message: " + e.getMessage());
+				"Place 지역 갱신 실패", e);
 		}
 	}
 

@@ -3,10 +3,10 @@ package org.example.be.domain.mail.service;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import org.example.be.domain.mail.dto.MailVerifyReqBody;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
 import org.example.be.global.exception.code.ErrorCode;
-import org.example.be.domain.mail.dto.MailVerifyReqBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -53,26 +53,26 @@ public class MailService {
 			mailSender.send(message);
 
 		} catch (Exception e) {
-
-			throw new RuntimeException(e);
+			// Redis, SMTP라는 외부 경계의 실패. 우리가 통제할 수 없으므로 도메인 예외로 옮긴다.
+			// cause(e)를 넘겨서 로그에 진짜 원인(연결 타임아웃, 인증 실패 등)이 변환 지점에서 소멸하지 않도록 한다.
+			throw new BusinessException(ErrorCode.MAIL_SEND_FAILED, "인증 메일 발송 실패 - email: " + email, e);
 		}
 	}
 
-	// 인증 코드 검사하는 로직
-	public boolean verifyCode(MailVerifyReqBody mailVerifyReqBody) {
+	// 인증 코드 검사하는 로직. 실패는 예외로만 표현한다(반환값으로 실패를 알리지 않는다).
+	public void verifyCode(MailVerifyReqBody mailVerifyReqBody) {
 
 		String storedCode = stringRedisTemplate.opsForValue().get(mailVerifyReqBody.email());
 
 		if (storedCode == null) {
-			throw new RuntimeException("인증 코드를 찾을 수 없거나 만료 되었습니다.");
+			throw new BusinessException(ErrorCode.MAIL_CODE_EXPIRED, "email: " + mailVerifyReqBody.email());
 		}
 
 		if (!storedCode.equals(mailVerifyReqBody.code())) {
-			throw new RuntimeException("인증코드가 다릅니다.");
+			throw new BusinessException(ErrorCode.MAIL_CODE_MISMATCH, "email: " + mailVerifyReqBody.email());
 		}
 
 		stringRedisTemplate.delete(mailVerifyReqBody.email()); // 인증 성공 시 Redis에서 삭제
-		return true;
 	}
 
 	// 인증 코드 만드는 로직
@@ -102,7 +102,7 @@ public class MailService {
 				"인증 코드 유효시간은 5분 입니다.");
 			mailSender.send(message);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new BusinessException(ErrorCode.MAIL_SEND_FAILED, "재설정 메일 발송 실패 - email: " + email, e);
 		}
 	}
 }

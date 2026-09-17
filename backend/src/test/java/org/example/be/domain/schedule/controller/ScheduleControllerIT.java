@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.example.be.domain.schedule.dto.response.NearestScheduleResBody;
 import org.example.be.domain.schedule.service.ScheduleService;
+import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.security.config.SecurityUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -77,9 +78,9 @@ class ScheduleControllerIT {
 	void unauthenticated_returnsUnauthorized() throws Exception {
 		mockMvc.perform(get("/schedule/nearest"))
 			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.success").value(false))
 			.andExpect(jsonPath("$.status").value(401))
-			.andExpect(jsonPath("$.message").value("로그인 후 이용해주세요."));
+			.andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+			.andExpect(jsonPath("$.message").value(ErrorCode.UNAUTHORIZED.getMessage()));
 
 		verifyNoInteractions(scheduleService);
 	}

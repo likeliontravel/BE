@@ -36,16 +36,24 @@ public class GCSService {
 	 * @return : 저장 성공 후 반환받은 public URL
 	 */
 	public String uploadProfileImage(MultipartFile file, Long memberId) {
+		// 검증은 I/O가 아니므로 try 밖에 둔다.
+		validateImageFile(file);
+
 		try {
-			validateImageFile(file);
 			String fileName = "profile_" + memberId + "_" + UUID.randomUUID();
 			BlobId blobId = BlobId.of(profileBucketName, fileName);
 			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", profileBucketName, fileName);
+			// TODO: StorageException(GCS SDK 장애 - 인증, 버킷, 권한, 네트워크)은 RuntimeException이라 이 catch에 걸리지 않는다.
+			// -> 진짜 GCS 장애는 GCS_UPLOAD_FAILED 가 아니라 catch-all의 INTERNAL_SERVER_ERROR 로 나간다.
+			// -> 왜 지금 안 하는가: 응답 code가 바뀌는 프론트엔드 계약 변경이라 이후 작업 Phase에서 다룬다.
+			// -> 올바른 해결: catch (IOException | StorageException e) 로 넓혀 GCS_UPLOAD_FAILED로 통일한다.
+			//    (validateImageFile을 try 밖으로 뺐으므로 넓혀도 400이 500으로 승격되지 않는다)
+			// -> 언제: Phase 2 의 3번째 작업 외부 API 경계 예외 정리하기로 결정함
 		} catch (IOException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. \nmessage: " + e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
 
@@ -64,11 +72,14 @@ public class GCSService {
 			boolean deleted = storage.delete(blobId);
 
 			if (!deleted) {
+				// TODO: System.out을 로거로 교체해야 한다.
+				// - 왜 지금 안 하는가: Task 1-4는 예외 재포장을 다루고, 이 줄은 예외가 아니라 로깅 결함이다.
+				// - 올바른 해결: log.warn으로 교체 + '삭제 대상 없음' 이 정상(멱등)인지 이상인지 확정
+				// - 언제: Task 2-6 로깅 정비
 				System.out.println("[GCS 프로필 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
 			}
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED,
-				"image url: " + imageUrl + ", message: " + e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
 		}
 
 	}
@@ -78,16 +89,22 @@ public class GCSService {
 	 *
 	 */
 	public String uploadChatImage(MultipartFile file, String senderId, String groupName) {
+		// 검증은 I/O가 아니므로 try 밖에 둔다.
+		validateImageFile(file);
+
 		try {
-			validateImageFile(file);
 			String fileName = "chat_" + groupName + "_" + senderId + "_" + UUID.randomUUID();
 			BlobId blobId = BlobId.of(chatImageBucketName, fileName);
 			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", chatImageBucketName, fileName);
+			// TODO: StorageException 은 RuntimeException이라 이 catch에 걸리지 않는다. (상세: 위 uploadProfileImage 의 같은 TODO).
+			// - 올바른 해결: catch (IOException | StorageException e) 로 통일
+			// - 언제: Phase 2 - 3 Task
 		} catch (IOException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "채팅 이미지 업로드 실패. \n message: " + e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
+				"채팅 이미지 업로드 실패. groupName: " + groupName + ", senderId: " + senderId, e);
 		}
 	}
 
@@ -109,16 +126,21 @@ public class GCSService {
 	 * @return : 저장 성공 후 반환받은 public URL
 	 */
 	public String uploadBoardImage(MultipartFile file, Long memberId) {
+		// 검증은 I/O가 아니므로 try 밖에 둔다.
+		validateImageFile(file);
+
 		try {
-			validateImageFile(file);
 			String fileName = "board_" + memberId + "_" + UUID.randomUUID();
 			BlobId blobId = BlobId.of(boardImageBucketName, fileName);
 			BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
 			storage.create(blobInfo, file.getBytes());
 
 			return String.format("https://storage.googleapis.com/%s/%s", boardImageBucketName, fileName);
+			// TODO: StorageException 은 RuntimeException이라 이 catch에 걸리지 않는다. (상세: 위 uploadProfileImage 의 같은 TODO).
+			// - 올바른 해결: catch (IOException | StorageException e) 로 통일
+			// - 언제: Phase 2 - 3 Task
 		} catch (IOException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "게시글 이미지 업로드 실패. \nmessage: " + e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "게시글 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
 
@@ -137,12 +159,13 @@ public class GCSService {
 			boolean deleted = storage.delete(blobId);
 
 			if (!deleted) {
+				// TODO: System.out 을 로거로 교체해야 한다 ( 상세: deleteProfileImage() 와 같은 TODO.)
 				System.out.println("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: " + fileName);
 			}
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED,
-				"image url: " + imageUrl + ", message: " + e.getMessage());
+			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
 		}
+
 	}
 
 }

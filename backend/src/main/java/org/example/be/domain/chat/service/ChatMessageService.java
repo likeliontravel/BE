@@ -140,11 +140,8 @@ public class ChatMessageService {
 		Member sender = findMember(memberId);
 
 		ChatMessage chatMessage = ChatMessage.create(group, sender, type, content);
-		try {
-			return chatMessageRepository.save(chatMessage);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
-		}
+
+		return chatMessageRepository.save(chatMessage);
 	}
 
 	// ==================== 내부 사용 메서드 ====================
@@ -155,7 +152,7 @@ public class ChatMessageService {
 			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
