@@ -103,7 +103,9 @@ public class RefreshCategoryService {
 			return new FetchResult(totalSaved, totalUpdated, totalSkipped, 0);
 
 		} catch (Exception e) {
-			log.error("[RefreshCategory] 카테고리 갱신 실패", e);
+			// 여기서 로그를 남기지 않는다 - 두 호출 경로가 모두 이미 ERROR + 스택을 남기기 때문이다.
+			// HTTP(RefreshCategoryController): BusinessExceptionHandler 가 5xx 를 ERROR + 스택으로 기록
+			// 배치(BatchConfig refreshCategoryStep): Spring Batch AbstractStep 이 Step 실패를 ERROR + 스택으로 기록
 			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
 				"Place 카테고리 갱신 실패", e);
 		}
