@@ -35,7 +35,8 @@ import lombok.extern.slf4j.Slf4j;
  * advice 의 사정거리 밖 - catch-all 에서도 아래는 여기에 도달하지 못한다.
  * 1. 필터에서 난 예외 : DispatcherServlet 밖이다. 필터가 잡는 BusinessException 은 ErrorResponseWriter 가
  *                  규격 JSON 으로 직접 쓰고, 그 밖의 예외는 컨테이너 error 디스패치(/error)로 가서 스프링 기본 바디로 나간다.
- * 2. @MessageMapping(STOMP) : @MessageExceptionHandler 가 따로 있어야 한다 (현재 우리 프로젝트에 없음)
+ * 2. @MessageMapping(STOMP) : @MessageExceptionHandler 가 따로 있어야 한다
+ *                             ChatSocketExceptionHandler 가 담당한다 (오류를 보낸 세션의 `/user/queue/errors` 로 보낸다).
  * 3. SSE 클라이언트 이탈 : 이건 SseExceptionHandler 가 @Order(0) 으로 먼저 받는다.
  *
  * 핸들러는 전부 3개 인자 CommonResponse.error(status, code, message) 를 쓴다. (이유: BusinessExceptionHandler 상단 주석)

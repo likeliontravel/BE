@@ -35,7 +35,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	// STOMP 메시지 처리에 사용할 브로커 설정
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry registry) {
-		registry.enableSimpleBroker("/sub"); // 클라이언트가 구독에 사용할 prefix
+		// "/queue" 는 사용자별 오류 통보 채널 ('/user/queue/errors' - ChatSocketExceptionHandler) 을 위한 것이다.
+		// '/user/queue/errors' 는 '/queue/errors-user{세션id}' 로 바뀌어 이 브로커로 오는데,
+		// 브로커는 등록된 prefix 로 시작하지 않는 목적지를 예외 없이 버린다. 즉 이 값을 빼면 오류 메시지만 조용히 사라진다.
+		// (컴파일, 부팅, 채팅 브로드캐스트는 모두 정상이라 눈에 보이지 않는다. 이 계약은 ChatSocketExceptionHandlerIT 테스트가 고정한다)
+		registry.enableSimpleBroker("/sub", "/queue"); // 클라이언트가 구독에 사용할 prefix
 		registry.setApplicationDestinationPrefixes("/pub"); // 클라이언트가 메시지 전송 시 사용할 prefix
 	}
 
