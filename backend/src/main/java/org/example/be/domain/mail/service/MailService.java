@@ -58,11 +58,11 @@ public class MailService {
 		String storedCode = stringRedisTemplate.opsForValue().get(mailVerifyReqBody.email());
 
 		if (storedCode == null) {
-			throw new RuntimeException("인증 코드를 찾을 수 없거나 만료 되었습니다.");
+			throw new BusinessException(ErrorCode.MAIL_CODE_NOT_FOUND);
 		}
 
 		if (!storedCode.equals(mailVerifyReqBody.code())) {
-			throw new RuntimeException("인증코드가 다릅니다.");
+			throw new BusinessException(ErrorCode.MAIL_CODE_MISMATCH);
 		}
 
 		stringRedisTemplate.delete(mailVerifyReqBody.email()); // 인증 성공 시 Redis에서 삭제
