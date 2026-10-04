@@ -52,7 +52,7 @@ public class CommentController {
 
 		CommentResBody resBody = commentService.writeComment(boardId, reqBody, user.getId());
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success(resBody, "댓글이 작성되었습니다."));
+			.body(CommonResponse.success(HttpStatus.CREATED, resBody, "댓글이 작성되었습니다."));
 	}
 
 	// 댓글 수정 - 작성자 본인만 수정 가능
@@ -62,8 +62,7 @@ public class CommentController {
 		@AuthenticationPrincipal SecurityUser user) {
 
 		CommentResBody resBody = commentService.updateComment(commentId, commentResBody, user.getId());
-		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(CommonResponse.success(resBody, "댓글이 수정되었습니다."));
+		return ResponseEntity.ok(CommonResponse.success(resBody, "댓글이 수정되었습니다."));
 	}
 
 	// 댓글 삭제

@@ -1,5 +1,7 @@
 package org.example.be.global.response;
 
+import org.springframework.http.HttpStatus;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
@@ -30,22 +32,30 @@ public class CommonResponse<T> {
 	private String message; // 응답 메세지
 	private T data; // 실제 데이터 (제네릭 타입)
 
-	// 성공 응답을 위한 정적 메서드
+	// 성공 응답을 위한 정적 메서드 (200 OK)
 	public static <T> CommonResponse<T> success(T data, String message) {
+		return success(HttpStatus.OK, data, message);
+	}
+
+	/**
+	 * 2026.10.04 update - 200이 아닌 성공 응답 (201 Created 등)용 오버로드 추가.
+	 * 바디의 status 는 반드시 ResponseEntity 헤더의 상태코드와 같은 값을 넘긴다.
+	 * 이전에는 status 가 200으로 하드코딩되어 헤더 201 / 바디 200 으로 어긋났다.
+	 */
+	public static <T> CommonResponse<T> success(HttpStatus status, T data, String message) {
 		return CommonResponse.<T>builder()
 			.success(true)
-			.status(200)
+			.status(status.value())
 			.message(message)
 			.data(data)
 			.build();
 	}
 
-	// 실패 응답을 위한 정적 메서드 (code를 모르는 호출부용 - 필터 등)
-	public static <T> CommonResponse<T> error(int status, String message) {
-		return error(status, null, message);
-	}
-
-	// 실패 응답을 위한 정적 메서드 (code 포함 - advice · ErrorResponseWriter가 쓴다)
+	/**
+	 * 실패 응답을 위한 정적 메서드 - advice, ErrorResponseWriter, STOMP 핸들러가 쓴다.
+	 * 2026.10.04 update - code 없는 2-인자 error(int, String)를 삭제했다.
+	 * @JsonInclude(NON_NULL) 때문에 code 를 빠뜨리면 응답에서 키가 조용히 사라지므로, code 전달을 컴파일러가 강제하게 한다.
+	 */
 	public static <T> CommonResponse<T> error(int status, String code, String message) {
 		return CommonResponse.<T>builder()
 			.success(false)

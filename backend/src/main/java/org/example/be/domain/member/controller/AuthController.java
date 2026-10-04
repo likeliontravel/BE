@@ -1,5 +1,10 @@
 package org.example.be.domain.member.controller;
 
+import org.example.be.domain.group.invitation.entity.GroupInvitation;
+import org.example.be.domain.group.invitation.service.GroupInvitationService;
+import org.example.be.domain.group.service.GroupService;
+import org.example.be.domain.mail.dto.MailVerifyReqBody;
+import org.example.be.domain.mail.service.MailService;
 import org.example.be.domain.member.dto.request.MemberJoinReqBody;
 import org.example.be.domain.member.dto.request.MemberLoginReqBody;
 import org.example.be.domain.member.dto.request.PasswordResetReqBody;
@@ -12,11 +17,6 @@ import org.example.be.domain.member.service.RefreshTokenStore;
 import org.example.be.global.response.CommonResponse;
 import org.example.be.global.security.config.SecurityUser;
 import org.example.be.global.util.CookieHelper;
-import org.example.be.domain.group.invitation.entity.GroupInvitation;
-import org.example.be.domain.group.invitation.service.GroupInvitationService;
-import org.example.be.domain.group.service.GroupService;
-import org.example.be.domain.mail.dto.MailVerifyReqBody;
-import org.example.be.domain.mail.service.MailService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -69,7 +69,8 @@ public class AuthController {
 		}
 
 		MemberDto memberDto = MemberDto.from(member, false);
-		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(memberDto, "회원가입 성공"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CommonResponse.success(HttpStatus.CREATED, memberDto, "회원가입 성공"));
 	}
 
 	// 로그인

@@ -97,7 +97,8 @@ public class ChatMessageController {
 		@AuthenticationPrincipal SecurityUser user
 	) {
 		String publicUrl = chatMessageService.uploadAndGetPreview(image, groupName, user.getId());
-		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(publicUrl, "이미지 메시지 저장 성공"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CommonResponse.success(HttpStatus.CREATED, publicUrl, "이미지 메시지 저장 성공"));
 	}
 
 	// -----------------------------------------------------------------------------------------

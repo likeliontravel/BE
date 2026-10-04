@@ -111,7 +111,8 @@ public class BoardController {
 		@RequestParam("files") List<MultipartFile> files,
 		@AuthenticationPrincipal SecurityUser user) {
 		List<String> urls = boardService.uploadBoardImages(files, user.getId());
-		return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(urls, "게시글 이미지 업로드 성공"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(CommonResponse.success(HttpStatus.CREATED, urls, "게시글 이미지 업로드 성공"));
 	}
 
 }
