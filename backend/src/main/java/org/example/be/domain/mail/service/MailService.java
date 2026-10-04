@@ -11,6 +11,7 @@ import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.mail.dto.MailVerifyReqBody;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -184,8 +185,8 @@ public class MailService {
 			helper.setText(html, true); // true = HTML로 렌더링
 
 			mailSender.send(message);
-		} catch (MessagingException e) {
-			throw new BusinessException(ErrorCode.EMAIL_SEND_FAILED, e.getMessage());
+		} catch (MessagingException | MailException e) {
+			throw new BusinessException(ErrorCode.MAIL_SEND_FAILED, e.getMessage());
 		}
 	}
 }
