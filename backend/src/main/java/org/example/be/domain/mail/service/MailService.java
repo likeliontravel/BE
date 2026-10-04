@@ -107,10 +107,10 @@ public class MailService {
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
     <style>
-      :root { color-scheme: light dark; supported-color-schemes: light dark; }
+      :root { color-scheme: light; }
       .card { background-color:#ffffff !important; }
       .code-box { background-color:#f0f3f6 !important; }
       .body-text { color:#333333 !important; }
@@ -119,25 +119,15 @@ public class MailService {
       .code-label { color:#8a939c !important; }
       .code-value { color:#2f7bf6 !important; }
       .outer-bg { background-color:#eef1f4 !important; }
-      @media (prefers-color-scheme: dark) {
-        .card { background-color:#ffffff !important; }
-        .code-box { background-color:#f0f3f6 !important; }
-        .body-text { color:#333333 !important; }
-        .sub-text { color:#aaaaaa !important; }
-        .footer { background-color:#fafafa !important; color:#bbbbbb !important; }
-        .code-label { color:#8a939c !important; }
-        .code-value { color:#2f7bf6 !important; }
-        .outer-bg { background-color:#eef1f4 !important; }
-      }
       img { max-width:100%%; height:auto; }
     </style>
     </head>
     <body style="margin:0; padding:0; background-color:#eef1f4;">
-    <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" bgcolor="#eef1f4" class="outer-bg" style="background-color:#eef1f4; padding:40px 0; font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;">
-      <tr><td align="center">
+    <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" bgcolor="#eef1f4" class="outer-bg" style="background-color:#eef1f4; font-family:'Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;">
+      <tr><td align="center" style="padding:40px 16px;">
         <table role="presentation" width="480" cellpadding="0" cellspacing="0" bgcolor="#ffffff" class="card" style="background-color:#ffffff; border-radius:16px; overflow:hidden; max-width:480px; width:100%%;">
           <tr>
-            <td align="center" style="padding:40px 32px 0 32px;">
+            <td align="center" bgcolor="#ffffff" style="padding:40px 32px 0 32px; background-color:#ffffff;">
               <img src="%s" width="220" height="93" alt="투리브 캐릭터" style="display:block; width:220px; height:auto; max-width:60%%;">
             </td>
           </tr>
