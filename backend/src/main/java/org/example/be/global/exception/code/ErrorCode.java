@@ -75,12 +75,7 @@ public enum ErrorCode {
 	INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "초대 링크가 만료되었습니다. 새로 생성하세요."),
 	INVITATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "초대 링크가 없습니다. 초대 링크를 생성하세요."),
 	GROUP_CREATOR_CANNOT_EXIT(HttpStatus.BAD_REQUEST, "그룹 창설자는 그룹을 나갈 수 없습니다. 그룹 삭제 기능을 이용해주세요."),
-	GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없어 최신 그룹 공지가 없습니다."),
-	GROUP_ANNOUNCEMENT_NOT_FOUND(HttpStatus.NO_CONTENT, "그룹 공지가 없습니다."),
-
-	// --- 채팅 (chat) ---
-	GROUP_CHAT_NOT_FOUND(HttpStatus.NO_CONTENT, "해당 그룹에 아직 메시지가 존재하지 않습니다."),
-	CHAT_PREVIOUS_MESSAGE_NOT_FOUND(HttpStatus.NO_CONTENT, "이전 메시지가 더 존재하지 않습니다."),
+	GROUP_ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹 공지가 없습니다."),
 
 	// --- 게시판 (Board) ---
 	BOARD_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 게시글입니다."),

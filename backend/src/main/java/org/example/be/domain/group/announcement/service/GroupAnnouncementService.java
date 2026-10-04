@@ -61,6 +61,7 @@ public class GroupAnnouncementService {
 	}
 
 	// 최상단 노출 그룹 공지 1개만 조회
+	// 공지가 하나도 없으면 null 을 반환한다 - CommonResponse 의 @JsonInclude(NON_NULL) 로 응답에서 data 키가 생략된다
 	@Transactional(readOnly = true)
 	public GroupAnnouncementResBody getLatestAnnouncement(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
@@ -71,14 +72,9 @@ public class GroupAnnouncementService {
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
-		Optional<GroupAnnouncement> latestAnnouncementOptional = groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(
-			group);
-
-		if (latestAnnouncementOptional.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND, "groupName: " + groupName);
-		}
-
-		return toResBody(latestAnnouncementOptional.get());
+		return groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(group)
+			.map(this::toResBody)
+			.orElse(null);
 	}
 
 	// 그룹 공지 전부 조회 (최신순 정렬되어 반환됨)

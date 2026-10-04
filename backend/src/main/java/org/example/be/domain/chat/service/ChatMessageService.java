@@ -41,27 +41,22 @@ public class ChatMessageService {
 	// ==================== 일반 REST API ====================
 
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
+	// 메시지가 없어도 오류가 아니다 - 빈 { messages: [], senderProfiles: {} } 를 그대로 반환한다
 	@Transactional(readOnly = true)
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findRecentMessages(group, 20);
-		if (messages.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
-		}
 		return buildMessageWithProfiles(messages);
 	}
 
 	// 이전 메시지 20개 추가 조회 ( 스크롤 업 시 호출용 )
+	// 더 이전 메시지가 없어도 오류가 아니다 - 같은 빈 shape 를 반환한다
 	@Transactional(readOnly = true)
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findPreviousMessages(group, lastMessageId, 20);
-		if (messages.isEmpty()) {
-			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
-				"groupName: " + groupName + ", messageId: " + lastMessageId);
-		}
 		return buildMessageWithProfiles(messages);
 	}
 
@@ -78,12 +73,13 @@ public class ChatMessageService {
 	}
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
+	// 메시지가 하나도 없으면 null 을 반환한다 - CommonResponse 의 @JsonInclude(NON_NULL) 로 응답에서 data 키가 생략된다
 	@Transactional(readOnly = true)
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		return chatMessageRepository.findLatestMessage(group)
 			.map(ChatMessageResBody::from)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName));
+			.orElse(null);
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
