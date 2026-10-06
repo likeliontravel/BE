@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.type.OauthProvider;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.jwt.util.JwtUt;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -64,7 +65,7 @@ class AuthExceptionIT {
 			.andExpect(jsonPath("$.success").value(false))
 			.andExpect(jsonPath("$.status").value(401))
 			.andExpect(jsonPath("$.code").value("LOGIN_FAILED"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.LOGIN_FAILED.getMessage()))
+			.andExpect(jsonPath("$.message").value(MemberErrorCode.LOGIN_FAILED.getMessage()))
 			.andReturn();
 
 		MvcResult unknownEmail = mockMvc.perform(post("/auth/login")
@@ -91,7 +92,7 @@ class AuthExceptionIT {
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.status").value(400))
 			.andExpect(jsonPath("$.code").value("SOCIAL_ACCOUNT_LOGIN_REQUIRED"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.SOCIAL_ACCOUNT_LOGIN_REQUIRED.getMessage()));
+			.andExpect(jsonPath("$.message").value(MemberErrorCode.SOCIAL_ACCOUNT_LOGIN_REQUIRED.getMessage()));
 	}
 
 	@Test
@@ -116,7 +117,7 @@ class AuthExceptionIT {
 			.andExpect(jsonPath("$.success").value(false))
 			.andExpect(jsonPath("$.status").value(401))
 			.andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.UNAUTHORIZED.getMessage()));
+			.andExpect(jsonPath("$.message").value(CommonErrorCode.UNAUTHORIZED.getMessage()));
 	}
 
 	// MemberLoginReqBody 의 @Email, @Size(min = 8) 을 통과하는 값만 넘길 것. 걸리면 401/400 대신 @Valid 400 이 난다.

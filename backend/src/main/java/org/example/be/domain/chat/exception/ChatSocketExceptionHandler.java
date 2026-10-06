@@ -2,6 +2,7 @@ package org.example.be.domain.chat.exception;
 
 import org.example.be.domain.chat.controller.ChatMessageSocketController;
 import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.messaging.converter.MessageConversionException;
@@ -71,7 +72,7 @@ public class ChatSocketExceptionHandler {
 	@MessageExceptionHandler(MessageConversionException.class)
 	@SendToUser(destinations = ERROR_DESTINATION, broadcast = false)
 	public CommonResponse<Void> handleMessageConversionException(MessageConversionException e) {
-		ErrorCode errorCode = ErrorCode.INVALID_REQUEST_BODY;
+		ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_BODY;
 		log.warn("[ChatSocket] code={}, detail={}", errorCode.name(), e.getMessage());
 		return CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage());
 	}
@@ -83,7 +84,7 @@ public class ChatSocketExceptionHandler {
 	@SendToUser(destinations = ERROR_DESTINATION, broadcast = false)
 	public CommonResponse<Void> handleException(Exception e) {
 		log.error("[ChatSocket] 처리되지 않은 예외 - message={}", e.getMessage(), e);
-		ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+		ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
 		return CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage());
 	}
 }

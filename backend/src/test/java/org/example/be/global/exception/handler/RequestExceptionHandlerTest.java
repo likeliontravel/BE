@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,7 +148,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response =
 			requestExceptionHandler.handleHttpMessageNotReadableException(exception);
 
-		assertErrorResponse(response, 400, "INVALID_REQUEST_BODY", ErrorCode.INVALID_REQUEST_BODY.getMessage());
+		assertErrorResponse(response, 400, "INVALID_REQUEST_BODY", CommonErrorCode.INVALID_REQUEST_BODY.getMessage());
 		ILoggingEvent event = assertSingleWarnLogWithoutStack("[HttpMessageNotReadableException] ");
 		// 원문은 로그에서만 볼 수 있어야 한다.
 		assertThat(event.getFormattedMessage()).contains("MemberLoginReqBody");
@@ -163,7 +163,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response =
 			requestExceptionHandler.handleHttpMediaTypeNotSupportedException(exception);
 
-		assertErrorResponse(response, 415, "UNSUPPORTED_MEDIA_TYPE", ErrorCode.UNSUPPORTED_MEDIA_TYPE.getMessage());
+		assertErrorResponse(response, 415, "UNSUPPORTED_MEDIA_TYPE", CommonErrorCode.UNSUPPORTED_MEDIA_TYPE.getMessage());
 		assertThat(response.getHeaders().getFirst(HttpHeaders.ACCEPT)).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
 		assertSingleWarnLogWithoutStack("[HttpMediaTypeNotSupportedException] ");
 	}
@@ -180,7 +180,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleMissingServletRequestParameterException(exception);
 
 		assertErrorResponse(response, 400, "MISSING_REQUIRED_PARAMETER",
-			ErrorCode.MISSING_REQUIRED_PARAMETER.getMessage() + " (groupName)");
+			CommonErrorCode.MISSING_REQUIRED_PARAMETER.getMessage() + " (groupName)");
 		// 스프링 원문 "Required request parameter 'groupName' for method parameter type String is not present" 가 새면 안 된다.
 		assertThat(response.getBody().getMessage()).doesNotContain("Required").doesNotContain("String");
 		assertSingleWarnLogWithoutStack("[MissingServletRequestParameterException] ");
@@ -195,7 +195,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleMissingRequestHeaderException(exception);
 
 		assertErrorResponse(response, 400, "MISSING_REQUIRED_HEADER",
-			ErrorCode.MISSING_REQUIRED_HEADER.getMessage() + " (X-Group-Id)");
+			CommonErrorCode.MISSING_REQUIRED_HEADER.getMessage() + " (X-Group-Id)");
 		assertSingleWarnLogWithoutStack("[MissingRequestHeaderException] ");
 	}
 
@@ -210,7 +210,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleMethodArgumentTypeMismatchException(exception);
 
 		assertErrorResponse(response, 400, "INVALID_URI_VARIABLES",
-			ErrorCode.INVALID_URI_VARIABLES.getMessage() + " (id)");
+			CommonErrorCode.INVALID_URI_VARIABLES.getMessage() + " (id)");
 		assertThat(response.getBody().getMessage()).doesNotContain("<script>");
 		ILoggingEvent event = assertSingleWarnLogWithoutStack("[MethodArgumentTypeMismatchException] ");
 		// 입력값은 로그에서만 볼 수 있어야 한다.
@@ -227,7 +227,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response = requestExceptionHandler.handleNoResourceFoundException(
 			exception);
 
-		assertErrorResponse(response, 404, "ENDPOINT_NOT_FOUND", ErrorCode.ENDPOINT_NOT_FOUND.getMessage());
+		assertErrorResponse(response, 404, "ENDPOINT_NOT_FOUND", CommonErrorCode.ENDPOINT_NOT_FOUND.getMessage());
 		assertThat(response.getBody().getMessage()).doesNotContain("mail/nope");
 		ILoggingEvent event = assertSingleWarnLogWithoutStack("[NoResourceFoundException] ");
 		assertThat(event.getFormattedMessage()).contains("path=mail/nope");
@@ -242,7 +242,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response =
 			requestExceptionHandler.handleHttpRequestMethodNotSupportedException(exception);
 
-		assertErrorResponse(response, 405, "METHOD_NOT_ALLOWED", ErrorCode.METHOD_NOT_ALLOWED.getMessage());
+		assertErrorResponse(response, 405, "METHOD_NOT_ALLOWED", CommonErrorCode.METHOD_NOT_ALLOWED.getMessage());
 		// RFC 9110 은 405 응답에 Allow 헤더를 요구한다.
 		assertThat(response.getHeaders().getFirst(HttpHeaders.ALLOW)).isEqualTo("POST");
 		assertSingleWarnLogWithoutStack("[HttpRequestMethodNotSupportedException] ");
@@ -260,7 +260,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleMaxUploadSizeExceededException(exception);
 
 		assertErrorResponse(response, 413, "FILE_SIZE_EXCEEDED",
-			ErrorCode.FILE_SIZE_EXCEEDED.getMessage() + " (파일 1개당 최대 10MB, 요청 전체 최대 55MB)");
+			CommonErrorCode.FILE_SIZE_EXCEEDED.getMessage() + " (파일 1개당 최대 10MB, 요청 전체 최대 55MB)");
 		assertSingleWarnLogWithoutStack("[MaxUploadSizeExceededException] ");
 	}
 
@@ -273,7 +273,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleMissingServletRequestPartException(exception);
 
 		assertErrorResponse(response, 400, "MISSING_REQUIRED_PART",
-			ErrorCode.MISSING_REQUIRED_PART.getMessage() + " (files)");
+			CommonErrorCode.MISSING_REQUIRED_PART.getMessage() + " (files)");
 		assertSingleWarnLogWithoutStack("[MissingServletRequestPartException] ");
 	}
 
@@ -285,7 +285,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response = requestExceptionHandler.handleMultipartException(exception);
 
 		assertErrorResponse(response, 400, "INVALID_MULTIPART_REQUEST",
-			ErrorCode.INVALID_MULTIPART_REQUEST.getMessage());
+			CommonErrorCode.INVALID_MULTIPART_REQUEST.getMessage());
 		assertSingleWarnLogWithoutStack("[MultipartException] ");
 	}
 
@@ -302,7 +302,7 @@ class RequestExceptionHandlerTest {
 			requestExceptionHandler.handleDataIntegrityViolationException(exception);
 
 		assertErrorResponse(response, 409, "DATA_INTEGRITY_VIOLATION",
-			ErrorCode.DATA_INTEGRITY_VIOLATION.getMessage());
+			CommonErrorCode.DATA_INTEGRITY_VIOLATION.getMessage());
 		assertThat(response.getBody().getMessage()).doesNotContain("update member");
 		ILoggingEvent event = assertSingleWarnLogWithoutStack("[DataIntegrityViolationException] ");
 		assertThat(event.getFormattedMessage())
@@ -320,7 +320,7 @@ class RequestExceptionHandlerTest {
 			exception);
 
 		// 헤더 404 와 바디 status 404 가 일치해야 한다. (2-2 반영 중 바디 status 가 400 으로 어긋났던 결함)
-		assertErrorResponse(response, 404, "BAD_REQUEST", ErrorCode.BAD_REQUEST.getMessage());
+		assertErrorResponse(response, 404, "BAD_REQUEST", CommonErrorCode.BAD_REQUEST.getMessage());
 		assertThat(response.getBody().getMessage()).doesNotContain("boardId");
 
 		assertThat(logAppender.list).hasSize(1);
@@ -342,7 +342,7 @@ class RequestExceptionHandlerTest {
 		ResponseEntity<CommonResponse<Void>> response = requestExceptionHandler.handleResponseStatusException(
 			exception);
 
-		assertErrorResponse(response, 503, "INTERNAL_SERVER_ERROR", ErrorCode.INTERNAL_SERVER_ERROR.getMessage());
+		assertErrorResponse(response, 503, "INTERNAL_SERVER_ERROR", CommonErrorCode.INTERNAL_SERVER_ERROR.getMessage());
 
 		assertThat(logAppender.list).hasSize(1);
 		ILoggingEvent event = logAppender.list.get(0);

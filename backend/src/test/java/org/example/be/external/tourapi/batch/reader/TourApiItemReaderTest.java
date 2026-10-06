@@ -9,7 +9,7 @@ import java.util.Map;
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -159,7 +159,7 @@ class TourApiItemReaderTest {
 
 	// TourApiClient 가 실제로 던지는 형태 - I/O 실패를 cause 로 감싼 EXTERNAL_API_FAILED
 	private BusinessException fetchFailure(String detail) {
-		return new BusinessException(ErrorCode.EXTERNAL_API_FAILED, "TourAPI 관광정보 조회 실패. " + detail,
+		return new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED, "TourAPI 관광정보 조회 실패. " + detail,
 			new RuntimeException("Connection refused"));
 	}
 

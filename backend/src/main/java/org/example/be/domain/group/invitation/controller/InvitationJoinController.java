@@ -2,12 +2,13 @@ package org.example.be.domain.group.invitation.controller;
 
 import java.io.IOException;
 
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
 import org.example.be.domain.group.invitation.util.InviteRedirectHelper;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.security.config.SecurityUser;
 import org.example.be.global.util.DecodedPathVariable;
 import org.springframework.http.HttpHeaders;
@@ -78,7 +79,7 @@ public class InvitationJoinController {
 		} catch (BusinessException e) {
 			// 이미 그룹에 속한 사용자가 링크를 다시 클릭한 경우.
 			// 사용자 입장에서는 "그룹에 속해 있다"는 결과가 같으므로 실패가 아닌 성공으로 취급한다.
-			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
+			if (e.getErrorCode() == GroupErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
 				log.info("[invite] 이미 그룹 멤버 - invitationCode={}, groupName={}", invitationCode, groupName);
 				response.sendRedirect(
 					inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_ALREADY));
@@ -93,7 +94,7 @@ public class InvitationJoinController {
 			// 예상하지 못한 예외만 error 레벨로 남긴다
 			log.error("[invite] 초대 처리 중 예기치 못한 오류 - invitationCode={}", invitationCode, e);
 			response.sendRedirect(
-				inviteRedirectHelper.inviteErrorUrl(ErrorCode.INTERNAL_SERVER_ERROR.name())
+				inviteRedirectHelper.inviteErrorUrl(CommonErrorCode.INTERNAL_SERVER_ERROR.name())
 			);
 		}
 	}

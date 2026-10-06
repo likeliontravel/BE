@@ -3,6 +3,7 @@ package org.example.be.external.tourapi.controller;
 import java.util.List;
 
 import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
+import org.example.be.domain.place.exception.PlaceErrorCode;
 import org.example.be.domain.place.restaurant.dto.RestaurantResBody;
 import org.example.be.domain.place.touristspot.dto.TouristSpotResBody;
 import org.example.be.external.tourapi.dto.FetchResult;
@@ -11,7 +12,6 @@ import org.example.be.external.tourapi.service.RestaurantFetchService;
 import org.example.be.external.tourapi.service.TouristSpotFetchService;
 import org.example.be.external.tourapi.util.AreaCodeResolver;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class TourismController {
 	) {
 		String state = areaCodeResolver.getState(areaCode);
 		if (state == null) {
-			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
+			throw new BusinessException(PlaceErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 
 		List<TouristSpotResBody> result = touristSpotFetchService.getTouristSpots(
@@ -61,7 +61,7 @@ public class TourismController {
 	) {
 		String state = areaCodeResolver.getState(areaCode);
 		if (state == null) {
-			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
+			throw new BusinessException(PlaceErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 		List<AccommodationResBody> result = accommodationFetchService.getAccommodations(
 			areaCode, state, 1000, pageNo
@@ -79,7 +79,7 @@ public class TourismController {
 		String state = areaCodeResolver.getState(areaCode);
 
 		if (state == null) {
-			throw new BusinessException(ErrorCode.INVALID_REGION, "areaCode: " + areaCode);
+			throw new BusinessException(PlaceErrorCode.INVALID_REGION, "areaCode: " + areaCode);
 		}
 		List<RestaurantResBody> result = restaurantFetchService.getData(areaCode, 39, 1000, pageNo);
 		return ResponseEntity.ok(CommonResponse.success(result, "식당 정보 저장 성공"));

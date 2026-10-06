@@ -14,11 +14,12 @@ import org.example.be.domain.group.announcement.dto.GroupAnnouncementResBody;
 import org.example.be.domain.group.announcement.entity.GroupAnnouncement;
 import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepository;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.member.service.MemberService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +45,10 @@ public class GroupAnnouncementService {
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED, " groupName: " + groupName);
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED, " groupName: " + groupName);
 		}
 
 		GroupAnnouncement newAnnouncement = new GroupAnnouncement();
@@ -65,10 +66,10 @@ public class GroupAnnouncementService {
 	@Transactional(readOnly = true)
 	public GroupAnnouncementResBody getLatestAnnouncement(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -82,14 +83,14 @@ public class GroupAnnouncementService {
 	public List<GroupAnnouncementResBody> getAllGroupAnnouncements(String groupName, Long memberId) {
 		// 요청자가 그룹 멤버인지 검증
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
 		// 해당 이름의 그룹이 존재하는지 확인
 		if (groupOptional.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName);
+			throw new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName);
 		}
 
 		Group group = groupOptional.get();
@@ -108,19 +109,19 @@ public class GroupAnnouncementService {
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
 		GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.id())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
 				"groupAnnouncementId: " + request.id()));
 
 		// 요청한 그룹이 공지의 그룹과 일치하는지 확인
 		if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {
-			throw new BusinessException(ErrorCode.FORBIDDEN, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
+			throw new BusinessException(CommonErrorCode.FORBIDDEN, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
 				+ "\n요청한 groupName: " + groupName
 				+ "\n삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());
 		}
 
 		// 요청자가 해당 그룹의 멤버인지 확인
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 

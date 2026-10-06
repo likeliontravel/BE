@@ -4,9 +4,10 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.example.be.domain.mail.dto.MailVerifyReqBody;
+import org.example.be.domain.mail.exception.MailErrorCode;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -31,7 +32,7 @@ public class MailService {
 	// 인증 코드 보내는 로직
 	public void sendMail(String email) {
 		if (memberRepository.existsByEmail(email)) {
-			throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED, "입력된 이메일: " + email);
+			throw new BusinessException(MemberErrorCode.EMAIL_ALREADY_REGISTERED, "입력된 이메일: " + email);
 		}
 
 		String verificationCode = generateVerificationCode();
@@ -55,7 +56,7 @@ public class MailService {
 		} catch (Exception e) {
 			// Redis, SMTP라는 외부 경계의 실패. 우리가 통제할 수 없으므로 도메인 예외로 옮긴다.
 			// cause(e)를 넘겨서 로그에 진짜 원인(연결 타임아웃, 인증 실패 등)이 변환 지점에서 소멸하지 않도록 한다.
-			throw new BusinessException(ErrorCode.MAIL_SEND_FAILED, "인증 메일 발송 실패 - email: " + email, e);
+			throw new BusinessException(MailErrorCode.MAIL_SEND_FAILED, "인증 메일 발송 실패 - email: " + email, e);
 		}
 	}
 
@@ -65,11 +66,11 @@ public class MailService {
 		String storedCode = stringRedisTemplate.opsForValue().get(mailVerifyReqBody.email());
 
 		if (storedCode == null) {
-			throw new BusinessException(ErrorCode.MAIL_CODE_EXPIRED, "email: " + mailVerifyReqBody.email());
+			throw new BusinessException(MailErrorCode.MAIL_CODE_EXPIRED, "email: " + mailVerifyReqBody.email());
 		}
 
 		if (!storedCode.equals(mailVerifyReqBody.code())) {
-			throw new BusinessException(ErrorCode.MAIL_CODE_MISMATCH, "email: " + mailVerifyReqBody.email());
+			throw new BusinessException(MailErrorCode.MAIL_CODE_MISMATCH, "email: " + mailVerifyReqBody.email());
 		}
 
 		stringRedisTemplate.delete(mailVerifyReqBody.email()); // 인증 성공 시 Redis에서 삭제
@@ -88,7 +89,7 @@ public class MailService {
 	public void sendPasswordResetMail(String email) {
 		if (!memberRepository.existsByEmail(email)) {
 			/// TODO: EmailAlreadyRegisteredException이 이미 가입된 이메일인 경우에도, 가입되지 않은 이메일인 경우에도 사용되고 있었음. 해당 사항 PR에 안내.
-			throw new BusinessException(ErrorCode.EMAIL_NOT_REGISTERED, "입력된 이메일: " + email);
+			throw new BusinessException(MemberErrorCode.EMAIL_NOT_REGISTERED, "입력된 이메일: " + email);
 		}
 		String verificationCode = generateVerificationCode();
 		try {
@@ -102,7 +103,7 @@ public class MailService {
 				"인증 코드 유효시간은 5분 입니다.");
 			mailSender.send(message);
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.MAIL_SEND_FAILED, "재설정 메일 발송 실패 - email: " + email, e);
+			throw new BusinessException(MailErrorCode.MAIL_SEND_FAILED, "재설정 메일 발송 실패 - email: " + email, e);
 		}
 	}
 }

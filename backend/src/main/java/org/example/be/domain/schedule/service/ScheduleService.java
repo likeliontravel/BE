@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.member.entity.Member;
@@ -37,9 +38,9 @@ import org.example.be.domain.schedule.dto.response.ScheduleResBody;
 import org.example.be.domain.schedule.dto.response.ScheduleSummaryResBody;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
+import org.example.be.domain.schedule.exception.ScheduleErrorCode;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,13 +66,13 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResBody createSchedule(ScheduleReqBody reqBody, Long userId) {
 		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
-			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD,
+			throw new BusinessException(ScheduleErrorCode.SCHEDULE_INVALID_PERIOD,
 				"일정 생성 실패 - 시작 날짜가 종료 날짜보다 이후일 수 없음 startSchedule: " + reqBody.startSchedule() + ", endSchedule: "
 					+ reqBody.endSchedule());
 		}
 
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND,
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND,
 				"일정 생성 실패 - 그룹 찾을 수 없음 groupName: " + reqBody.groupName()));
 
 		// 그룹 창설자인지 검증
@@ -79,7 +80,7 @@ public class ScheduleService {
 
 		// 이미 일정이 존재하는지 검사
 		scheduleRepository.findByGroup(group).ifPresent(existingSchedule -> {
-			throw new BusinessException(ErrorCode.SCHEDULE_ALREADY_EXIST,
+			throw new BusinessException(ScheduleErrorCode.SCHEDULE_ALREADY_EXIST,
 				"일정 생성 실패 - 그룹에 이미 일정 존재 groupName: " + reqBody.groupName());
 		});
 
@@ -96,10 +97,10 @@ public class ScheduleService {
 	@Transactional(readOnly = true)
 	public ScheduleResBody getScheduleByGroupName(String groupName) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		Schedule schedule = scheduleRepository.findByGroup(group)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "groupName: " + groupName));
 
 		Map<String, PlaceSimpleResBody> placeDetails = placeValidationService.getPlaceSimpleDetails(
 			schedule.getSchedulePlaces());
@@ -232,14 +233,14 @@ public class ScheduleService {
 	@Transactional
 	public ScheduleResBody updateSchedule(Long scheduleId, ScheduleReqBody reqBody, Long userId) {
 		if (reqBody.startSchedule().isAfter(reqBody.endSchedule())) {
-			throw new BusinessException(ErrorCode.SCHEDULE_INVALID_PERIOD);
+			throw new BusinessException(ScheduleErrorCode.SCHEDULE_INVALID_PERIOD);
 		}
 
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		Group group = groupRepository.findByGroupName(reqBody.groupName())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + reqBody.groupName()));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + reqBody.groupName()));
 
 		// 그룹 창설자 검증
 		groupService.validateGroupCreator(group.getGroupName(), userId);
@@ -257,7 +258,7 @@ public class ScheduleService {
 	@Transactional
 	public void deleteSchedule(Long scheduleId, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
 

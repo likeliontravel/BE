@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.example.be.domain.place.accommodation.entity.Accommodation;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.exception.PlaceErrorCode;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.shared.type.PlaceType;
@@ -19,7 +20,6 @@ import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.domain.schedule.dto.response.PlaceSimpleResBody;
 import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +52,7 @@ public class PlaceValidationService {
 				// 실제 없는 장소를 담을 Set
 				Set<String> missingIds = new HashSet<>(requestedIds);
 				missingIds.removeAll(existingIds); // 실제로 존재하는 contentId들만 요청받은 Id들에서 제거
-				throw new BusinessException(ErrorCode.PLACE_NOT_FOUND,
+				throw new BusinessException(PlaceErrorCode.PLACE_NOT_FOUND,
 					"placeType: " + placeType + ", 존재하지 않는 contentId: " + missingIds);
 			}
 		});

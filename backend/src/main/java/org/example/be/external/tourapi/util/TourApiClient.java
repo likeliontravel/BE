@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.core.log.LogFormatUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -89,13 +89,13 @@ public class TourApiClient {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException ex) {
 			logErrorResponse("areaBasedList2", ex);
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 관광정보 조회 실패. areaCode: " + areaCode + ", contentTypeId: " + contentTypeId
 					+ ", pageNo: " + pageNo, ex);
 		} catch (RestClientException ex) {
 			// 응답조차 받지 못한 실패(연결 거부 또는 타임아웃, DNS - ResourceAccessException)도 외부 연동 실패라 502로 통일한다.
 			// 여기서는 로그를 남기지 않는다. HTTP 경로에서는 BusinessExceptionHandler 가 5xx 를 ERROR + 스택으로 기록하고 있다.
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 관광정보 조회 실패. areaCode: " + areaCode + ", contentTypeId: "
 					+ contentTypeId + ", pageNo: " + pageNo, ex);
 		}
@@ -120,10 +120,10 @@ public class TourApiClient {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
 			logErrorResponse("areaCode2(지역)", e);
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED, "TourAPI 지역코드 조회 실패", e);
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED, "TourAPI 지역코드 조회 실패", e);
 		} catch (RestClientException e) {
 			// 연결 거부 또는 타임아웃, DNS 실패 (상세: fetchTourData 의 같은 catch)
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED, "TourAPI 지역코드 조회 실패", e);
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED, "TourAPI 지역코드 조회 실패", e);
 		}
 	}
 
@@ -147,11 +147,11 @@ public class TourApiClient {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
 			logErrorResponse("areaCode2(시군구)", e);
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 시군구코드 조회 실패. areaCode: " + areaCode, e);
 		} catch (RestClientException e) {
 			// 연결 거부 또는 타임아웃, DNS 실패 (상세: fetchTourData 의 같은 catch)
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 시군구코드 조회 실패. areaCode: " + areaCode, e);
 		}
 
@@ -185,11 +185,11 @@ public class TourApiClient {
 			return restTemplate.getForObject(uri, String.class);
 		} catch (RestClientResponseException e) {
 			logErrorResponse("categoryCode2", e);
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 분류코드 조회 실패. contentTypeId: " + contentTypeId + ", cat1: " + cat1 + ", cat2: " + cat2, e);
 		} catch (RestClientException e) {
 			// 연결 거부 또는 타임아웃, DNS 실패 (상세: fetchTourData 의 같은 catch)
-			throw new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+			throw new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 				"TourAPI 분류코드 조회 실패. contentTypeId: " + contentTypeId + ", cat1: " + cat1 + ", cat2: " + cat2, e);
 		}
 

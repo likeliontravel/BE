@@ -10,16 +10,17 @@ import org.example.be.domain.board.dto.request.CommentUpdateReqBody;
 import org.example.be.domain.board.dto.response.CommentResBody;
 import org.example.be.domain.board.entity.Board;
 import org.example.be.domain.board.entity.Comment;
+import org.example.be.domain.board.exception.BoardErrorCode;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.board.repository.CommentRepository;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.notification.event.NotificationEvent;
 import org.example.be.domain.notification.event.NotificationEventPublisher;
 import org.example.be.domain.notification.message.NotificationMessageFactory;
 import org.example.be.domain.notification.type.NotificationType;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,7 +45,7 @@ public class CommentService {
 	@Transactional(readOnly = true)
 	public PageResponse<CommentResBody> getAllComments(Long boardId, Pageable pageable) {
 		boardRepository.findById(boardId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
 
 		Page<Comment> rootPage = commentRepository.findRootComments(boardId, pageable);
 		List<Comment> rootComments = rootPage.getContent();
@@ -74,20 +75,20 @@ public class CommentService {
 	@Transactional
 	public CommentResBody writeComment(Long boardId, CommentCreateReqBody reqBody, Long userId) {
 		Member writer = memberRepository.findById(userId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + userId));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + userId));
 
 		Board boardEntity = boardRepository.findById(boardId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.BOARD_NOT_FOUND, "boardId: " + boardId));
 
 		Comment parentComment = null;
 
 		if (reqBody.parentCommentId() != null) {
 			parentComment = commentRepository.findById(reqBody.parentCommentId())
-				.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PARENT_COMMENT,
+				.orElseThrow(() -> new BusinessException(BoardErrorCode.INVALID_PARENT_COMMENT,
 					"parentCommentId: " + reqBody.parentCommentId()));
 
 			if (!parentComment.getBoard().getId().equals(boardEntity.getId())) {
-				throw new BusinessException(ErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
+				throw new BusinessException(BoardErrorCode.INVALID_PARENT_COMMENT_OF_BOARD);
 			}
 		}
 
@@ -119,11 +120,11 @@ public class CommentService {
 	@Transactional
 	public CommentResBody updateComment(Long commentId, CommentUpdateReqBody reqBody, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
 
 		if (!comment.getWriter().getId().equals(userId)) {
 			///  TODO: 1. BOARD_NOT_WRITER라는 이름의 예외로 댓글, 게시글 다 처리했음 | 2. userId로 사용했는데, 실제로 memberId가져오는건 똑같아서 로그에 memberId라는 이름으로 남게 했음 | 이 두가지 안내.
-			throw new BusinessException(ErrorCode.COMMENT_NOT_WRITER, "memberId: " + userId);
+			throw new BusinessException(BoardErrorCode.COMMENT_NOT_WRITER, "memberId: " + userId);
 		}
 
 		comment.toUpdateEntity(reqBody);
@@ -134,10 +135,10 @@ public class CommentService {
 	@Transactional
 	public void deleteComment(Long commentId, Long userId) {
 		Comment comment = commentRepository.findById(commentId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.COMMENT_NOT_FOUND, "commentId: " + commentId));
 
 		if (!comment.getWriter().getId().equals(userId)) {
-			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
+			throw new BusinessException(BoardErrorCode.BOARD_NOT_WRITER, "memberId: " + userId);
 		}
 
 		commentRepository.delete(comment);

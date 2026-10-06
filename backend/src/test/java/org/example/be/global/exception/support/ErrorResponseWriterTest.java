@@ -5,7 +5,8 @@ import static org.assertj.core.api.Assertions.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.domain.member.exception.MemberErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ class ErrorResponseWriterTest {
 	void write_setsStatusAndCommonResponseJson() throws IOException {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		errorResponseWriter.write(response, ErrorCode.UNAUTHORIZED);
+		errorResponseWriter.write(response, CommonErrorCode.UNAUTHORIZED);
 
 		assertThat(response.getStatus()).isEqualTo(401);
 		assertThat(response.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
@@ -45,7 +46,7 @@ class ErrorResponseWriterTest {
 		assertThat(body.get("success").asBoolean()).isFalse();
 		assertThat(body.get("status").asInt()).isEqualTo(401);
 		assertThat(body.get("code").asText()).isEqualTo("UNAUTHORIZED");
-		assertThat(body.get("message").asText()).isEqualTo(ErrorCode.UNAUTHORIZED.getMessage());
+		assertThat(body.get("message").asText()).isEqualTo(CommonErrorCode.UNAUTHORIZED.getMessage());
 		// 에러 응답에는 data 가 없다. (@JsonInclude(NON_NULL) 이라 키 자체가 빠진다)
 		assertThat(body.has("data")).isFalse();
 	}
@@ -55,7 +56,7 @@ class ErrorResponseWriterTest {
 	void write_declaresUtf8CharsetAndEncodesKorean() throws IOException {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		errorResponseWriter.write(response, ErrorCode.UNAUTHORIZED);
+		errorResponseWriter.write(response, CommonErrorCode.UNAUTHORIZED);
 
 		// 이 테스트의 핵심 단언은 'Content-Type 에 charset=UTF-8 이 붙어 있다'이다.
 		// MockHttpServletResponse 는 Content-Type 이 JSON 이면 charset 을 지정하지 않아도 UTF-8 로 쓴다. (2026-09-16 실측)
@@ -64,7 +65,7 @@ class ErrorResponseWriterTest {
 		assertThat(response.getContentType()).isEqualTo("application/json;charset=UTF-8");
 
 		String bodyAsUtf8 = new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
-		assertThat(bodyAsUtf8).contains(ErrorCode.UNAUTHORIZED.getMessage());
+		assertThat(bodyAsUtf8).contains(CommonErrorCode.UNAUTHORIZED.getMessage());
 	}
 
 	@Test
@@ -73,9 +74,9 @@ class ErrorResponseWriterTest {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		String customMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
 
-		errorResponseWriter.write(response, ErrorCode.INVALID_TOKEN, customMessage);
+		errorResponseWriter.write(response, MemberErrorCode.INVALID_TOKEN, customMessage);
 
-		assertThat(response.getStatus()).isEqualTo(ErrorCode.INVALID_TOKEN.getStatus().value());
+		assertThat(response.getStatus()).isEqualTo(MemberErrorCode.INVALID_TOKEN.getStatus().value());
 		JsonNode body = objectMapper.readTree(response.getContentAsString(StandardCharsets.UTF_8));
 		assertThat(body.get("code").asText()).isEqualTo("INVALID_TOKEN");
 		assertThat(body.get("message").asText()).isEqualTo(customMessage);
@@ -88,7 +89,7 @@ class ErrorResponseWriterTest {
 		// SSE 스트림처럼 헤더와 본문 일부가 이미 클라이언트로 나간 상태를 흉내낸다.
 		response.setCommitted(true);
 
-		errorResponseWriter.write(response, ErrorCode.UNAUTHORIZED);
+		errorResponseWriter.write(response, CommonErrorCode.UNAUTHORIZED);
 
 		// 이 테스트의 핵심 단언은 '본문이 비어 있다'이다.
 		// MockHttpServletResponse.setStatus() 는 커밋된 응답이면 값을 무시하므로,

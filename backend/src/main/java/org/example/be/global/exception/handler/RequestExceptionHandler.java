@@ -2,6 +2,7 @@ package org.example.be.global.exception.handler;
 
 import java.util.stream.Collectors;
 
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -101,7 +102,7 @@ public class RequestExceptionHandler {
 				.map(ObjectError::getDefaultMessage)
 				.collect(Collectors.joining(", "));
 		}
-		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+		ErrorCode errorCode = CommonErrorCode.BAD_REQUEST;
 		log.warn("[MethodArgumentNotValidException] {}", message);
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), message));
@@ -118,7 +119,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(HandlerMethodValidationException.class)
 	public ResponseEntity<CommonResponse<Void>> handleHandlerMethodValidationException(
 		HandlerMethodValidationException e) {
-		ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+		ErrorCode errorCode = CommonErrorCode.BAD_REQUEST;
 		// 위반 메시지를 모아 하나의 문자열로 변환 (MethodArgumentNotValidException 핸들러와 같은 방식)
 		String message = e.getAllErrors().stream()
 			.map(MessageSourceResolvable::getDefaultMessage)
@@ -142,7 +143,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<CommonResponse<Void>> handleHttpMessageNotReadableException(
 		HttpMessageNotReadableException e) {
-		ErrorCode errorCode = ErrorCode.INVALID_REQUEST_BODY;
+		ErrorCode errorCode = CommonErrorCode.INVALID_REQUEST_BODY;
 		log.warn("[HttpMessageNotReadableException] {}", e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage()));
@@ -157,7 +158,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
 	public ResponseEntity<CommonResponse<Void>> handleHttpMediaTypeNotSupportedException(
 		HttpMediaTypeNotSupportedException e) {
-		ErrorCode errorCode = ErrorCode.UNSUPPORTED_MEDIA_TYPE;
+		ErrorCode errorCode = CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 		log.warn("[HttpMediaTypeNotSupportedException] contentType={}, supported={}", e.getContentType(),
 			e.getSupportedMediaTypes());
 		return ResponseEntity.status(errorCode.getStatus())
@@ -181,7 +182,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(MissingServletRequestParameterException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMissingServletRequestParameterException(
 		MissingServletRequestParameterException e) {
-		ErrorCode errorCode = ErrorCode.MISSING_REQUIRED_PARAMETER;
+		ErrorCode errorCode = CommonErrorCode.MISSING_REQUIRED_PARAMETER;
 		String message = String.format("%s (%s)", errorCode.getMessage(), e.getParameterName());
 		log.warn("[MissingServletRequestParameterException] {}", e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
@@ -195,7 +196,7 @@ public class RequestExceptionHandler {
 	 */
 	@ExceptionHandler(MissingRequestHeaderException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMissingRequestHeaderException(MissingRequestHeaderException e) {
-		ErrorCode errorCode = ErrorCode.MISSING_REQUIRED_HEADER;
+		ErrorCode errorCode = CommonErrorCode.MISSING_REQUIRED_HEADER;
 		String message = String.format("%s (%s)", errorCode.getMessage(), e.getHeaderName());
 		log.warn("[MissingRequestHeaderException] {}", e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
@@ -212,7 +213,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMethodArgumentTypeMismatchException(
 		MethodArgumentTypeMismatchException e) {
-		ErrorCode errorCode = ErrorCode.INVALID_URI_VARIABLES;
+		ErrorCode errorCode = CommonErrorCode.INVALID_URI_VARIABLES;
 		String message = String.format("%s (%s)", errorCode.getMessage(), e.getName());
 		log.warn("[MethodArgumentTypeMismatchException] name={}, value={}, requiredType={}",
 			e.getName(), e.getValue(), e.getRequiredType());
@@ -231,7 +232,7 @@ public class RequestExceptionHandler {
 	 */
 	@ExceptionHandler(NoResourceFoundException.class)
 	public ResponseEntity<CommonResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
-		ErrorCode errorCode = ErrorCode.ENDPOINT_NOT_FOUND;
+		ErrorCode errorCode = CommonErrorCode.ENDPOINT_NOT_FOUND;
 		log.warn("[NoResourceFoundException] method={}, path={}", e.getHttpMethod(), e.getResourcePath());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage()));
@@ -247,7 +248,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	public ResponseEntity<CommonResponse<Void>> handleHttpRequestMethodNotSupportedException(
 		HttpRequestMethodNotSupportedException e) {
-		ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
+		ErrorCode errorCode = CommonErrorCode.METHOD_NOT_ALLOWED;
 		log.warn("[HttpRequestMethodNotSupportedException] method={}, supported={}", e.getMethod(),
 			e.getSupportedHttpMethods());
 		return ResponseEntity.status(errorCode.getStatus())
@@ -267,7 +268,7 @@ public class RequestExceptionHandler {
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
-		ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
+		ErrorCode errorCode = CommonErrorCode.FILE_SIZE_EXCEEDED;
 		long maxFileSizeMb = multipartProperties.getMaxFileSize().toMegabytes();
 		long maxRequestSizeMb = multipartProperties.getMaxRequestSize().toMegabytes();
 		String message = String.format("%s (파일 1개당 최대 %dMB, 요청 전체 최대 %dMB)",
@@ -288,7 +289,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(MissingServletRequestPartException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMissingServletRequestPartException(
 		MissingServletRequestPartException e) {
-		ErrorCode errorCode = ErrorCode.MISSING_REQUIRED_PART;
+		ErrorCode errorCode = CommonErrorCode.MISSING_REQUIRED_PART;
 		String message = String.format("%s (%s)", errorCode.getMessage(), e.getRequestPartName());
 		log.warn("[MissingServletRequestPartException] {}", e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
@@ -304,7 +305,7 @@ public class RequestExceptionHandler {
 	 */
 	@ExceptionHandler(MultipartException.class)
 	public ResponseEntity<CommonResponse<Void>> handleMultipartException(MultipartException e) {
-		ErrorCode errorCode = ErrorCode.INVALID_MULTIPART_REQUEST;
+		ErrorCode errorCode = CommonErrorCode.INVALID_MULTIPART_REQUEST;
 		log.warn("[MultipartException] {}", e.getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage()));
@@ -326,7 +327,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<CommonResponse<Void>> handleDataIntegrityViolationException(
 		DataIntegrityViolationException e) {
-		ErrorCode errorCode = ErrorCode.DATA_INTEGRITY_VIOLATION;
+		ErrorCode errorCode = CommonErrorCode.DATA_INTEGRITY_VIOLATION;
 		log.warn("[DataIntegrityViolationException] cause={}", e.getMostSpecificCause().getMessage());
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage()));
@@ -353,7 +354,7 @@ public class RequestExceptionHandler {
 	@ExceptionHandler(ResponseStatusException.class)
 	public ResponseEntity<CommonResponse<Void>> handleResponseStatusException(ResponseStatusException e) {
 		HttpStatusCode statusCode = e.getStatusCode();
-		ErrorCode errorCode = statusCode.is5xxServerError() ? ErrorCode.INTERNAL_SERVER_ERROR : ErrorCode.BAD_REQUEST;
+		ErrorCode errorCode = statusCode.is5xxServerError() ? CommonErrorCode.INTERNAL_SERVER_ERROR : CommonErrorCode.BAD_REQUEST;
 
 		if (statusCode.is5xxServerError()) {
 			log.error("[ResponseStatusException] 규칙 위반 - BusinessException 으로 교체할 것. type={}, status={}, reason={}",

@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.entity.Group;
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.repository.GroupInvitationRepository;
@@ -47,9 +47,9 @@ public class GroupInvitationService {
 		});
 
 		if (expiredOptional.isPresent()) {
-			throw new BusinessException(ErrorCode.INVITATION_EXPIRED, "새 초대 코드 발급 필요");
+			throw new BusinessException(GroupErrorCode.INVITATION_EXPIRED, "새 초대 코드 발급 필요");
 		} else {
-			throw new BusinessException(ErrorCode.INVITATION_NOT_FOUND, "초대 코드 없음. 초대 코드 발급 필요");
+			throw new BusinessException(GroupErrorCode.INVITATION_NOT_FOUND, "초대 코드 없음. 초대 코드 발급 필요");
 		}
 	}
 
@@ -79,7 +79,7 @@ public class GroupInvitationService {
 	public GroupInvitation getValidInvitation(String invitationCode) {
 		LocalDateTime now = LocalDateTime.now();
 		return invitationRepository.findByInvitationCodeAndActiveTrueAndExpiresAtAfter(invitationCode, now)
-			.orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITATION, "입력된 초대코드: " + invitationCode));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.INVALID_INVITATION, "입력된 초대코드: " + invitationCode));
 	}
 
 }

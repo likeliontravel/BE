@@ -26,7 +26,7 @@ public class CommonResponse<T> {
 	 *
 	 * message는 사람이 읽는 글이고, code는 프론트가 분기에 사용할 수 있는 기계용 식별자다.
 	 * 이 분리 덕분에 message 문구를 고치더라도 프론트의 분기가 깨지지 않는다.
-	 * code값은 공개 계약이다. 앞으로는 ErrorCode enum의 상수 이름을 바꾸면 계약이 바뀌게 된다.
+	 * code값은 공개 계약이다. 앞으로는 ErrorCode 구현체 enum의 상수 이름을 바꾸면 계약이 바뀌게 된다.
 	 */
 	private String code;
 	private String message; // 응답 메세지

@@ -17,10 +17,10 @@ import org.example.be.domain.schedule.dto.response.SchedulePlaceDeleteResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
+import org.example.be.domain.schedule.exception.ScheduleErrorCode;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -161,7 +161,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.deleteAllSchedulePlaces(SCHEDULE_ID, USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_NOT_FOUND);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
 	}
 
 	@Test
@@ -185,7 +185,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, List.of(), USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_NOT_FOUND);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
 	}
 
 	@Test
@@ -202,7 +202,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, reqBodies, USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_PLACE_DUPLICATE_ORDER);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_PLACE_DUPLICATE_ORDER);
 	}
 
 	@Test
@@ -220,7 +220,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, reqBodies, USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_PLACE_DUPLICATE_ID);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_PLACE_DUPLICATE_ID);
 	}
 
 	@Test
@@ -237,7 +237,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, reqBodies, USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_PLACE_NOT_FOUND);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_PLACE_NOT_FOUND);
 	}
 
 	@Test
@@ -255,7 +255,7 @@ class SchedulePlaceServiceTest {
 
 		assertThatThrownBy(() -> schedulePlaceService.updateSchedulePlaces(SCHEDULE_ID, reqBodies, USER_ID))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.SCHEDULE_PLACE_NOT_FOUND);
+			.extracting("errorCode").isEqualTo(ScheduleErrorCode.SCHEDULE_PLACE_NOT_FOUND);
 	}
 
 	// === 테스트 헬퍼 메서드 ===

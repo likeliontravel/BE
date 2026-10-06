@@ -3,7 +3,7 @@ package org.example.be.global.security.oauth.userinfo;
 import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 
 public class NaverUserInfo implements OAuth2UserInfo {
 	private final Map<String, Object> attribute;
@@ -22,7 +22,7 @@ public class NaverUserInfo implements OAuth2UserInfo {
 	public String getProviderId() {
 		Object providerId = attribute.get("id");
 		if (providerId == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - ProviderId is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - ProviderId is Missing");
 		}
 		return providerId.toString();
 	}
@@ -31,7 +31,7 @@ public class NaverUserInfo implements OAuth2UserInfo {
 	public String getEmail() {
 		Object email = attribute.get("email");
 		if (email == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - email is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - email is Missing");
 		}
 		return email.toString();
 	}
@@ -40,7 +40,7 @@ public class NaverUserInfo implements OAuth2UserInfo {
 	public String getName() {
 		Object name = attribute.get("name");
 		if (name == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - name is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "NaverLogin - name is Missing");
 		}
 		return name.toString();
 	}

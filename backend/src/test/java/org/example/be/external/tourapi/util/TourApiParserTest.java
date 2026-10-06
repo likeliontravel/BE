@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.example.be.external.tourapi.dto.AreaDTO;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -89,7 +89,7 @@ class TourApiParserTest {
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("TourAPI 응답 파싱 실패")
 			.hasCauseInstanceOf(JsonProcessingException.class)
-			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(ErrorCode.EXTERNAL_API_FAILED));
+			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(CommonErrorCode.EXTERNAL_API_FAILED));
 	}
 
 	@ParameterizedTest(name = "[{index}] {0}")
@@ -107,7 +107,7 @@ class TourApiParserTest {
 		assertThatThrownBy(() -> tourApiParser.parseItems(json))
 			.isInstanceOf(BusinessException.class)
 			.hasMessageContaining("TourAPI 응답 파싱 실패")
-			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(ErrorCode.EXTERNAL_API_FAILED));
+			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(CommonErrorCode.EXTERNAL_API_FAILED));
 	}
 
 	@Test
@@ -115,7 +115,7 @@ class TourApiParserTest {
 	void nullBody_throws() {
 		assertThatThrownBy(() -> tourApiParser.parseItems(null))
 			.isInstanceOf(BusinessException.class)
-			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(ErrorCode.EXTERNAL_API_FAILED));
+			.satisfies(e -> assertThat(((BusinessException)e).getErrorCode()).isEqualTo(CommonErrorCode.EXTERNAL_API_FAILED));
 	}
 
 	@Test

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.storage.gcs.exception.FileErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -52,7 +52,7 @@ public class GCSService {
 		} catch (IOException | StorageException e) {
 			// StorageException(인증, 버킷, 권한, 네트워크 등 GCS SDK 장애)은 RuntimeException 이라 여기에 명시해야 잡힌다.
 			// validateImageFile 이 try 밖에 있어야 400(잘못된 파일)이 GCS_UPLOAD_FAILED(500)로 승격되지 않는다.
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. memberId: " + memberId, e);
+			throw new BusinessException(FileErrorCode.GCS_UPLOAD_FAILED, "프로필 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
 
@@ -76,7 +76,7 @@ public class GCSService {
 				log.warn("[GCS 프로필 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: {}", fileName);
 			}
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
+			throw new BusinessException(FileErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
 		}
 
 	}
@@ -97,7 +97,7 @@ public class GCSService {
 
 			return String.format("https://storage.googleapis.com/%s/%s", chatImageBucketName, fileName);
 		} catch (IOException | StorageException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
+			throw new BusinessException(FileErrorCode.GCS_UPLOAD_FAILED,
 				"채팅 이미지 업로드 실패. groupName: " + groupName + ", senderId: " + senderId, e);
 		}
 	}
@@ -106,11 +106,11 @@ public class GCSService {
 	// 게시글 이미지 업로드에서 전량으로 사진을 검증하기 위해서 public으로 변경
 	public void validateImageFile(MultipartFile file) {
 		if (file == null || file.isEmpty()) {
-			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "빈 파일은 업로드할 수 없습니다.");
+			throw new BusinessException(FileErrorCode.INVALID_IMAGE_FILE_TYPE, "빈 파일은 업로드할 수 없습니다.");
 		}
 		String contentType = file.getContentType();
 		if (contentType == null || !contentType.startsWith("image/")) {
-			throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE_TYPE, "입력된 파일 contentType: " + contentType);
+			throw new BusinessException(FileErrorCode.INVALID_IMAGE_FILE_TYPE, "입력된 파일 contentType: " + contentType);
 		}
 	}
 
@@ -131,7 +131,7 @@ public class GCSService {
 
 			return String.format("https://storage.googleapis.com/%s/%s", boardImageBucketName, fileName);
 		} catch (IOException | StorageException e) {
-			throw new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
+			throw new BusinessException(FileErrorCode.GCS_UPLOAD_FAILED,
 				"게시글 이미지 업로드 실패. memberId: " + memberId, e);
 		}
 	}
@@ -155,7 +155,7 @@ public class GCSService {
 				log.warn("[GCS 게시글 이미지 삭제 이상] - 삭제하려는 파일이 존재하지 않아 삭제되지 않았습니다. fileName: {}", fileName);
 			}
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
+			throw new BusinessException(FileErrorCode.GCS_DELETE_FAILED, "imageUrl: " + imageUrl, e);
 		}
 
 	}

@@ -15,8 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.jwt.util.JwtUt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -130,8 +131,8 @@ class ChatSocketExceptionHandlerIT {
 
 		assertThat(body.get("success").asBoolean()).isFalse();
 		assertThat(body.get("status").asInt()).isEqualTo(404);
-		assertThat(body.get("code").asText()).isEqualTo(ErrorCode.GROUP_NOT_FOUND.name());
-		assertThat(body.get("message").asText()).isEqualTo(ErrorCode.GROUP_NOT_FOUND.getMessage());
+		assertThat(body.get("code").asText()).isEqualTo(GroupErrorCode.GROUP_NOT_FOUND.name());
+		assertThat(body.get("message").asText()).isEqualTo(GroupErrorCode.GROUP_NOT_FOUND.getMessage());
 		// 응답에는 debugMessage(로그용 detail)가 실리지 않는다.
 		assertThat(body.has("data")).isFalse();
 	}
@@ -145,7 +146,7 @@ class ChatSocketExceptionHandlerIT {
 		JsonNode body = sendUntilReceived(session, DENIED_GROUP, VALID_PAYLOAD, received);
 
 		assertThat(body.get("status").asInt()).isEqualTo(403);
-		assertThat(body.get("code").asText()).isEqualTo(ErrorCode.GROUP_ACCESS_DENIED.name());
+		assertThat(body.get("code").asText()).isEqualTo(GroupErrorCode.GROUP_ACCESS_DENIED.name());
 	}
 
 	@Test
@@ -158,7 +159,7 @@ class ChatSocketExceptionHandlerIT {
 		JsonNode body = sendUntilReceived(session, MEMBER_GROUP, BROKEN_PAYLOAD, received);
 
 		assertThat(body.get("status").asInt()).isEqualTo(400);
-		assertThat(body.get("code").asText()).isEqualTo(ErrorCode.INVALID_REQUEST_BODY.name());
+		assertThat(body.get("code").asText()).isEqualTo(CommonErrorCode.INVALID_REQUEST_BODY.name());
 	}
 
 	@Test
@@ -171,7 +172,7 @@ class ChatSocketExceptionHandlerIT {
 		JsonNode body = sendUntilReceived(session, BOOM_GROUP, VALID_PAYLOAD, received);
 
 		assertThat(body.get("status").asInt()).isEqualTo(500);
-		assertThat(body.get("code").asText()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR.name());
+		assertThat(body.get("code").asText()).isEqualTo(CommonErrorCode.INTERNAL_SERVER_ERROR.name());
 	}
 
 	@Test
@@ -190,7 +191,7 @@ class ChatSocketExceptionHandlerIT {
 
 		JsonNode body = sendUntilReceived(sender, MISSING_GROUP, VALID_PAYLOAD, senderReceived);
 
-		assertThat(body.get("code").asText()).isEqualTo(ErrorCode.GROUP_NOT_FOUND.name());
+		assertThat(body.get("code").asText()).isEqualTo(GroupErrorCode.GROUP_NOT_FOUND.name());
 		assertThat(bystanderReceived.poll(SILENCE_TIMEOUT_MS, TimeUnit.MILLISECONDS)).isNull();
 	}
 

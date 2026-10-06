@@ -9,7 +9,7 @@ import org.example.be.external.tourapi.dto.AreaDTO;
 import org.example.be.external.tourapi.dto.CategoryCodeDTO;
 import org.example.be.external.tourapi.dto.SigunguDTO;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.core.log.LogFormatUtils;
 import org.springframework.stereotype.Component;
 
@@ -82,7 +82,7 @@ public class TourApiParser {
 
 	// 파싱 실패를 외부 연동 실패(502)로 변환한다. 응답 앞부분은 디버깅용 메시지에만 싣는다(클라이언트에는 ErrorCode 메시지만 노출).
 	private BusinessException parseFailure(String reason, String json, Throwable cause) {
-		return new BusinessException(ErrorCode.EXTERNAL_API_FAILED,
+		return new BusinessException(CommonErrorCode.EXTERNAL_API_FAILED,
 			"TourAPI 응답 파싱 실패(" + reason + "). json 앞부분=" + LogFormatUtils.formatValue(json, MAX_LOGGED_JSON_LENGTH,
 				true),
 			cause);

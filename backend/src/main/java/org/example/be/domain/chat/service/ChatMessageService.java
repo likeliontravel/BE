@@ -14,12 +14,13 @@ import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.chat.type.MessageType;
 import org.example.be.domain.chat.type.SearchDirection;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.response.MemberDto;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.storage.gcs.GCSService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,7 +87,7 @@ public class ChatMessageService {
 	@Transactional(readOnly = true)
 	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage(Long memberId) {
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
@@ -145,10 +146,10 @@ public class ChatMessageService {
 	// 그룹 존재 여부와 요청자가 그룹 내 멤버인지 검증하는 메서드
 	private Group findGroupAndValidateMember(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
@@ -156,7 +157,7 @@ public class ChatMessageService {
 
 	private Member findMember(Long memberId) {
 		return memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 	}
 
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.

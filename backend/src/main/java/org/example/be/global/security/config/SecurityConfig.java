@@ -3,7 +3,7 @@ package org.example.be.global.security.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.exception.support.ErrorResponseWriter;
 import org.example.be.global.security.filter.CustomAuthenticationFilter;
 import org.example.be.global.security.oauth.handler.CustomFailureHandler;
@@ -97,11 +97,11 @@ public class SecurityConfig {
 				exceptionHandling -> exceptionHandling
 					.authenticationEntryPoint(
 						(request, response, authException) ->
-							errorResponseWriter.write(response, ErrorCode.UNAUTHORIZED)
+							errorResponseWriter.write(response, CommonErrorCode.UNAUTHORIZED)
 					)
 					.accessDeniedHandler(
 						(request, response, deniedException) ->
-							errorResponseWriter.write(response, ErrorCode.FORBIDDEN)
+							errorResponseWriter.write(response, CommonErrorCode.FORBIDDEN)
 					)
 			);
 		return http.build();

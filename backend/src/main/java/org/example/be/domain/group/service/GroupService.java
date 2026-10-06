@@ -19,6 +19,7 @@ import org.example.be.domain.group.dto.response.GroupExitResBody;
 import org.example.be.domain.group.dto.response.GroupModifyResBody;
 import org.example.be.domain.group.dto.response.GroupResBody;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.invitation.repository.GroupInvitationRepository;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.entity.Member;
@@ -36,7 +37,6 @@ import org.example.be.domain.schedule.entity.SchedulePlace;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +70,7 @@ public class GroupService {
 		String groupName = request.groupName();
 
 		groupRepository.findByGroupName(groupName).ifPresent(group -> {
-			throw new BusinessException(ErrorCode.GROUP_NAME_ALREADY_EXIST, "groupName: " + groupName);
+			throw new BusinessException(GroupErrorCode.GROUP_NAME_ALREADY_EXIST, "groupName: " + groupName);
 		});
 
 		Member creator = memberService.getById(memberId);
@@ -88,11 +88,11 @@ public class GroupService {
 	public GroupDetailResBody getGroupDetail(String groupName, Long memberId) {
 		// 그룹과 함께 멤버도 같이 패치 조인 셀렉트
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		// 그룹 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -118,7 +118,7 @@ public class GroupService {
 		Member user = memberService.getById(memberId);
 
 		if (group.getMembers().contains(user)) {
-			throw new BusinessException(ErrorCode.GROUP_ALREADY_MEMBER,
+			throw new BusinessException(GroupErrorCode.GROUP_ALREADY_MEMBER,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -155,7 +155,7 @@ public class GroupService {
 
 		// 그룹 내 멤버인지 검증
 		if (!isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
@@ -176,12 +176,12 @@ public class GroupService {
 		Member user = memberService.getById(memberId);
 
 		if (!group.getMembers().contains(user)) {
-			throw new BusinessException(ErrorCode.GROUP_ACCESS_DENIED,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		if (memberId.equals(group.getCreatedBy().getId())) {
-			throw new BusinessException(ErrorCode.GROUP_CREATOR_CANNOT_EXIT);
+			throw new BusinessException(GroupErrorCode.GROUP_CREATOR_CANNOT_EXIT);
 		}
 
 		group.removeMember(user);
@@ -227,7 +227,7 @@ public class GroupService {
 	@Transactional(readOnly = true)
 	public Boolean isContains(String groupName, Long memberId) {
 		Group group = groupRepository.findWithMembersByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		return group.getMembers().stream().anyMatch(m -> m.getId().equals(memberId));
 	}
@@ -245,10 +245,10 @@ public class GroupService {
 	// 그룹 창설자 검증
 	public Group validateGroupCreator(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!group.getCreatedBy().getId().equals(memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_NOT_CREATOR,
+			throw new BusinessException(GroupErrorCode.GROUP_NOT_CREATOR,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
@@ -258,7 +258,7 @@ public class GroupService {
 	@Transactional
 	public Group getGroupByName(String groupName) {
 		return groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 	}
 
 	// ==================== 그룹 상세 조회 이용 내부메서드 ====================

@@ -1,5 +1,6 @@
 package org.example.be.global.exception.handler;
 
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
 import org.springframework.core.Ordered;
@@ -60,7 +61,7 @@ public class FallbackExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<CommonResponse<Void>> handleException(Exception e) {
 		log.error("[UnhandledException] message={}", e.getMessage(), e);
-		ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+		ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
 		return ResponseEntity.status(errorCode.getStatus())
 			.body(CommonResponse.error(errorCode.getStatus().value(), errorCode.name(), errorCode.getMessage()));
 	}

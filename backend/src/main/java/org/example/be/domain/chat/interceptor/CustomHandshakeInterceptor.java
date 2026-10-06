@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.service.AuthTokenService;
 import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.exception.support.ErrorResponseWriter;
@@ -45,7 +47,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		Map<String, Object> claims = authTokenService.payload(accessToken);
 		if (claims == null) {
 			log.debug("[WebSocket Debug] Token validation failed");
-			return failHandshake(response, ErrorCode.INVALID_TOKEN);
+			return failHandshake(response, MemberErrorCode.INVALID_TOKEN);
 		}
 
 		long memberId = ((Number)claims.get("id")).longValue();
@@ -66,7 +68,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 
 		if (!isMember) {
 			log.debug("[WebSocket Debug] User {} is NOT a member of group {} or group not found", memberId, groupName);
-			return failHandshake(response, ErrorCode.GROUP_ACCESS_DENIED);
+			return failHandshake(response, GroupErrorCode.GROUP_ACCESS_DENIED);
 		}
 
 		// 4. 인증된 사용자 정보를 WebSocket 세션 속성에 저장 (HandshakeHandler에서 Principal로 변환 예정)

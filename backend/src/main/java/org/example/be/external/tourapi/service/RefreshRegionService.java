@@ -14,7 +14,7 @@ import org.example.be.external.tourapi.util.RegionClassifier;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.external.tourapi.util.TourApiParser;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,7 +108,7 @@ public class RefreshRegionService {
 			// 여기서 로그를 남기지 않는다 - 두 호출 경로가 모두 이미 ERROR + 스택을 남기기 때문이다.
 			// HTTP(RefreshRegionController): BusinessException 가 5xx 를 ERROR + 스택 으로 기록
 			// 배치 (BatchConfig refreshRegionStep): Spring Batch AbstractStep 이 Step 실패를 ERROR + 스택 으로 기록
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
+			throw new BusinessException(CommonErrorCode.RESOURCE_UPDATE_FAILED,
 				"Place 지역 갱신 실패", e);
 		}
 	}

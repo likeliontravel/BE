@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.*;
 import java.io.IOException;
 import java.util.List;
 
+import org.example.be.domain.mail.exception.MailErrorCode;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.CommonResponse;
+import org.example.be.storage.gcs.exception.FileErrorCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,7 +53,7 @@ class BusinessExceptionHandlerTest {
 	@Test
 	@DisplayName("4xx 는 WARN 한 줄로 남기고 스택은 남기지 않는다")
 	void clientError_logsWarnWithoutStackTrace() {
-		BusinessException exception = new BusinessException(ErrorCode.LOGIN_FAILED,
+		BusinessException exception = new BusinessException(MemberErrorCode.LOGIN_FAILED,
 			"비밀번호 불일치 - email: tester@example.com");
 
 		ResponseEntity<CommonResponse<Void>> response = businessExceptionHandler.handleBusinessException(exception);
@@ -62,7 +64,7 @@ class BusinessExceptionHandlerTest {
 		assertThat(body.isSuccess()).isFalse();
 		assertThat(body.getStatus()).isEqualTo(401);
 		assertThat(body.getCode()).isEqualTo("LOGIN_FAILED");
-		assertThat(body.getMessage()).isEqualTo(ErrorCode.LOGIN_FAILED.getMessage());
+		assertThat(body.getMessage()).isEqualTo(MemberErrorCode.LOGIN_FAILED.getMessage());
 
 		List<ILoggingEvent> events = logAppender.list;
 		assertThat(events).hasSize(1);
@@ -79,7 +81,7 @@ class BusinessExceptionHandlerTest {
 	@DisplayName("5xx 는 ERROR 와 스택을 남기고, cause 체인까지 로그에 포함한다")
 	void serverError_logsErrorWithStackTraceAndCause() {
 		IOException cause = new IOException("GCS 연결 타임아웃");
-		BusinessException exception = new BusinessException(ErrorCode.GCS_UPLOAD_FAILED,
+		BusinessException exception = new BusinessException(FileErrorCode.GCS_UPLOAD_FAILED,
 			"게시글 이미지 업로드 실패 - fileName: a.png", cause);
 
 		ResponseEntity<CommonResponse<Void>> response = businessExceptionHandler.handleBusinessException(exception);
@@ -112,7 +114,7 @@ class BusinessExceptionHandlerTest {
 	void responseMessage_excludesDebugMessageAndCause() {
 		// 서버 내부 정보(SMTP 주소, Redis 연결 문자열)가 응답으로 새던 과거 사례(MailController)를 재현한 입력
 		String debugMessage = "SMTP 연결 실패 - host: smtp.internal.example:587";
-		BusinessException exception = new BusinessException(ErrorCode.MAIL_SEND_FAILED, debugMessage,
+		BusinessException exception = new BusinessException(MailErrorCode.MAIL_SEND_FAILED, debugMessage,
 			new IllegalStateException("redis://10.0.0.5:6379 연결 거부"));
 
 		ResponseEntity<CommonResponse<Void>> response = businessExceptionHandler.handleBusinessException(exception);
@@ -120,7 +122,7 @@ class BusinessExceptionHandlerTest {
 		CommonResponse<Void> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getMessage())
-			.isEqualTo(ErrorCode.MAIL_SEND_FAILED.getMessage())
+			.isEqualTo(MailErrorCode.MAIL_SEND_FAILED.getMessage())
 			.doesNotContain("smtp.internal")
 			.doesNotContain("redis://");
 	}

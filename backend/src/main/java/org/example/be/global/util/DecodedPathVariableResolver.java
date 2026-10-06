@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -40,7 +40,7 @@ public class DecodedPathVariableResolver implements HandlerMethodArgumentResolve
 
 		String rawValue = uriTemplateVars.get(parameterName);
 		if (rawValue == null) {
-			throw new BusinessException(ErrorCode.INVALID_URI_VARIABLES,
+			throw new BusinessException(CommonErrorCode.INVALID_URI_VARIABLES,
 				"PathVariable '" + parameterName + "' not found in URI variables. " + "Avaialable keys: "
 					+ uriTemplateVars.keySet());
 		}

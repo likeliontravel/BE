@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.Map;
 
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.jwt.util.JwtUt;
 import org.example.be.global.security.config.SecurityUser;
 import org.junit.jupiter.api.DisplayName;
@@ -111,7 +111,7 @@ class ExceptionHandlerOrderIT {
 		mockMvc.perform(post("/group/addMember").with(authedUser()))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value("MISSING_REQUIRED_PARAMETER"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.MISSING_REQUIRED_PARAMETER.getMessage() + " (groupName)"));
+			.andExpect(jsonPath("$.message").value(CommonErrorCode.MISSING_REQUIRED_PARAMETER.getMessage() + " (groupName)"));
 	}
 
 	@Test
@@ -123,7 +123,7 @@ class ExceptionHandlerOrderIT {
 		mockMvc.perform(multipart("/board/images").file(wrongNamePart).with(authedUser()))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value("MISSING_REQUIRED_PART"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.MISSING_REQUIRED_PART.getMessage() + " (files)"));
+			.andExpect(jsonPath("$.message").value(CommonErrorCode.MISSING_REQUIRED_PART.getMessage() + " (files)"));
 	}
 
 	@Test
@@ -163,7 +163,7 @@ class ExceptionHandlerOrderIT {
 		assertThat(response.getStatusCode().value()).isEqualTo(413);
 		JsonNode body = objectMapper.readTree(response.getBody());
 		assertThat(body.get("code").asText()).isEqualTo("FILE_SIZE_EXCEEDED");
-		assertThat(body.get("message").asText()).startsWith(ErrorCode.FILE_SIZE_EXCEEDED.getMessage());
+		assertThat(body.get("message").asText()).startsWith(CommonErrorCode.FILE_SIZE_EXCEEDED.getMessage());
 	}
 
 	@Test
@@ -186,7 +186,7 @@ class ExceptionHandlerOrderIT {
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.status").value(404))
 			.andExpect(jsonPath("$.code").value("BAD_REQUEST"))
-			.andExpect(jsonPath("$.message").value(ErrorCode.BAD_REQUEST.getMessage()));
+			.andExpect(jsonPath("$.message").value(CommonErrorCode.BAD_REQUEST.getMessage()));
 	}
 
 	// ===== FallbackExceptionHandler (@Order LOWEST_PRECEDENCE) =====

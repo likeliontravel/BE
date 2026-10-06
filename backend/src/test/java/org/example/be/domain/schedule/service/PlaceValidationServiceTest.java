@@ -8,13 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.exception.PlaceErrorCode;
 import org.example.be.domain.place.restaurant.entity.Restaurant;
 import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.shared.type.PlaceType;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +63,7 @@ class PlaceValidationServiceTest {
 
 		assertThatThrownBy(() -> placeValidationService.validateContentIdsExist(request))
 			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.PLACE_NOT_FOUND);
+			.extracting("errorCode").isEqualTo(PlaceErrorCode.PLACE_NOT_FOUND);
 	}
 
 	@Test
