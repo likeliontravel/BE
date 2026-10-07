@@ -8,23 +8,23 @@ import org.example.be.domain.board.dto.request.BoardSearchReqBody;
 import org.example.be.domain.board.dto.request.BoardUpdateReqBody;
 import org.example.be.domain.board.dto.response.BoardResBody;
 import org.example.be.domain.board.entity.Board;
+import org.example.be.domain.board.exception.BoardErrorCode;
 import org.example.be.domain.board.repository.BoardRepository;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
+import org.example.be.domain.place.exception.PlaceErrorCode;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.PageResponse;
 import org.example.be.storage.gcs.GCSService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,7 +46,7 @@ public class BoardService {
 	@Transactional
 	public BoardResBody getBoard(Long id) {
 		Board board = boardRepository.findById(id)
-			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		board.increaseHits();
 
@@ -84,22 +84,16 @@ public class BoardService {
 
 		// 사용자 인증 확인, 게시글 작성자 값 결정
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
-		try {
+		// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
+		String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
 
-			// HTML content escape처리 ( 특수문자 인식 오류 방지, XSS공격 방지 )
-			String escapedContent = StringEscapeUtils.escapeHtml4(reqBody.content());
+		// 저장할 엔티티로 변환, 작성자 정보 기입
+		Board board = Board.toCreateEntity(reqBody, member, escapedContent);
 
-			// 저장할 엔티티로 변환, 작성자 정보 기입
-			Board board = Board.toCreateEntity(reqBody, member, escapedContent);
-
-			Board savedBoard = boardRepository.save(board);
-			return BoardResBody.from(savedBoard, member.getProfileImageUrl());
-
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "게시글 저장 실패 - message: " + e.getMessage());
-		}
+		Board savedBoard = boardRepository.save(board);
+		return BoardResBody.from(savedBoard, member.getProfileImageUrl());
 	}
 
 	// 게시글 수정
@@ -108,45 +102,38 @@ public class BoardService {
 
 		// 기존 게시글 조회 (없으면 예외 발생)
 		Board originalBoard = boardRepository.findById(id)
-			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		if (!memberId.equals(originalBoard.getWriter().getId())) {
-			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
+			throw new BusinessException(BoardErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
 		}
+
 		// 들어온 수정데이터 유효성 확인
 		validateBoardUpdate(reqBody);
 
-		try {
-			// HTML escape처리
-			String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
-			originalBoard.toUpdateEntity(reqBody, escapedContent);
+		// HTML escape처리
+		String escapedContent = reqBody.content() != null ? StringEscapeUtils.escapeHtml4(reqBody.content()) : null;
+		originalBoard.toUpdateEntity(reqBody, escapedContent);
 
-			return BoardResBody.from(originalBoard, originalBoard.getWriter().getProfileImageUrl());
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED, "게시글 수정 실패 - message: " + e.getMessage());
-		}
+		return BoardResBody.from(originalBoard, originalBoard.getWriter().getProfileImageUrl());
 	}
 
 	// 게시글 삭제
 	@Transactional
 	public void deleteBoard(Long id, Long memberId) {
 		Board board = boardRepository.findById(id)
-			.orElseThrow(() -> new BusinessException(ErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
+			.orElseThrow(() -> new BusinessException(BoardErrorCode.BOARD_NOT_FOUND, "boardId: " + id));
 
 		if (!memberId.equals(board.getWriter().getId())) {
-			throw new BusinessException(ErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
+			throw new BusinessException(BoardErrorCode.BOARD_NOT_WRITER, "요청한 memberId: " + memberId);
 		}
 		// Lazy 로딩을 사용하면 연관 데이터를 즉시 불러오지 않음.
 		// 삭제 전에 size()를 호출하면 실제 데이터가 로딩되며, 연관 엔티티도 정상적으로 삭제됨.
 		board.getCommentList().size();
 
-		try {
-			boardRepository.delete(board);
-			// 실제 삭제 쿼리 강제 실행
-			boardRepository.flush();
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_DELETE_FAILED, "게시글 삭제 실패 - message: " + e.getMessage());
-		}
+		boardRepository.delete(board);
+		// 실제 삭제 쿼리 강제 실행
+		boardRepository.flush();
 	}
 
 	//게시글 이미지 업로드
@@ -172,11 +159,11 @@ public class BoardService {
 
 	private void validateBoardImages(List<MultipartFile> files) {
 		if (files == null || files.isEmpty()) {
-			throw new BusinessException(ErrorCode.BOARD_IMAGE_EMPTY);
+			throw new BusinessException(BoardErrorCode.BOARD_IMAGE_EMPTY);
 		}
 
 		if (files.size() > MAX_BOARD_IMAGE_COUNT) {
-			throw new BusinessException(ErrorCode.BOARD_IMAGE_COUNT_EXCEEDED,
+			throw new BusinessException(BoardErrorCode.BOARD_IMAGE_COUNT_EXCEEDED,
 				"최대 " + MAX_BOARD_IMAGE_COUNT + "장, 요청 이미지 개수: " + files.size());
 		}
 
@@ -195,23 +182,23 @@ public class BoardService {
 
 		// TODO: Valid 이용 여부 판단 후 예외처리 수정
 		if (req.title() != null && req.title().isBlank()) {
-			throw new BusinessException(ErrorCode.BOARD_TITLE_BLANK);
+			throw new BusinessException(BoardErrorCode.BOARD_TITLE_BLANK);
 		}
 
 		if (req.content() != null && req.content().isBlank()) {
-			throw new BusinessException(ErrorCode.BOARD_CONTENT_BLANK);
+			throw new BusinessException(BoardErrorCode.BOARD_CONTENT_BLANK);
 		}
 	}
 
 	private void validateTheme(String theme) {
 		if (!placeCategoryService.existsByTheme(theme)) {
-			throw new BusinessException(ErrorCode.INVALID_THEME, "theme: " + theme);
+			throw new BusinessException(PlaceErrorCode.INVALID_THEME, "theme: " + theme);
 		}
 	}
 
 	private void validateRegion(String region) {
 		if (!tourRegionService.existsByRegion(region)) {
-			throw new BusinessException(ErrorCode.INVALID_REGION, "region: " + region);
+			throw new BusinessException(PlaceErrorCode.INVALID_REGION, "region: " + region);
 		}
 	}
 }

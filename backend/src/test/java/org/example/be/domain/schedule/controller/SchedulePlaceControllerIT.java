@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 // SchedulePlaceController 요청 경계 통합 테스트.
-// @SpringBootTest 로 전체 컨텍스트(실제 보안 필터·바인딩·GlobalExceptionHandler)를 띄우되,
+// @SpringBootTest 로 전체 컨텍스트(실제 보안 필터·바인딩·예외 advice)를 띄우되,
 // SchedulePlaceService 만 mock 으로 갈아끼워 "래퍼 바디 검증 → 400 / 전체삭제 위임"이라는 컨트롤러 경계만 확인한다.
 // (검증 실패는 서비스 도달 전 바인딩 단계라 mock 으로 충분 — 실제 DB 데이터는 건드리지 않는다.)
 @SpringBootTest

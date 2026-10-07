@@ -16,10 +16,10 @@ import org.example.be.domain.schedule.dto.response.SchedulePlaceDeleteResBody;
 import org.example.be.domain.schedule.dto.response.SchedulePlaceResBody;
 import org.example.be.domain.schedule.entity.Schedule;
 import org.example.be.domain.schedule.entity.SchedulePlace;
+import org.example.be.domain.schedule.exception.ScheduleErrorCode;
 import org.example.be.domain.schedule.repository.SchedulePlaceRepository;
 import org.example.be.domain.schedule.repository.ScheduleRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +39,7 @@ public class SchedulePlaceService {
 	public List<SchedulePlaceResBody> createSchedulePlaces(Long scheduleId, List<SchedulePlaceReqBody> reqBodies,
 		Long userId) {
 		var schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 추가할 수 있음
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
@@ -85,7 +85,7 @@ public class SchedulePlaceService {
 	public List<SchedulePlaceResBody> updateSchedulePlaces(Long scheduleId, List<SchedulePlaceUpdateReqBody> reqBodies,
 		Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// === 검증 시작 ===
 
@@ -136,7 +136,7 @@ public class SchedulePlaceService {
 	@Transactional
 	public List<SchedulePlaceDeleteResBody> deleteAllSchedulePlaces(Long scheduleId, Long userId) {
 		Schedule schedule = scheduleRepository.findById(scheduleId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
+			.orElseThrow(() -> new BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND, "scheduleId: " + scheduleId));
 
 		// 권한 검증: 그룹 창설자만 세부 일정을 삭제할 수 있음
 		groupService.validateGroupCreator(schedule.getGroup().getGroupName(), userId);
@@ -178,12 +178,12 @@ public class SchedulePlaceService {
 
 		// 3-a. 요청 내 schedulePlaceId 중복 금지 (같은 기존 블록을 두 번 가리키면 한 입력이 조용히 사라짐)
 		if (incomingIds.size() != incomingIdList.size()) {
-			throw new BusinessException(ErrorCode.SCHEDULE_PLACE_DUPLICATE_ID, "schedulePlaceIds: " + incomingIdList);
+			throw new BusinessException(ScheduleErrorCode.SCHEDULE_PLACE_DUPLICATE_ID, "schedulePlaceIds: " + incomingIdList);
 		}
 		// 3-b. 이 일정에 속하지 않거나 존재하지 않는 id 금지 (타 일정 id 탈취 방지)
 		for (Long incomingId : incomingIds) {
 			if (!existingById.containsKey(incomingId)) {
-				throw new BusinessException(ErrorCode.SCHEDULE_PLACE_NOT_FOUND,
+				throw new BusinessException(ScheduleErrorCode.SCHEDULE_PLACE_NOT_FOUND,
 					"이 일정에 속하지 않거나 존재하지 않는 schedulePlaceId: " + incomingId);
 			}
 		}
@@ -202,7 +202,7 @@ public class SchedulePlaceService {
 	private void validateNoDuplicateSlots(List<SlotKey> slots) {
 		Set<SlotKey> uniqueSlots = new HashSet<>(slots);
 		if (uniqueSlots.size() != slots.size()) {
-			throw new BusinessException(ErrorCode.SCHEDULE_PLACE_DUPLICATE_ORDER,
+			throw new BusinessException(ScheduleErrorCode.SCHEDULE_PLACE_DUPLICATE_ORDER,
 				"중복된 (dayOrder, orderInDay) 슬롯이 있습니다.");
 		}
 	}

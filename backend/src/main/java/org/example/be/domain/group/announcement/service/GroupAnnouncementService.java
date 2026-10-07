@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.example.be.domain.member.service.MemberService;
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementCreateReqBody;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementDeleteReqBody;
 import org.example.be.domain.group.announcement.dto.GroupAnnouncementDeleteResBody;
@@ -17,8 +14,11 @@ import org.example.be.domain.group.announcement.dto.GroupAnnouncementResBody;
 import org.example.be.domain.group.announcement.entity.GroupAnnouncement;
 import org.example.be.domain.group.announcement.repository.GroupAnnouncementRepository;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.group.service.GroupService;
+import org.example.be.domain.member.service.MemberService;
+import org.example.be.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +44,10 @@ public class GroupAnnouncementService {
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND, " groupName: " + groupName);
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED, " groupName: " + groupName);
 		}
 
 		GroupAnnouncement newAnnouncement = new GroupAnnouncement();
@@ -61,24 +61,20 @@ public class GroupAnnouncementService {
 	}
 
 	// 최상단 노출 그룹 공지 1개만 조회
+	// 공지가 하나도 없으면 null 을 반환한다 - CommonResponse 의 @JsonInclude(NON_NULL) 로 응답에서 data 키가 생략된다
 	@Transactional(readOnly = true)
 	public GroupAnnouncementResBody getLatestAnnouncement(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
-		Optional<GroupAnnouncement> latestAnnouncementOptional = groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(
-			group);
-
-		if (latestAnnouncementOptional.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_LATEST_NOT_FOUND, "groupName: " + groupName);
-		}
-
-		return toResBody(latestAnnouncementOptional.get());
+		return groupAnnouncementRepository.findTopByGroupOrderByTimeStampDesc(group)
+			.map(this::toResBody)
+			.orElse(null);
 	}
 
 	// 그룹 공지 전부 조회 (최신순 정렬되어 반환됨)
@@ -86,14 +82,14 @@ public class GroupAnnouncementService {
 	public List<GroupAnnouncementResBody> getAllGroupAnnouncements(String groupName, Long memberId) {
 		// 요청자가 그룹 멤버인지 검증
 		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				" groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		Optional<Group> groupOptional = groupRepository.findByGroupName(groupName);
 		// 해당 이름의 그룹이 존재하는지 확인
 		if (groupOptional.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName);
+			throw new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName);
 		}
 
 		Group group = groupOptional.get();
@@ -104,6 +100,9 @@ public class GroupAnnouncementService {
 	}
 
 	// 그룹 공지 삭제
+	// 공지가 없거나, 요청한 그룹의 공지가 아니거나, 요청자가 그 그룹의 멤버가 아니면 모두 같은 404로 응답한다.
+	// 사유마다 응답이 다르면, 그룹 멤버가 아닌 사람도 응답만 보고 공지 id 가 존재하는지와 어느 그룹의 공지인지 알아낼 수 있다.
+	// 실패 사유는 debugMessage 로 로그에만 남긴다. (로그인 실패를 LOGIN_FAILED 하나로 응답하는 것과 같은 원리)
 	@Transactional
 	public GroupAnnouncementDeleteResBody deleteGroupAnnouncement(GroupAnnouncementDeleteReqBody request,
 		Long memberId) {
@@ -111,21 +110,21 @@ public class GroupAnnouncementService {
 		String groupName =
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
+		// 요청자가 해당 그룹의 멤버인지 확인
+		if (!groupService.isContains(groupName, memberId)) {
+			throw new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
+				"그룹 멤버가 아님 - groupName: " + groupName + ", memberId: " + memberId);
+		}
+
 		GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.id())
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
 				"groupAnnouncementId: " + request.id()));
 
 		// 요청한 그룹이 공지의 그룹과 일치하는지 확인
 		if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {
-			throw new BusinessException(ErrorCode.FORBIDDEN, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
+			throw new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
 				+ "\n요청한 groupName: " + groupName
 				+ "\n삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());
-		}
-
-		// 요청자가 해당 그룹의 멤버인지 확인
-		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
-				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		GroupAnnouncementDeleteResBody deletedInfo = new GroupAnnouncementDeleteResBody(

@@ -5,10 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.service.AuthTokenService;
+import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.support.ErrorResponseWriter;
 import org.example.be.global.security.config.SecurityUser;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -28,6 +31,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 
 	private final AuthTokenService authTokenService;
 	private final GroupRepository groupRepository;
+	private final ErrorResponseWriter errorResponseWriter;
 
 	@Override
 	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -43,7 +47,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 		Map<String, Object> claims = authTokenService.payload(accessToken);
 		if (claims == null) {
 			log.debug("[WebSocket Debug] Token validation failed");
-			return failHandshake(response, "유효하지 않거나 만료된 토큰입니다.");
+			return failHandshake(response, MemberErrorCode.INVALID_TOKEN);
 		}
 
 		long memberId = ((Number)claims.get("id")).longValue();
@@ -64,7 +68,7 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 
 		if (!isMember) {
 			log.debug("[WebSocket Debug] User {} is NOT a member of group {} or group not found", memberId, groupName);
-			return failHandshake(response, "해당 그룹의 멤버가 아닙니다.");
+			return failHandshake(response, GroupErrorCode.GROUP_ACCESS_DENIED);
 		}
 
 		// 4. 인증된 사용자 정보를 WebSocket 세션 속성에 저장 (HandshakeHandler에서 Principal로 변환 예정)
@@ -85,14 +89,16 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
 			.orElse(null);
 	}
 
-	private boolean failHandshake(ServerHttpResponse response, String message) {
+	// 핸드셰이크를 거부하고 사유를 CommonResponse 규격 JSON 으로 응답한다.
+	// 거부는 예외가 아니라 false 반환하고, SockJS 핸들러는 컨트롤러 메서드가 아니라 advice 도 적용되지 않으므로
+	// 응답을 여기서 직접 써야 한다. ErrorResponseWriter 를 거치며 상태코드도 ErrorCode 가 정한다.
+	private boolean failHandshake(ServerHttpResponse response, ErrorCode errorCode) {
 		if (response instanceof ServletServerHttpResponse servletResponse) {
-			servletResponse.getServletResponse().setStatus(HttpStatus.FORBIDDEN.value());
 			try {
-				servletResponse.getServletResponse().getWriter().write(message);
-				servletResponse.getServletResponse().flushBuffer();
+				errorResponseWriter.write(servletResponse.getServletResponse(), errorCode);
 			} catch (IOException e) {
-				e.printStackTrace();
+				// 거부 응답조차 쓸 수 없는 상태(클라이언트 이탈 등). 핸드셰이크는 어차피 거부되므로 기록만 남긴다. 이 때에는 스택 포함.
+				log.warn("[Handshake] 거부 응답 작성 실패 - code={}", errorCode.name(), e);
 			}
 		}
 		return false;

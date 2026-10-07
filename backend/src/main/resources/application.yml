@@ -164,3 +164,10 @@ api:
   url: ${API_URL}
 
 service-key: ${SERVICE_KEY}
+
+# TourAPI 배치 운영값
+tourapi:
+  batch:
+    # chunk Step(관광지, 식당, 숙박) 하나가 건너뛸 수 있는 아이템 수 상한. 넘으면 그 Step은 FAILED 로 끝난다.
+    # 긴급 시 재빌드 없이 올릴 수 있도록 환경변수로 덮어쓸 수 있게 했다 (운영: EC2 .env 에 추가 후 app 컨테이너 재시작)
+    skip-limit: ${TOURAPI_BATCH_SKIP_LIMIT:100}

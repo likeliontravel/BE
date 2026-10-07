@@ -3,6 +3,7 @@ package org.example.be.global.security.oauth.handler;
 import java.io.IOException;
 import java.util.Map;
 
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.invitation.entity.GroupInvitation;
 import org.example.be.domain.group.invitation.service.GroupInvitationService;
 import org.example.be.domain.group.invitation.util.InviteRedirectHelper;
@@ -11,7 +12,7 @@ import org.example.be.domain.member.entity.Member;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.domain.member.service.AuthTokenService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.example.be.global.security.oauth.userinfo.GoogleUserInfo;
 import org.example.be.global.security.oauth.userinfo.KakaoUserInfo;
 import org.example.be.global.security.oauth.userinfo.NaverUserInfo;
@@ -99,7 +100,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 			return inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_NEW);
 		} catch (BusinessException e) {
 			// 이미 멤버인 경우는 실패가 아니라 성공으로 취급한다. (InvitationJoinController와 동일한 정책)
-			if (e.getErrorCode() == ErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
+			if (e.getErrorCode() == GroupErrorCode.GROUP_ALREADY_MEMBER && groupName != null) {
 				log.info("[invite] 소셜 로그인 후 이미 그룹 멤버 - memberId={}, groupName={}", memberId, groupName);
 				return inviteRedirectHelper.groupPageUrl(groupName, InviteRedirectHelper.JOINED_ALREADY);
 			}
@@ -109,7 +110,7 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 			return inviteRedirectHelper.inviteErrorUrl(e.getErrorCode().name());
 		} catch (Exception e) {
 			log.error("[invite] 소셜 로그인 후 그룹 자동 가입 중 예기지 못한 오류 - memberId={}", memberId, e);
-			return inviteRedirectHelper.inviteErrorUrl(ErrorCode.INTERNAL_SERVER_ERROR.name());
+			return inviteRedirectHelper.inviteErrorUrl(CommonErrorCode.INTERNAL_SERVER_ERROR.name());
 		}
 	}
 

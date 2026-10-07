@@ -3,7 +3,7 @@ package org.example.be.global.security.oauth.userinfo;
 import java.util.Map;
 
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
+import org.example.be.global.exception.code.CommonErrorCode;
 
 /**
  * Google OAuth2 인증을 통해 반환된 사용자 정보를 다루는 클래스.
@@ -27,7 +27,7 @@ public class GoogleUserInfo implements OAuth2UserInfo {
 	public String getProviderId() {
 		Object providerId = attributes.get("sub");
 		if (providerId == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - ProviderId is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - ProviderId is Missing");
 		}
 		return providerId.toString();
 	}
@@ -37,7 +37,7 @@ public class GoogleUserInfo implements OAuth2UserInfo {
 		// Google 응답에서 "email" 필드를 사용하여 이메일 주소를 추출
 		Object email = attributes.get("email");
 		if (email == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - email is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - email is Missing");
 		}
 		return email.toString();
 	}
@@ -47,7 +47,7 @@ public class GoogleUserInfo implements OAuth2UserInfo {
 		// Google 응답에서 "name" 필드를 사용하여 사용자 이름을 추출
 		Object name = attributes.get("name");
 		if (name == null) {
-			throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - name is Missing");
+			throw new BusinessException(CommonErrorCode.INTERNAL_SERVER_ERROR, "GoogleLogin - name is Missing");
 		}
 		return name.toString();
 	}

@@ -5,11 +5,11 @@ import java.util.List;
 import org.example.be.domain.place.accommodation.dto.AccommodationResBody;
 import org.example.be.domain.place.accommodation.entity.Accommodation;
 import org.example.be.domain.place.accommodation.repository.AccommodationRepository;
+import org.example.be.domain.place.exception.PlaceErrorCode;
 import org.example.be.domain.place.region.TourRegionService;
 import org.example.be.domain.place.shared.dto.PlaceSearchReqBody;
 import org.example.be.domain.place.theme.PlaceCategoryService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.global.response.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,7 +49,7 @@ public class AccommodationFilterService {
 		if (regions != null) {
 			for (String region : regions) {
 				if (!tourRegionService.existsByRegion(region)) {
-					throw new BusinessException(ErrorCode.INVALID_REGION, "허용되지 않는 region값: " + region);
+					throw new BusinessException(PlaceErrorCode.INVALID_REGION, "허용되지 않는 region값: " + region);
 				}
 			}
 		}
@@ -58,7 +58,7 @@ public class AccommodationFilterService {
 		if (themes != null) {
 			for (String theme : themes) {
 				if (!placeCategoryService.existsByTheme(theme)) {
-					throw new BusinessException(ErrorCode.INVALID_THEME, "허용되지 않는 theme값: " + theme);
+					throw new BusinessException(PlaceErrorCode.INVALID_THEME, "허용되지 않는 theme값: " + theme);
 				}
 			}
 		}

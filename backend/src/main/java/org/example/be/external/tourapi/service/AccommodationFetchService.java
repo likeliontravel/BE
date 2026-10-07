@@ -29,8 +29,7 @@ public class AccommodationFetchService {
 	private String serviceKey;
 
 	// 컨트롤러 입력 -> 페이지 입력에 따라 데이터 저장 함수 분기
-	public List<AccommodationResBody> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) throws
-		Exception {
+	public List<AccommodationResBody> getAccommodations(int areaCode, String state, int numOfRows, int pageNo) {
 		int contentTypeId = 32; // 숙소 ContentTypeId 32 고정
 		if (pageNo <= 0) {
 			return getAllData(areaCode, state, contentTypeId, numOfRows);
@@ -41,7 +40,7 @@ public class AccommodationFetchService {
 
 	// Page 입력 시 해당 단위 데이터 저장
 	private List<AccommodationResBody> getPageData(int areaCode, String state, int contentTypeId, int numOfRows,
-		int pageNo) throws Exception {
+		int pageNo) {
 		String json = tourApiClient.fetchTourData(areaCode, contentTypeId, numOfRows, pageNo, serviceKey);
 		log.debug("[TourAPI JSON 응답 - 숙소] \n {}", json);
 		List<Map<String, Object>> items = tourApiParser.parseItems(json);
@@ -55,8 +54,7 @@ public class AccommodationFetchService {
 	}
 
 	// Page 미입력 시 전체 결과 저장
-	private List<AccommodationResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) throws
-		Exception {
+	private List<AccommodationResBody> getAllData(int areaCode, String state, int contentTypeId, int numOfRows) {
 		int pageNo = 1;
 		List<AccommodationResBody> allItems = new ArrayList<>();
 
@@ -131,17 +129,31 @@ public class AccommodationFetchService {
 	}
 
 	private Double toDouble(Object obj) {
+		if (obj == null || String.valueOf(obj).isBlank()) {
+			return null;    // TourAPI 는 값이 없으면 "" 를 보낸다. 변환 실패가 아니라 '값 없음' 이므로 로그를 남기지 않는다.
+		}
+
 		try {
-			return obj != null ? Double.parseDouble(obj.toString()) : null;
-		} catch (Exception e) {
+			return Double.parseDouble(String.valueOf(obj));
+		} catch (NumberFormatException e) {
+			// 좌표 (mapX, mapY) 가 여기서 null 이 되면 그 장소는 지도에 뜨지 않는다.
+			// 건별 오류라 예외로 올리기엔 과하지만, 무음으로 두면 데이터 품질이 조용히 떨어진다.
+			// 운영 로그 레벨이 INFO 라 debug 로 남기면 보이지 않으므로 WARN 으로 남긴다.
+			log.warn("[TypeConvert] Double 변환 실패 - value={}", obj);
 			return null;
 		}
 	}
 
 	private Integer toInteger(Object obj) {
+		if (obj == null || String.valueOf(obj).isBlank()) {
+			return null;
+		}
+
 		try {
-			return obj != null ? Integer.parseInt(obj.toString()) : null;
-		} catch (Exception e) {
+			return Integer.parseInt(String.valueOf(obj));
+		} catch (NumberFormatException e) {
+			// 사유는 toDouble() 의 같은 catch 주석 참고
+			log.warn("[TypeConvert] Integer 변환 실패 - value={}", obj);
 			return null;
 		}
 	}

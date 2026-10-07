@@ -10,6 +10,8 @@ import org.example.be.domain.place.restaurant.repository.RestaurantRepository;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.domain.place.touristspot.entity.TouristSpot;
 import org.example.be.domain.place.touristspot.repository.TouristSpotRepository;
+import org.example.be.external.tourapi.batch.listener.PlaceSkipListener;
+import org.example.be.external.tourapi.batch.listener.TourDataJobListener;
 import org.example.be.external.tourapi.batch.processor.AccommodationItemProcessor;
 import org.example.be.external.tourapi.batch.processor.PlaceProcessorHelper;
 import org.example.be.external.tourapi.batch.processor.RestaurantItemProcessor;
@@ -54,6 +56,10 @@ public class BatchConfig {
 	@Value("${service-key}")
 	private String serviceKey;
 
+	// chunk Step 하나가 건너뛸 수 있는 아이템 수 상한 (application.yml - tourapi.batch.skip-limit)
+	@Value("${tourapi.batch.skip-limit}")
+	private int skipLimit;
+
 	/**
 	 * 전체 Tour 데이터 갱신 Job
 	 *
@@ -63,6 +69,8 @@ public class BatchConfig {
 	 * 3. touristSpotFetchStep - TouristSpot 저장/업데이트 (chunk)
 	 * 4. restaurantFetchStep - Restaurant 저장/업데이트 (chunk)
 	 * 5. accommodationFetchStep - Accommodation 저장/업데이트 (chunk)
+	 *
+	 * 모든 Step 이 끝나면 TourDataJobListener 가 Step 별 실패율을 판정해 임계치 이상이면 Job 을 FAILED 로 바꾼다.
 	 */
 	@Bean
 	public Job tourDataRefreshJob(
@@ -74,12 +82,29 @@ public class BatchConfig {
 		Step accommodationFetchStep
 	) {
 		return new JobBuilder("tourDataRefreshJob", jobRepository)
+			.listener(tourDataJobListener())
 			.start(refreshRegionStep)
 			.next(refreshCategoryStep)
 			.next(touristSpotFetchStep)
 			.next(restaurantFetchStep)
 			.next(accommodationFetchStep)
 			.build();
+	}
+
+	/**
+	 * Job 실패율 판정 리스너 - 수집 실패율 / skip 률이 임계치 이상이면 Job 을 FAILED 로 바꾼다
+	 */
+	@Bean
+	public TourDataJobListener tourDataJobListener() {
+		return new TourDataJobListener();
+	}
+
+	/**
+	 * chunk Step 3개가 함께 쓰는 skip 기록 리스너 - skip 된 아이템을 WARN + 스택 으로 남긴다
+	 */
+	@Bean
+	public PlaceSkipListener placeSkipListener() {
+		return new PlaceSkipListener();
 	}
 
 	/**
@@ -159,8 +184,9 @@ public class BatchConfig {
 			.processor(touristSpotItemProcessor(processorHelper))
 			.writer(touristSpotItemWriter())
 			.faultTolerant()    // 오류가 발생해도 전체가 멈추지 않도록 내결함성 모드 설정.
-			.skip(Exception.class)    // 이 예외 발생 시 건너뛰기. 단, 실패 발생 시 내부에서 failed count + 1
-			.skipLimit(Integer.MAX_VALUE) // 최대 몇 개까지 건너뛸지 (Integer 최대범위를 넘어갈 경우 스킵)
+			.skip(Exception.class)    // 아이템 1건 처리 (process, write) 중 예외가 나면 그 건만 SKIP_COUNT 에 기록
+			.skipLimit(skipLimit) // Step 당 skip 상한. 넘으면 Step 이 FAILED 로 끝난다
+			.listener(placeSkipListener())        // skip 된 아이템을 WARN + 스택 으로 남긴다 (Spring Batch 는 DEBUG 로만 남긴다)
 			.build();
 	}
 
@@ -216,7 +242,8 @@ public class BatchConfig {
 			.writer(restaurantItemWriter())
 			.faultTolerant()
 			.skip(Exception.class)
-			.skipLimit(Integer.MAX_VALUE)
+			.skipLimit(skipLimit)
+			.listener(placeSkipListener())
 			.build();
 	}
 
@@ -272,7 +299,8 @@ public class BatchConfig {
 			.writer(accommodationItemWriter())
 			.faultTolerant()
 			.skip(Exception.class)
-			.skipLimit(Integer.MAX_VALUE)
+			.skipLimit(skipLimit)
+			.listener(placeSkipListener())
 			.build();
 	}
 

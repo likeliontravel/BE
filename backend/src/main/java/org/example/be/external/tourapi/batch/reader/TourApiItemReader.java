@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.example.be.domain.place.region.TourRegionRepository;
 import org.example.be.external.tourapi.util.TourApiClient;
+import org.example.be.global.exception.BusinessException;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
@@ -32,6 +33,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class TourApiItemReader implements ItemStreamReader<Map<String, Object>> {
 
+	// 수집 단위(areaCode x contentTypeId) 집계를 Step 의 ExecutionContext 에 남기는 키
+	// open() 의 예외는 skip 대상이 아니라 skipCount 에 잡히지 않으므로, 수집 실패는 이 값으로 따로 샌다.
+	// TourDataJobListener 가 이 값으로 Step 별 수집 실패율을 판정한다.
+	public static final String FETCH_TOTAL_COUNT_KEY = "fetchTotalCount";
+	public static final String FETCH_FAILED_COUNT_KEY = "fetchFailedCount";
+
 	private final TourApiClient tourApiClient;
 	private final TourRegionRepository tourRegionRepository;
 	private final String serviceKey;
@@ -48,6 +55,7 @@ public class TourApiItemReader implements ItemStreamReader<Map<String, Object>> 
 	 *  1. DB에서 모든 areaCode 조회
 	 *  2. 각 areaCode별로 TourAPI 전체 페이지 순회
 	 *  3. 결과를 내부 List에 저장
+	 *  4. 수집 단위 집계(전체 / 실패) 를 ExecutionContext 에 기록
 	 */
 	@Override
 	public void open(ExecutionContext executionContext) throws ItemStreamException {
@@ -57,29 +65,41 @@ public class TourApiItemReader implements ItemStreamReader<Map<String, Object>> 
 
 		int totalAreas = areaCodes.size();
 		int currentArea = 0;
-		int failedCount = 0;
+		int fetchTotalCount = 0;
+		int fetchFailedCount = 0;
 
 		for (String areaCode : areaCodes) {
+
 			currentArea++;
+
+			// try 밖에 code 값을 둔다. tour_region 의 areaCode 가 숫자가 아니면 외부 수집 실패가 아니라 우리 DB 의 데이터 결함이므로
+			// 건너뛰지 않고 전파에 Step을 실패시킨다.
+			int code = Integer.parseInt(areaCode);
+
 			for (int contentTypeId : contentTypeIds) {
+				fetchTotalCount++;
 				try {
-					int code = Integer.parseInt(areaCode);
 					List<Map<String, Object>> pageItems =
 						tourApiClient.fetchAllPagesForArea(code, contentTypeId, numOfRows, serviceKey);
 					items.addAll(pageItems);
 					log.info("[TourApiItemReader] areaCode({}/{}) contentTypeId={} 수집 완료 ({}건)",
 						currentArea, totalAreas, contentTypeId, pageItems.size());
-				} catch (Exception e) {
-					failedCount++;
-					log.error("[TourApiItemReader] areaCode={} contentTypeId={} 수집 실패 - 건너뜀",
-						areaCode, contentTypeId);
-					log.error("[TourApiItemReader] 실패 원인 : {}", e.getMessage());
+				} catch (BusinessException e) {
+					// TourApiClient 는 수집 실패 (HTTP 오류, I/O)를 BusinessException(EXTERNAL_API_FAILED) 으로만 던진다.
+					// 한 단위의 실패로 전체를 멈추지 않고 스택과 함께 기록한 뒤 다음 단위로 넘어간다. 실패율 판정은 TourDataJobListener 가 한다.
+					// 그 외 예외 (NPE 등 코드 결함)는 잡지 않는다 -> 전파되어 Step 이 FAILED 로 끝난다.
+					fetchFailedCount++;
+					log.error("[TourApiItemReader] areaCode={}, contentTypeId={} 수집 실패 - 건너뜀",
+						areaCode, contentTypeId, e);
 				}
 			}
 		}
 
-		if (failedCount > 0) {
-			log.warn("[TourApiItemReader] ⚠️ 총 {}건 수집 실패", failedCount);
+		executionContext.putInt(FETCH_TOTAL_COUNT_KEY, fetchTotalCount);
+		executionContext.putInt(FETCH_FAILED_COUNT_KEY, fetchFailedCount);
+
+		if (fetchFailedCount > 0) {
+			log.warn("[TourApiItemReader] ⚠️수집 실패 {}/{} 단위", fetchFailedCount, fetchTotalCount);
 		}
 
 		// 재시작 시 이전 진행 위치 복원

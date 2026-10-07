@@ -1,7 +1,5 @@
 package org.example.be.domain.member.controller;
 
-import java.io.IOException;
-
 import org.example.be.domain.member.dto.request.MemberNameUpdateReqBody;
 import org.example.be.domain.member.dto.request.MemberPolicyUpdateReqBody;
 import org.example.be.domain.member.dto.request.MemberSubscribedUpdateReqBody;
@@ -67,7 +65,7 @@ public class MemberController {
 
 	@PostMapping("/me/profileImage")
 	public ResponseEntity<CommonResponse<String>> updateProfileImage(@RequestParam MultipartFile file,
-		@AuthenticationPrincipal SecurityUser user) throws IOException {
+		@AuthenticationPrincipal SecurityUser user) {
 		String profileImageUrl = memberService.updateProfileImageUrl(user.getId(), file);
 		return ResponseEntity.status(HttpStatus.OK).body(CommonResponse.success(profileImageUrl, "프로필 사진 변경 성공"));
 	}

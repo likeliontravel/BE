@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.domain.place.theme.PlaceCategory;
 import org.example.be.domain.place.theme.PlaceCategoryRepository;
 import org.example.be.external.tourapi.dto.CategoryCodeDTO;
@@ -14,6 +12,8 @@ import org.example.be.external.tourapi.dto.SaveResult;
 import org.example.be.external.tourapi.util.CategoryClassifier;
 import org.example.be.external.tourapi.util.TourApiClient;
 import org.example.be.external.tourapi.util.TourApiParser;
+import org.example.be.global.exception.BusinessException;
+import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,9 +103,11 @@ public class RefreshCategoryService {
 			return new FetchResult(totalSaved, totalUpdated, totalSkipped, 0);
 
 		} catch (Exception e) {
-			log.error("[RefreshCategory] 카테고리 갱신 실패", e);
-			throw new BusinessException(ErrorCode.RESOURCE_UPDATE_FAILED,
-				"Place 카테고리 갱신 실패 - message: " + e.getMessage());
+			// 여기서 로그를 남기지 않는다 - 두 호출 경로가 모두 이미 ERROR + 스택을 남기기 때문이다.
+			// HTTP(RefreshCategoryController): BusinessExceptionHandler 가 5xx 를 ERROR + 스택으로 기록
+			// 배치(BatchConfig refreshCategoryStep): Spring Batch AbstractStep 이 Step 실패를 ERROR + 스택으로 기록
+			throw new BusinessException(CommonErrorCode.RESOURCE_UPDATE_FAILED,
+				"Place 카테고리 갱신 실패", e);
 		}
 	}
 

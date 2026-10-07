@@ -14,12 +14,13 @@ import org.example.be.domain.chat.repository.ChatMessageRepository;
 import org.example.be.domain.chat.type.MessageType;
 import org.example.be.domain.chat.type.SearchDirection;
 import org.example.be.domain.group.entity.Group;
+import org.example.be.domain.group.exception.GroupErrorCode;
 import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.member.dto.response.MemberDto;
 import org.example.be.domain.member.entity.Member;
+import org.example.be.domain.member.exception.MemberErrorCode;
 import org.example.be.domain.member.repository.MemberRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.example.be.storage.gcs.GCSService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,27 +42,22 @@ public class ChatMessageService {
 	// ==================== 일반 REST API ====================
 
 	// 해당 그룹 가장 최신 메시지 20개 조회 ( 채팅방 최초 입장 시 호출용 )
+	// 메시지가 없어도 오류가 아니다 - 빈 { messages: [], senderProfiles: {} } 를 그대로 반환한다
 	@Transactional(readOnly = true)
 	public Map<String, Object> getRecent20Messages(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findRecentMessages(group, 20);
-		if (messages.isEmpty()) {
-			throw new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName);
-		}
 		return buildMessageWithProfiles(messages);
 	}
 
 	// 이전 메시지 20개 추가 조회 ( 스크롤 업 시 호출용 )
+	// 더 이전 메시지가 없어도 오류가 아니다 - 같은 빈 shape 를 반환한다
 	@Transactional(readOnly = true)
 	public Map<String, Object> getPrevious20Messages(String groupName, Long lastMessageId, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 
 		List<ChatMessage> messages = chatMessageRepository.findPreviousMessages(group, lastMessageId, 20);
-		if (messages.isEmpty()) {
-			throw new BusinessException(ErrorCode.CHAT_PREVIOUS_MESSAGE_NOT_FOUND,
-				"groupName: " + groupName + ", messageId: " + lastMessageId);
-		}
 		return buildMessageWithProfiles(messages);
 	}
 
@@ -78,19 +74,20 @@ public class ChatMessageService {
 	}
 
 	// 해당 그룹 가장 마지막 메시지 조회 ( 그룹 채팅방 목록에서 표시용 )
+	// 메시지가 하나도 없으면 null 을 반환한다 - CommonResponse 의 @JsonInclude(NON_NULL) 로 응답에서 data 키가 생략된다
 	@Transactional(readOnly = true)
 	public ChatMessageResBody getLatestMessageOfGroup(String groupName, Long memberId) {
 		Group group = findGroupAndValidateMember(groupName, memberId);
 		return chatMessageRepository.findLatestMessage(group)
 			.map(ChatMessageResBody::from)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_CHAT_NOT_FOUND, "groupName: " + groupName));
+			.orElse(null);
 	}
 
 	// 사용자가 가입한 모든 그룹 + 각 그룹의 최신 메시지 1개를 한 번에 조회
 	@Transactional(readOnly = true)
 	public List<ChatRoomListWithLatestMessageResBody> getGroupsWithLatestMessage(Long memberId) {
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 
 		// 요청자가 속한 그룹 목록
 		List<Group> groups = groupRepository.findByMembersContaining(member);
@@ -140,11 +137,8 @@ public class ChatMessageService {
 		Member sender = findMember(memberId);
 
 		ChatMessage chatMessage = ChatMessage.create(group, sender, type, content);
-		try {
-			return chatMessageRepository.save(chatMessage);
-		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.RESOURCE_CREATION_FAILED, "메시지 저장 실패 - message: " + e.getMessage());
-		}
+
+		return chatMessageRepository.save(chatMessage);
 	}
 
 	// ==================== 내부 사용 메서드 ====================
@@ -152,10 +146,10 @@ public class ChatMessageService {
 	// 그룹 존재 여부와 요청자가 그룹 내 멤버인지 검증하는 메서드
 	private Group findGroupAndValidateMember(String groupName, Long memberId) {
 		Group group = groupRepository.findByGroupName(groupName)
-			.orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
+			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_NOT_FOUND, "groupName: " + groupName));
 
 		if (!groupRepository.existsByGroupNameAndMembers_Id(groupName, memberId)) {
-			throw new BusinessException(ErrorCode.GROUP_MEMBER_NOT_FOUND,
+			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
 				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 		return group;
@@ -163,7 +157,7 @@ public class ChatMessageService {
 
 	private Member findMember(Long memberId) {
 		return memberRepository.findById(memberId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND, "memberId: " + memberId));
 	}
 
 	// 최종 반환해줄 메시지를 전송자의 프로필정보를 함께 담아 빌드해주는 메서드.

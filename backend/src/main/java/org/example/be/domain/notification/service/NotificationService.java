@@ -12,9 +12,9 @@ import org.example.be.domain.notification.dto.response.NotificationResBody;
 import org.example.be.domain.notification.dto.response.NotificationUnreadCountResBody;
 import org.example.be.domain.notification.entity.Notification;
 import org.example.be.domain.notification.event.NotificationEvent;
+import org.example.be.domain.notification.exception.NotificationErrorCode;
 import org.example.be.domain.notification.repository.NotificationRepository;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,11 +100,11 @@ public class NotificationService {
 
 	private Notification findByIdAndValidateOwner(Long notificationId, Long memberId) {
 		Notification notification = notificationRepository.findById(notificationId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND,
+			.orElseThrow(() -> new BusinessException(NotificationErrorCode.NOTIFICATION_NOT_FOUND,
 				"notificationId: " + notificationId));
 
 		if (!notification.getReceiver().getId().equals(memberId)) {
-			throw new BusinessException(ErrorCode.NOTIFICATION_FORBIDDEN,
+			throw new BusinessException(NotificationErrorCode.NOTIFICATION_FORBIDDEN,
 				"notificationId: " + notificationId + ", memberId: " + memberId);
 		}
 		return notification;
