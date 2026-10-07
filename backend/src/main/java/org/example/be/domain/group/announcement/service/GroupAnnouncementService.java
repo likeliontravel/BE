@@ -19,7 +19,6 @@ import org.example.be.domain.group.repository.GroupRepository;
 import org.example.be.domain.group.service.GroupService;
 import org.example.be.domain.member.service.MemberService;
 import org.example.be.global.exception.BusinessException;
-import org.example.be.global.exception.code.CommonErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +100,9 @@ public class GroupAnnouncementService {
 	}
 
 	// 그룹 공지 삭제
+	// 공지가 없거나, 요청한 그룹의 공지가 아니거나, 요청자가 그 그룹의 멤버가 아니면 모두 같은 404로 응답한다.
+	// 사유마다 응답이 다르면, 그룹 멤버가 아닌 사람도 응답만 보고 공지 id 가 존재하는지와 어느 그룹의 공지인지 알아낼 수 있다.
+	// 실패 사유는 debugMessage 로 로그에만 남긴다. (로그인 실패를 LOGIN_FAILED 하나로 응답하는 것과 같은 원리)
 	@Transactional
 	public GroupAnnouncementDeleteResBody deleteGroupAnnouncement(GroupAnnouncementDeleteReqBody request,
 		Long memberId) {
@@ -108,21 +110,21 @@ public class GroupAnnouncementService {
 		String groupName =
 			needsDecoding(rawGroupName) ? URLDecoder.decode(rawGroupName, StandardCharsets.UTF_8) : rawGroupName;
 
+		// 요청자가 해당 그룹의 멤버인지 확인
+		if (!groupService.isContains(groupName, memberId)) {
+			throw new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
+				"그룹 멤버가 아님 - groupName: " + groupName + ", memberId: " + memberId);
+		}
+
 		GroupAnnouncement groupAnnouncement = groupAnnouncementRepository.findById(request.id())
 			.orElseThrow(() -> new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND,
 				"groupAnnouncementId: " + request.id()));
 
 		// 요청한 그룹이 공지의 그룹과 일치하는지 확인
 		if (!groupAnnouncement.getGroup().getGroupName().equals(groupName)) {
-			throw new BusinessException(CommonErrorCode.FORBIDDEN, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
+			throw new BusinessException(GroupErrorCode.GROUP_ANNOUNCEMENT_NOT_FOUND, "삭제하려는 공지가 요청한 그룹의 공지가 아닙니다."
 				+ "\n요청한 groupName: " + groupName
 				+ "\n삭제하려는 공지의 groupName: " + groupAnnouncement.getGroup().getGroupName());
-		}
-
-		// 요청자가 해당 그룹의 멤버인지 확인
-		if (!groupService.isContains(groupName, memberId)) {
-			throw new BusinessException(GroupErrorCode.GROUP_ACCESS_DENIED,
-				"groupName: " + groupName + ", memberId: " + memberId);
 		}
 
 		GroupAnnouncementDeleteResBody deletedInfo = new GroupAnnouncementDeleteResBody(
